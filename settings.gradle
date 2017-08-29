@@ -1,0 +1,3 @@
+// set the root project name (so that directory name doesn't matter)
+rootProject.name="iox-wkf"
+
