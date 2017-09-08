@@ -822,7 +822,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			if(event instanceof ObjectEvent){
 	        	IomObject iomObj=((ObjectEvent)event).getIomObject();
-	        	assertTrue(iomObj.getobjecttag().contains("StadtModel"));
+	        	assertTrue(iomObj.getobjecttag().contains("BundesModel"));
 	        	assertTrue(iomObj.getobjecttag().contains("Topic1"));
 	        	assertTrue(iomObj.getobjecttag().contains("Polygon"));
 			}
