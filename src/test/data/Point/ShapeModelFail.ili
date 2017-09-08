@@ -1,0 +1,17 @@
+INTERLIS 2.4;
+
+MODEL ShapeModelFail (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -0.22857142857142854 .. 0.22857142857142854 [INTERLIS.m],
+				  0.5688311688311687 .. 1.5688311688311687 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic1 =
+		CLASS Point =
+			id2 : 0 .. 150;
+			the_geom2 : Lkoord;
+		END Point;
+	END Topic1;
+	
+END ShapeModelFail.
