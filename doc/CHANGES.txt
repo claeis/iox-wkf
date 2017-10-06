@@ -1,0 +1,14 @@
+ideas/open issues
+----------------------------
+
+LATEST
+-----------------------------
+
+iox-wkf 1.1.0 (2017-??-??)
+-----------------------------
+- add shapefileReader
+- add shapefileWriter
+
+iox-wkf 1.0.0 (2017-??-??)
+-----------------------------
+- initial public version
