@@ -242,6 +242,8 @@ public class ShapeReader implements IoxReader{
 	        	// return each simple feature object.
 	        	return new ch.interlis.iox_j.ObjectEvent(iomObj);
 	        }
+			featureCollectionIter.close();
+			featureCollectionIter=null;
 			state=END_BASKET;
 	    }
 		if(state==END_BASKET){
@@ -340,12 +342,14 @@ public class ShapeReader implements IoxReader{
 			featuresSource=null;
 		}
 		if(dataStore!=null){
+			dataStore.dispose();
 			dataStore=null;
 		}
 		if(featureCollectionIter!=null) {
 			featureCollectionIter=null;
 		}
 		if(td!=null) {
+			td.clear();
 			td=null;
 		}
 		if(factory!=null) {
