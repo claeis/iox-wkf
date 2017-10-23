@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.shp;
+package ch.interlis.iom_j.dbimport;
 
 import static org.junit.Assert.*;
 import java.io.File;
@@ -13,9 +13,22 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.db2shp.Config;
-import ch.interlis.db2shp.Csv2db;
+import ch.interlis.configuration.Config;
+import ch.interlis.dbimport.Csv2db;
+import ch.interlis.dbimport.Import2db;
+import ch.interlis.ili2c.config.Configuration;
+import ch.interlis.ili2c.config.FileEntry;
+import ch.interlis.ili2c.config.FileEntryKind;
+import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.csv.CsvReader;
+import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
+import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.StartBasketEvent;
+import ch.interlis.iox_j.StartTransferEvent;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Csv2dbTest {
@@ -26,20 +39,33 @@ public class Csv2dbTest {
 	private static final String ROW="row";
 	private Map<String, List<String>> rows=null;
 	
-	// import test
-	// - header present
-	// - model set
-	// - model path set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-present
+	// - set: model
+	// - set: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_Ok() throws Exception
+	public void import_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheadernopk(id text,abbreviation text,state text) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
@@ -48,7 +74,8 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				String id=null;
@@ -79,8 +106,6 @@ public class Csv2dbTest {
 						break;
 				  	}
 				}
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM "+config.getValue(Config.DBSCHEMA)+".csvimportwithheadernopk WHERE state='Deutschland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -89,12 +114,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header not set
-	// - model set
-	// - model path set
-	// - db schema not set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - NOT SET: header-present
+	// - set: model
+	// - set: model-path
+	// - NOT SET: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_SchemaNotSet_HeaderNotSet_Ok() throws Exception
 	{
@@ -105,6 +133,14 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop table
+	        	preStmt.execute("DROP TABLE IF EXISTS csvimportnopkcolumn CASCADE");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvimportnopkcolumn(attr1 text,attr2 text,attr3 text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
@@ -112,7 +148,8 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimportnopkcolumn");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				String attr1=null;
@@ -147,8 +184,6 @@ public class Csv2dbTest {
 					fail();
 				}
 				dataFound=false;
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM public.csvimportnopkcolumn WHERE attr3='Holland'");
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -160,12 +195,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header not set
-	// - model not set
-	// - model path not set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - NOT SET: header-present
+	// - NOT SET: model
+	// - NOT SET: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_HeaderAndPathNotSet_ModelNotSet_Ok() throws Exception
 	{
@@ -178,6 +216,16 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportnopk(attr1 text,attr2 text,attr3 text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				config.setValue(Config.HEADER, Config.HEADERABSENT);
@@ -185,7 +233,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				rows = new HashMap<String, List<String>>();
@@ -217,8 +266,6 @@ public class Csv2dbTest {
 					fail();
 				}
 				attrValuesFound=false;
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM csvtodbschema.csvimportnopk WHERE attr3='Holland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -227,12 +274,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header present
-	// - model set
-	// - model path set
-	// - db schema not set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-present
+	// - set: model
+	// - set: model-path
+	// - NOT SET: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_SchemaNotSet_Ok() throws Exception
 	{
@@ -246,6 +296,14 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop table
+	        	preStmt.execute("DROP TABLE IF EXISTS csvimportwithheader CASCADE");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 				config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -253,7 +311,8 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: not set "csvtodbschema"
 				config.setValue(Config.TABLE, "csvimportwithheader");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				rows = new HashMap<String, List<String>>();
@@ -285,8 +344,6 @@ public class Csv2dbTest {
 					fail();
 				}
 				attrValuesFound=false;
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM csvimportwithheader WHERE state='Deutschland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -295,12 +352,15 @@ public class Csv2dbTest {
 		}
 	}
 
-	// import test
-	// - header present
-	// - model set
-	// - model path not set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-present
+	// - set: model
+	// - NOT SET: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_PathNotSet_Ok() throws Exception
 	{
@@ -311,6 +371,16 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheadernopk(id text,abbreviation text,state text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 				config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -318,7 +388,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set.
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				String id=null;
@@ -349,8 +420,6 @@ public class Csv2dbTest {
 						break;
 				  	}
 				}
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM "+config.getValue(Config.DBSCHEMA)+".csvimportwithheadernopk WHERE state='Deutschland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -359,12 +428,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header present
-	// - model not set
-	// - model not path set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-present
+	// - NOT SET: model
+	// - NOT SET: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_ModelAndPathNotSet_Ok() throws Exception
 	{
@@ -375,6 +447,16 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheadernopk(id text,abbreviation text,state text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 				config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -382,7 +464,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				String id=null;
@@ -413,8 +496,6 @@ public class Csv2dbTest {
 						break;
 				  	}
 				}
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM "+config.getValue(Config.DBSCHEMA)+".csvimportwithheadernopk WHERE state='Deutschland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -423,12 +504,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header absent
-	// - model not set
-	// - model not path set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-absent
+	// - NOT SET: model
+	// - NOT SET: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_ModelAndPathNotSet_HeaderSetAbsent_Ok() throws Exception
 	{
@@ -442,6 +526,16 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema 
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportnopk(attr1 text,attr2 text,attr3 text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				config.setValue(Config.HEADER, Config.HEADERABSENT);
@@ -449,7 +543,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				rows = new HashMap<String, List<String>>();
@@ -481,8 +576,6 @@ public class Csv2dbTest {
 					fail();
 				}
 				attrValuesFound=false;
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM csvtodbschema.csvimportnopk WHERE attr3='Holland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -491,12 +584,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header not set
-	// - model not set
-	// - model not path set
-	// - db schema set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - NOT SET: header-present
+	// - NOT SET: model
+	// - NOT SET: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_ModelAndPathNotSet_HeaderNotSet_Ok() throws Exception
 	{
@@ -510,6 +606,16 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportnopk(attr1 text,attr2 text,attr3 text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				// HEADER: Config.HEADERABSENT not set
@@ -517,7 +623,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				rows = new HashMap<String, List<String>>();
@@ -543,8 +650,6 @@ public class Csv2dbTest {
 					assertTrue(rowValue.get(1).equals("AU"));
 					assertTrue(rowValue.get(2).equals("Holland"));
 				}
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM csvtodbschema.csvimportnopk WHERE attr3='Holland'");
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -553,12 +658,15 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// import test
-	// - header not set
-	// - model not set
-	// - model not path set
-	// - db schema not set
-	// - db table set
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-present
+	// - NOT SET: model
+	// - NOT SET: model-path
+	// - NOT SET: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void import_ModelAndPathNotSet_HeaderNotSet_SchemaNotSet_Ok() throws Exception
 	{
@@ -572,6 +680,14 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop table
+	        	preStmt.execute("DROP TABLE IF EXISTS csvimportnopkcolumn CASCADE");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvimportnopkcolumn(attr1 text,attr2 text,attr3 text) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent2.csv");
 				// HEADER: Config.HEADERABSENT not set
@@ -579,7 +695,8 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimportnopkcolumn");
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
 				rows = new HashMap<String, List<String>>();
@@ -611,8 +728,6 @@ public class Csv2dbTest {
 					fail();
 				}
 				attrValuesFound=false;
-				// delete after tested
-				int result=stmt.executeUpdate("DELETE FROM public.csvimportnopkcolumn WHERE attr3='Europa'");
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -623,13 +738,139 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// attributes of db schema not found in csv file and ili model
-	// import test
-	// - header present
-	// - model set
-	// - model path set
-	// - db schema set
-	// - db table set
+	// Es wird eine Csv-Datei gelesen, welche die folgenden Attribute beinhaltet:
+	// - idname
+	// - textname
+	// - doublename
+	// - the_geom
+	// --
+	// Nun werden die Attribute-Werte, nach den Attribute-Namen welche im Model definiert sind,
+	// aus der Csv-Datei herausgelesen:
+	// - idname
+	// - textname
+	// - doublename
+	// - the_geom
+	// --
+	// Von diesen Attributen werden nun Einschraenkungen durch das Datenbank-Schema gemacht
+	// und die folgenden Daten in die Datenbank-Tabelle importiert:
+	// - textname
+	// - the_geom
+	// --
+	// Die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-->present
+	// - set: model
+	// - set: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS.
+	@Test
+	public void import_LimitedSelection_Ok() throws Exception{
+		{
+			// reader test
+			CsvReader reader=null;
+			TransferDescription tdM=null;
+			Configuration ili2cConfig=new Configuration();
+			FileEntry fileEntryConditionClass=new FileEntry("src/test/data/Csv2DB/CsvModelAttributesLimited.ili", FileEntryKind.ILIMODELFILE);
+			ili2cConfig.addFileEntry(fileEntryConditionClass);
+			tdM=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+			assertNotNull(tdM);
+			try {
+				reader=new CsvReader(new File("src/test/data/Csv2DB/AttributesLimited.csv"));
+				reader.setHeader(Config.HEADERPRESENT);
+				reader.setModel(tdM);
+				assertTrue(reader.read() instanceof StartTransferEvent);
+				assertTrue(reader.read() instanceof StartBasketEvent);
+				IoxEvent event=reader.read();
+				if(event instanceof ObjectEvent){
+		        	IomObject iomObj=((ObjectEvent)event).getIomObject();
+		        	assertTrue(iomObj.getattrcount()==4);
+		        	assertTrue(iomObj.getattrvalue("doublename").equals("54321"));
+		        	assertTrue(iomObj.getattrvalue("idname").equals("1"));
+		        	assertTrue(iomObj.getattrvalue("textname").equals("text1"));
+		        	assertTrue(iomObj.getattrvalue("the_geom").equals("COORD {C1 -0.5332351148239034, C2 0.7382312503416462}"));
+				}
+				assertTrue(reader.read() instanceof EndBasketEvent);
+				assertTrue(reader.read() instanceof EndTransferEvent);
+			}finally {
+				if(reader!=null) {
+			    	reader.close();
+					reader=null;
+		    	}
+			}
+		}
+		{
+			// import test
+			Settings config=new Settings();
+			Connection jdbcConnection=null;
+			try{
+		        Class driverClass = Class.forName("org.postgresql.Driver");
+		        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+		        {
+		        	Statement preStmt=jdbcConnection.createStatement();
+		        	// drop schema
+		        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+		        	// create schema
+		        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+		        	// create table in schema
+		        	preStmt.execute("CREATE TABLE csvtodbschema.csvimporttablelimited(textname text,the_geom text)WITH (OIDS=FALSE)");
+		        	preStmt.close();
+		        }
+		        {
+					// shp
+					File data=new File("src/test/data/Csv2DB/AttributesLimited.csv");
+					config.setValue(Config.HEADER, Config.HEADERPRESENT);
+					config.setValue(Config.SETTING_MODELNAMES, "CsvModelAttributesLimited");
+					config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
+					config.setValue(Config.DBSCHEMA, "csvtodbschema");
+					config.setValue(Config.TABLE, "csvimporttablelimited");
+					Import2db csv2db=new Csv2db();
+					csv2db.importData(data, jdbcConnection, config);
+				}
+				{
+					rows = new HashMap<String, List<String>>();
+					stmt=jdbcConnection.createStatement();
+					ResultSet rs = stmt.executeQuery("SELECT * FROM csvtodbschema.csvimporttablelimited");
+					ResultSetMetaData rsmd = rs.getMetaData();
+					int rowCount=rs.getRow();
+					while(rs.next()){
+						List<String> row = new ArrayList<String>();
+						String textValue = rs.getString(1);
+						String theGeomValue= rs.getString(2);
+						row.add(textValue);
+						row.add(theGeomValue);
+						rows.put(ROW+String.valueOf(rowCount), row);
+						rowCount+=1;
+					}
+					for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
+					  	List<String> rowValue = entry.getValue();
+					  	if(rowValue.get(0).equals("text1")) {
+							assertTrue(rowValue.get(1).equals("COORD {C1 -0.5332351148239034, C2 0.7382312503416462}"));
+							break;
+					  	}
+					}
+				}
+			}finally{
+				if(jdbcConnection!=null){
+					jdbcConnection.close();
+				}
+			}
+		}
+	}
+	
+	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// wenn die Spalten-Namen (Attribute-Namen) der gesuchten Datenbank-Tabelle,
+	// welche sich innerhalb des gesuchten Datenbank-Schemas befindet,
+	// weder in den gesetzten Modellen, noch in der Csv-Datei gefunden werden koennen.
+	// --
+	// Die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: header-->present
+	// - set: model
+	// - set: model-path
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: FEHLER: data base attribute names ... not found.
 	@Test
 	public void import_AttrNamesOfDbNotFound_Fail() throws Exception
 	{
@@ -639,6 +880,16 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader3.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -646,7 +897,8 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
 			assertTrue(e.getMessage().contains("data base attribute names: [id, abbreviation, state] not found"));
@@ -673,6 +925,16 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, "12345");
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -680,7 +942,8 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
 			assertTrue(e.getMessage().contains("FATAL: Passwort-Authentifizierung"));
@@ -707,14 +970,21 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-			// csv
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	preStmt.close();
+	        }
+	        // csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 			// HEADER: HEADERPRESENT, HEADERABSENT not set
 			// SETTING_MODELNAMES: "model2" not set
 			// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 			fail();
 		}catch(IoxException e) {
 			assertTrue(e.getMessage().contains("expected tablename"));
@@ -740,6 +1010,14 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	preStmt.close();
+	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -747,7 +1025,8 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			// TABLE: "csvimportwithheader" not set
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
 			assertTrue(e.getMessage().contains("expected tablename"));
@@ -774,6 +1053,16 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader3.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -781,7 +1070,8 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
 			assertTrue(e.getMessage().contains("attributes of headerrecord: [name, lastname, planet] not found in iliModel: model2"));
@@ -809,14 +1099,25 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-			// csv
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        // csv
 			File data=new File("src/test/data/NotExist/AttributesHeader.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
 			config.setValue(Config.SETTING_MODELNAMES, "model2");
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/NotExist");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
 		}finally{
@@ -841,6 +1142,16 @@ public class Csv2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
 			config.setValue(Config.HEADER, Config.HEADERPRESENT);
@@ -848,7 +1159,8 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Csv2db.importData(data, jdbcConnection, config);
+			Import2db csv2db=new Csv2db();
+			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 			}catch(IoxException e) {
 				assertTrue(e.getMessage().contains("models [modelNotFound] not found"));
@@ -875,6 +1187,14 @@ public class Csv2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop table
+	        	preStmt.execute("DROP TABLE IF EXISTS csvimport CASCADE");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvimport(attr1 character varying NOT NULL,attr2 character varying,attr3 character varying,CONSTRAINT csvimport_pkey PRIMARY KEY (attr1))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
@@ -882,12 +1202,13 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimport");
-				Csv2db.importData(data, jdbcConnection, config);
-				Csv2db.importData(data, jdbcConnection, config);
+				Import2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+				csv2db.importData(data, jdbcConnection, config);
 				fail();
 			}
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("import of model2.Topic12.Class1 oid o2 {attr2 AU, attr1 25, attr3 Holland} to csvtodbschema.csvimport failed"));
+			assertTrue(e.getMessage().contains("import of model2.Topic12.Class1 oid o2 {attr2 AU, attr1 25, attr3 Holland} to csvimport failed"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
