@@ -1,0 +1,18 @@
+INTERLIS 2.3;
+
+MODEL ShapeModelAttrs2 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -10 .. 20 [INTERLIS.m],
+				  -10 .. 20 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic5 =
+		CLASS Attributes3 =
+			id2 : 0 .. 150;
+			name2 : TEXT*100;
+			lastname2 : 0 .. 60000;
+		END Attributes3;
+	END Topic5;
+	
+END ShapeModelAttrs2.

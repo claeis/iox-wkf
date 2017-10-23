@@ -8,10 +8,10 @@ MODEL KantonModel (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 				  ROTATION 2 -> 1;
 
 	TOPIC Topic1 =
-		CLASS Polygon =
+		CLASS Polygon2 =
 			id : 0 .. 150;
 			the_geom : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
-		END Polygon;
+		END Polygon2;
 	END Topic1;
 	
 END KantonModel.
