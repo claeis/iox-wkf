@@ -546,10 +546,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	                transaction.close();
 	            }
 	            // shape file store is writable
-	            dataStore.dispose();
+	            
 	        } else {
 	        	// shape file store not writable
-	            dataStore.dispose();
+	            
 	        }
 	    } catch (IOException e) {
 	        throw new IoxException("no data written to shapefile",e);
@@ -558,10 +558,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 
 	@Override
     public void close() throws IoxException{
-    	if(dataStore!=null){
-			dataStore.dispose();
 			dataStore=null;
-    	}
     	if(mapping!=null){
     		mapping=null;
     	}

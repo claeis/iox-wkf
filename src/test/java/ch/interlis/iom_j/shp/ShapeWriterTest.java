@@ -71,6 +71,116 @@ public class ShapeWriterTest {
 		}
 	}
 	
+	// Der Benutzer gibt 3 models an.
+	// Es wird getestet ob der Name des Models (Name des Models: StadtModel.ili) stimmt.
+	// Es wird getestet ob der Name des Topics (Topic: Topic1) stimmt.
+	// Es wird getestet ob der Name der Klasse (Class: Polygon) stimmt.
+	// Das Model welches als letztes angegeben wird, wird zuerst auf die Zielklasse kontrolliert.
+	@Test
+    public void setMultipleModels_ClassFoundInLastInputModel_Ok() throws IoxException, Ili2cFailure, IOException{
+		Iom_jObject objSurfaceSuccess=new Iom_jObject("BundesModel.Topic1.Polygon", "o1");
+		objSurfaceSuccess.setattrvalue("id", "10");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("the_geom", "MULTISURFACE");
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+		// polyline
+		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment=segments.addattrobj("segment", "COORD");
+		startSegment.setattrvalue("C1", "-0.22857142857142854");
+		startSegment.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment=segments.addattrobj("segment", "COORD");
+		endSegment.setattrvalue("C1", "-0.15857142857142854");
+		endSegment.setattrvalue("C2", "0.5688311688311687");
+		// polyline 2
+		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+		startSegment2.setattrvalue("C1", "-0.15857142857142854");
+		startSegment2.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+		endSegment2.setattrvalue("C1", "-0.15857142857142854");
+		endSegment2.setattrvalue("C2", "0.5888311688311687");
+		// polyline 3
+		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+		startSegment3.setattrvalue("C1", "-0.15857142857142854");
+		startSegment3.setattrvalue("C2", "0.5888311688311687");
+		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+		endSegment3.setattrvalue("C1", "-0.22857142857142854");
+		endSegment3.setattrvalue("C2", "0.5688311688311687");
+		ShapeWriter writer = null;
+		// ili-datei lesen
+		ShapeReader reader=null;
+		TransferDescription tdM=null;
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntryConditionClass=new FileEntry(TEST_OUT+"/Polygon/StadtModel.ili", FileEntryKind.ILIMODELFILE); // first input model
+		ili2cConfig.addFileEntry(fileEntryConditionClass);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Polygon/KantonModel.ili", FileEntryKind.ILIMODELFILE); // second input model
+		ili2cConfig.addFileEntry(fileEntry);
+		FileEntry fileEntry2=new FileEntry(TEST_OUT+"/Polygon/BundesModel.ili", FileEntryKind.ILIMODELFILE); // third input model
+		ili2cConfig.addFileEntry(fileEntry2);
+		tdM=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		assertNotNull(tdM);
+		try {
+			writer = new ShapeWriter(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			writer.setModel(tdM);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("BundesModel.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		try {
+			reader=new ShapeReader(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			assertTrue(reader.read() instanceof StartTransferEvent);
+			assertTrue(reader.read() instanceof StartBasketEvent);
+			IoxEvent event=reader.read();
+			reader.setModel(tdM);
+			assertTrue(event instanceof ObjectEvent);
+			IomObject iomObj=((ObjectEvent)event).getIomObject();
+			assertTrue(iomObj.getattrvaluecount("id")==1);
+			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
+			
+			assertTrue(multisurface.getattrvaluecount("surface")==1);
+			
+			IomObject surface=multisurface.getattrobj("surface", 0);
+			IomObject boundary=surface.getattrobj("boundary", 0);
+			
+			// polyline 1
+			IomObject polylineObj=boundary.getattrobj("polyline", 0);
+			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject segment=sequence.getattrobj("segment", 0);
+			assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));
+			assertTrue(segment.getattrvalue("C2").equals("0.5688311688311687"));
+			IomObject segment2=sequence.getattrobj("segment", 1);
+			assertTrue(segment2.getattrvalue("C1").equals("-0.15857142857142853"));
+			assertTrue(segment2.getattrvalue("C2").equals("0.5888311688311687"));
+			
+			assertTrue(reader.read() instanceof EndBasketEvent);
+			assertTrue(reader.read() instanceof EndTransferEvent);
+		}finally {
+			if(reader!=null) {
+	    		try {
+	    			reader.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		reader=null;
+	    	}
+		}
+	}
+	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn eine Coord in einen Point konvertiert wird.
 	@Test
 	public void point_Ok() throws IoxException, IOException{
@@ -129,7 +239,7 @@ public class ShapeWriterTest {
 		
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn 3 Attribute in Fields konvertiert werden
 	@Test
-	public void pointAttribute_Ok() throws IoxException, IOException{
+	public void pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Point2", "o1");
 		inputObj.setattrvalue("id1", "1");
 		inputObj.setattrvalue("Text", "text1");
@@ -140,7 +250,7 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"PointAttributes/testPointAttrs.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"PointAttributes/Point2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -157,10 +267,15 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"PointAttributes/testPointAttrs.shp"));
-			reader.setModel(td);
+			reader=new ShapeReader(new File(TEST_OUT,"PointAttributes/Point2.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
@@ -248,7 +363,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein mehrere Coords in einen MultiPoint konvertiert wird.
 	@Test
-	public void multiPoint_Ok() throws IoxException, IOException{
+	public void multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint", "o1");
 		@SuppressWarnings("deprecation")
 		IomObject multiCoordValue=objSuccessFormat.addattrobj("attrMPoint", "MULTICOORD");
@@ -286,11 +401,16 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_OUT,"MultiPoint/MultiPoint.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
-			reader.setModel(td);
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
@@ -322,10 +442,10 @@ public class ShapeWriterTest {
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein mehrere Coords in einen MultiPoint konvertiert wird.
 	// Zusaetzlich werden Attribute erstellt.
 	@Test
-	public void multiPointAttribute_Ok() throws IoxException, IOException{
+	public void multiPointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint2", "o1");
-		objSuccessFormat.setattrvalue("Text", "text1");
-		IomObject multiCoordValue=objSuccessFormat.addattrobj("MPoint2", "MULTICOORD");
+		objSuccessFormat.setattrvalue("textattr2", "text1");
+		IomObject multiCoordValue=objSuccessFormat.addattrobj("multipoint2", "MULTICOORD");
 		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue1.setattrvalue("C1", "-0.22857142857142854");
 		coordValue1.setattrvalue("C2", "0.5688311688311687");
@@ -340,7 +460,7 @@ public class ShapeWriterTest {
 		
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPointAttributes/MultiPointAttributes.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"MultiPointAttributes/MultiPoint2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -357,16 +477,22 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPointAttributes/MultiPointAttributes.shp"));
+			reader=new ShapeReader(new File(TEST_OUT,"MultiPointAttributes/MultiPoint2.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
-			reader.setModel(td);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			assertTrue(iomObj.getattrvalue("Text").equals("text1"));
+			assertTrue(iomObj.getattrvalue("textattr2").equals("text1"));
 			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
 			IomObject coordObj=attrObj.getattrobj("coord", 0);
 			assertTrue(coordObj.getattrvalue("C1").equals("-0.22857142857142854"));
@@ -379,11 +505,13 @@ public class ShapeWriterTest {
 			assertTrue(coordObj3.getattrvalue("C2").equals("0.32727272727272716"));
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
+		}catch(Exception e) {
+			e.printStackTrace();
 		}finally {
 			if(reader!=null) {
 	    		try {
 	    			reader.close();
-				} catch (IoxException e) {
+				} catch (Exception e) {
 					throw new IoxException(e);
 				}
 	    		reader=null;
@@ -393,7 +521,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Polygon in einen LineString konvertiert wird.
 	@Test
-	public void lineString_Ok() throws IoxException, IOException{
+	public void lineString_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.LineString", "o1");
 		@SuppressWarnings("deprecation")
 		IomObject polylineValue=objStraightsSuccess.addattrobj("attrLineString", "POLYLINE");
@@ -426,12 +554,17 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_OUT,"LineString/LineString.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
-			reader.setModel(td);
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
@@ -462,7 +595,7 @@ public class ShapeWriterTest {
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Polygon in einen LineString konvertiert wird.
 	// Zusaetzlich werden Attribute erstellt.
 	@Test
-	public void lineStringAttributes_Ok() throws IoxException, IOException{
+	public void lineStringAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.LineString2", "o1");
 		objStraightsSuccess.setattrvalue("attr1LS", "text1");
 		objStraightsSuccess.setattrvalue("attr2LS", "5");
@@ -476,7 +609,7 @@ public class ShapeWriterTest {
 		coordEnd.setattrvalue("C2", "0.5658311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"LineStringAttributes/LineStringAttributes.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"LineStringAttributes/LineString2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -493,12 +626,17 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"LineStringAttributes/LineStringAttributes.shp"));
+			reader=new ShapeReader(new File(TEST_OUT,"LineStringAttributes/LineString2.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
-			reader.setModel(td);
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
@@ -530,7 +668,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn mehrere Polylines in einen MultiLineString konvertiert wird.
 	@Test
-	public void multiLineString_Ok() throws IoxException, IOException{
+	public void multiLineString_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.MultiLineString", "o1");
 		IomObject multiPolylineValue=objStraightsSuccess.addattrobj("attrMLineString", "MULTIPOLYLINE");
 		
@@ -571,11 +709,16 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_OUT,"MultiLineString/MultiLineString.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
-			reader.setModel(td);
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			
 			IoxEvent event=reader.read();
@@ -622,7 +765,7 @@ public class ShapeWriterTest {
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn mehrere Polylines in einen MultiLineString konvertiert wird.
 	// Zusaetzlich werden Attribute erstellt.
 	@Test
-	public void multiLineStringAttributes_Ok() throws IoxException, IOException{
+	public void multiLineStringAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.MultiLineString2", "o1");
 		IomObject multiPolylineValue=objStraightsSuccess.addattrobj("attrMLineString2", "MULTIPOLYLINE");
 		objStraightsSuccess.setattrvalue("attr1MLS", "text2");
@@ -644,10 +787,9 @@ public class ShapeWriterTest {
 		coordStart2.setattrvalue("C2", "0.5658311688311687");
 		coordEnd2.setattrvalue("C1", "-0.22755142857142853");
 		coordEnd2.setattrvalue("C2", "0.5558351688311687");
-		
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineStringAttributes.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineString2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -664,11 +806,16 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineStringAttributes.shp"));
+			reader=new ShapeReader(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineString2.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
-			reader.setModel(td);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			
 			IoxEvent event=reader.read();
@@ -716,7 +863,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
 	@Test
-	public void polygon_Ok() throws IoxException, IOException{
+	public void polygon_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon", "o1");
 		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrPolygon", "MULTISURFACE");
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
@@ -767,13 +914,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_OUT,"Polygon/Polygon.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			reader.setModel(td);
+			reader.setModel(td2);
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
@@ -810,7 +962,7 @@ public class ShapeWriterTest {
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
 	// Zusaetzlich werden Attribute erstellt.
 	@Test
-	public void polygonAttributes_Ok() throws IoxException, IOException{
+	public void polygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon2", "o1");
 		objSurfaceSuccess.setattrvalue("attr1PG","text2");
 		objSurfaceSuccess.setattrvalue("attr2PG","6");
@@ -846,7 +998,7 @@ public class ShapeWriterTest {
 		endSegment3.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"PolygonAttributes/PolygonAttributes.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"PolygonAttributes/Polygon2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -863,13 +1015,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"PolygonAttributes/PolygonAttributes.shp"));
+			reader=new ShapeReader(new File(TEST_OUT,"PolygonAttributes/Polygon2.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			reader.setModel(td);
+			reader.setModel(td2);
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			assertTrue(iomObj.getattrvalue("attr1PG").equals("text2"));
@@ -907,7 +1064,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
 	@Test
-	public void multiPolygon_Ok() throws IoxException, IOException{
+	public void multiPolygon_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.MultiPolygon", "o1");
 		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrMultiPolygon", "MULTISURFACE");
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
@@ -992,13 +1149,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_OUT,"MultiPolygon/MultiPolygon.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			reader.setModel(td);
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
@@ -1033,7 +1195,7 @@ public class ShapeWriterTest {
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
 	// Zusaetzlich werden Attribute erstellt.
 	@Test
-	public void multiPolygonAttributes_Ok() throws IoxException, IOException{
+	public void multiPolygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.MultiPolygon2", "o1");
 		objSurfaceSuccess.setattrvalue("attr1MPG","text3");
 		objSurfaceSuccess.setattrvalue("attr2MPG","8");
@@ -1103,7 +1265,7 @@ public class ShapeWriterTest {
 		}
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygonAttributes.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygon2.shp"));
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1120,13 +1282,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygonAttributes.shp"));
+			reader=new ShapeReader(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygon2.shp"));
+			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			reader.setModel(td);
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			assertTrue(iomObj.getattrvalue("attr1MPG").equals("text3"));
