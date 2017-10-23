@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -25,7 +23,7 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import ch.interlis.ili2c.metamodel.DataModel;
-import ch.interlis.ili2c.metamodel.Model;
+import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.ili2c.metamodel.Viewable;
@@ -52,9 +50,10 @@ public class ShapeReader implements IoxReader{
 	private SimpleFeatureIterator featureCollectionIter=null;
 	private FileDataStore dataStore=null;
 	private SimpleFeatureSource featuresSource=null;
+	private List<String> modelAttributes=new ArrayList<String>();
 	
 	// iox
-	private TransferDescription td;
+	private static TransferDescription td;
 	private IoxFactoryCollection factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
 	private java.io.File inputFile=null;
 	private int nextId=1;
@@ -87,7 +86,11 @@ public class ShapeReader implements IoxReader{
 			throw new IoxException("expected shape file");
 		}
 		featuresSource = dataStore.getFeatureSource();
-        featureCollectionIter=featuresSource.getFeatures().features();
+		try {
+			featureCollectionIter=featuresSource.getFeatures().features();
+		}catch(Exception e) {
+			throw new IoxException("shapefile: "+shapeFile.getAbsolutePath()+" not found",e);
+		}
 	}
 	
 	/**
@@ -95,7 +98,7 @@ public class ShapeReader implements IoxReader{
 	 * @param td, transfer description.
 	 */
 	public void setModel(TransferDescription td){
-		this.td=td;
+		ShapeReader.td=td;
 	}
 
 	/**
@@ -159,12 +162,25 @@ public class ShapeReader implements IoxReader{
 			// class name
 			Viewable viewable=findViewable(featureTypeName);
 			if(viewable==null){
-				topicIliQName=getNameOfDataFile()+".Topic";
-				classIliQName=topicIliQName+".Class"+getNextId();
+				if(td!=null) {
+					throw new IoxException("class: '"+featureTypeName.toString()+"' not found in model: '"+td.getLastModel().getName()+"'.");
+				}else {
+					topicIliQName=getNameOfDataFile()+".Topic";
+					classIliQName=topicIliQName+".Class"+getNextId();
+				}
 			}else{
 				// get model data
 				topicIliQName=viewable.getContainer().getScopedName();
 				classIliQName=viewable.getScopedName();
+				Iterator modelAttrIter=viewable.getAttributes();
+				while(modelAttrIter.hasNext()) {
+					Object obj=modelAttrIter.next();
+					if(obj instanceof LocalAttribute) {
+						LocalAttribute localAttr=(LocalAttribute)obj;
+						String attr=localAttr.getName();
+						modelAttributes.add(attr);
+					}
+				}
 			}
 			if(topicIliQName!=null) {
 				String bid="b"+getNextId();
@@ -177,69 +193,81 @@ public class ShapeReader implements IoxReader{
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();	
 				iomObj=createIomObject(classIliQName, null);
-				
+				boolean foundAttrInModel=false;
 	        	for(AttributeDescriptor attrDescripter : shapeAttributeDescriptors) {
 	        		IomObject subIomObj=null;
 	        		// attribute name
 	        		String attrName=attrDescripter.getLocalName();
+	        		// by td set, check if defined model contains attribute name
+        			if(td!=null && modelAttributes!=null) {
+        				if(modelAttributes.contains(attrName)) {
+        					foundAttrInModel=true;
+        				}else {
+        					attrName=null;
+        				}
+        			}
 	        		// attribute type
 	        		AttributeType typeOfAttribute=attrDescripter.getType();
-	        		
-	        		if(typeOfAttribute instanceof GeometryTypeImpl) {
-	        			GeometryTypeImpl geoTypeImpl=(GeometryTypeImpl)typeOfAttribute;
-	        			attrType=geoTypeImpl.getName().toString();
-		        		// attribute value of feature object
-		        		Object attrValue=shapeObj.getAttribute(attrName);
-	    				
-		        		if(attrValue instanceof MultiLineString) {
-	    					// multiLineString
-	        				MultiLineString multiLineString=(MultiLineString)attrValue;
-	        				subIomObj=WkfJts2iox.JTS2multipolyline(multiLineString);
-	        				iomObj.addattrobj(attrName, subIomObj);	            				
-	    				
-	    				}else if(attrValue instanceof MultiPoint) {
-	    					// multiPoint
-	        				MultiPoint multiPointObj=(MultiPoint)attrValue;
-	        				subIomObj=WkfJts2iox.JTS2multicoord(multiPointObj);
-	        				iomObj.addattrobj(attrName, subIomObj);
-	        			
-	    				}else if(attrValue instanceof MultiPolygon) {
-	        				// multiPolygon
-	        				MultiPolygon multiPolygonObj=(MultiPolygon)attrValue;
-							subIomObj=WkfJts2iox.JTS2multisurface(multiPolygonObj);
-	        				iomObj.addattrobj(attrName, subIomObj);
-	
-	        			}else if(attrValue instanceof LineString) {
-	        				// lineString
-	        				LineString lineStringObj=(LineString)attrValue;
-							subIomObj=Jts2iox.JTS2polyline(lineStringObj);
-	        				iomObj.addattrobj(attrName, subIomObj);
-	        				
-	        			}else if(attrValue instanceof Point) {
-	        				// point
-	        				Point pointObj=(Point)attrValue;
-	        				Coordinate coord=pointObj.getCoordinate();
-							subIomObj=Jts2iox.JTS2coord(coord);
-							iomObj.addattrobj(attrName, subIomObj);
-							
-	        			}else if(attrValue instanceof Polygon) {
-	        				// polygon
-	        				Polygon polygonObj=(Polygon)attrValue;
-							subIomObj=Jts2iox.JTS2surface(polygonObj);
-	        				iomObj.addattrobj(attrName, subIomObj);
-	        			}
-		        		
-	        		}else if(typeOfAttribute instanceof AttributeTypeImpl) {
-	        			AttributeTypeImpl attrTypeImpl=(AttributeTypeImpl)typeOfAttribute;
-	        			attrType=attrTypeImpl.getBinding().getSimpleName();
-	        			// attribute value
-		        		Object attrValue=shapeObj.getAttribute(attrName);
-		        		if(attrValue!=null) {
-		        			iomObj.setattrvalue(attrName, attrValue.toString());
+	        		if(attrName!=null) {
+		        		if(typeOfAttribute instanceof GeometryTypeImpl) {
+		        			GeometryTypeImpl geoTypeImpl=(GeometryTypeImpl)typeOfAttribute;
+		        			attrType=geoTypeImpl.getName().toString();
+			        		// attribute value of feature object
+			        		Object attrValue=shapeObj.getAttribute(attrName);
+		    				
+			        		if(attrValue instanceof MultiLineString) {
+		    					// multiLineString
+		        				MultiLineString multiLineString=(MultiLineString)attrValue;
+		        				subIomObj=WkfJts2iox.JTS2multipolyline(multiLineString);
+		        				iomObj.addattrobj(attrName, subIomObj);	            				
+		    				
+		    				}else if(attrValue instanceof MultiPoint) {
+		    					// multiPoint
+		        				MultiPoint multiPointObj=(MultiPoint)attrValue;
+		        				subIomObj=WkfJts2iox.JTS2multicoord(multiPointObj);
+		        				iomObj.addattrobj(attrName, subIomObj);
+		        			
+		    				}else if(attrValue instanceof MultiPolygon) {
+		        				// multiPolygon
+		        				MultiPolygon multiPolygonObj=(MultiPolygon)attrValue;
+								subIomObj=WkfJts2iox.JTS2multisurface(multiPolygonObj);
+		        				iomObj.addattrobj(attrName, subIomObj);
+		
+		        			}else if(attrValue instanceof LineString) {
+		        				// lineString
+		        				LineString lineStringObj=(LineString)attrValue;
+								subIomObj=Jts2iox.JTS2polyline(lineStringObj);
+		        				iomObj.addattrobj(attrName, subIomObj);
+		        				
+		        			}else if(attrValue instanceof Point) {
+		        				// point
+		        				Point pointObj=(Point)attrValue;
+		        				Coordinate coord=pointObj.getCoordinate();
+								subIomObj=Jts2iox.JTS2coord(coord);
+								iomObj.addattrobj(attrName, subIomObj);
+								
+		        			}else if(attrValue instanceof Polygon) {
+		        				// polygon
+		        				Polygon polygonObj=(Polygon)attrValue;
+								subIomObj=Jts2iox.JTS2surface(polygonObj);
+		        				iomObj.addattrobj(attrName, subIomObj);
+		        			}
+			        		
+		        		}else if(typeOfAttribute instanceof AttributeTypeImpl) {
+		        			AttributeTypeImpl attrTypeImpl=(AttributeTypeImpl)typeOfAttribute;
+		        			attrType=attrTypeImpl.getBinding().getSimpleName();
+		        			// attribute value
+			        		Object attrValue=shapeObj.getAttribute(attrName);
+			        		if(attrValue!=null) {
+			        			iomObj.setattrvalue(attrName, attrValue.toString());
+			        		}
 		        		}
 	        		}
 	        	}
 	        	// return each simple feature object.
+	        	if(iomObj.getattrcount()==0 && td!=null && !foundAttrInModel) {
+	        		throw new IoxException("model attribute names: '"+modelAttributes.toString()+"' not found in "+inputFile.getAbsolutePath());
+	        	}
 	        	return new ch.interlis.iox_j.ObjectEvent(iomObj);
 	        }
 			featureCollectionIter.close();
@@ -257,14 +285,21 @@ public class ShapeReader implements IoxReader{
 		return null;
 	}
 
-	private Viewable findViewable(String featureTypeName) {
+	private Viewable findViewable(String featureTypeName) throws IoxException {
+		List<Viewable> foundIliClasses=null;
 		if(td!=null) {
+			foundIliClasses=new ArrayList<Viewable>();
 			List<HashMap<String,Viewable>> allModels=setupNameMapping();
 			for(HashMap<String,Viewable> map : allModels) {
 				Viewable ret= map.get(featureTypeName);
 				if(ret!=null) {
-					return ret;
+					foundIliClasses.add(ret);
 				}
+			}
+			if(foundIliClasses.size()==1) {
+				return foundIliClasses.get(0);
+			}else if(foundIliClasses.size()>1) {
+				throw new IoxException("several possible classes were found: "+foundIliClasses.toString());
 			}
 		}
 		return null;
@@ -341,10 +376,6 @@ public class ShapeReader implements IoxReader{
 		if(featuresSource!=null){
 			featuresSource=null;
 		}
-		if(dataStore!=null){
-			dataStore.dispose();
-			dataStore=null;
-		}
 		if(featureCollectionIter!=null) {
 			featureCollectionIter=null;
 		}
@@ -355,6 +386,12 @@ public class ShapeReader implements IoxReader{
 		if(factory!=null) {
 			factory=null;
 		}
+		if(modelAttributes!=null) {
+			modelAttributes.clear();
+			modelAttributes=null;
+		}
+		//dataStore.dispose();
+		dataStore=null;
 	}
 	
 	/** get set factory.
