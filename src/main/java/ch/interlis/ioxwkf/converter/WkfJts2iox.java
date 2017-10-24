@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.converter;
+package ch.interlis.ioxwkf.converter;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;

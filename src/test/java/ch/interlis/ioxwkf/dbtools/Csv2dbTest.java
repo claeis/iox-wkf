@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.dbimport;
+package ch.interlis.ioxwkf.dbtools;
 
 import static org.junit.Assert.*;
 import java.io.File;
@@ -13,9 +13,6 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.configuration.Config;
-import ch.interlis.dbimport.Csv2db;
-import ch.interlis.dbimport.Import2db;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
 import ch.interlis.ili2c.config.FileEntryKind;
@@ -29,6 +26,9 @@ import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
+import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
+import ch.interlis.ioxwkf.dbtools.Config;
+import ch.interlis.ioxwkf.dbtools.Csv2db;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Csv2dbTest {
@@ -74,7 +74,7 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -148,7 +148,7 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimportnopkcolumn");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -233,7 +233,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -311,7 +311,7 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: not set "csvtodbschema"
 				config.setValue(Config.TABLE, "csvimportwithheader");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -388,7 +388,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set.
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -464,7 +464,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportwithheadernopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -543,7 +543,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -623,7 +623,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				config.setValue(Config.DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.TABLE, "csvimportnopk");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -695,7 +695,7 @@ public class Csv2dbTest {
 				// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimportnopkcolumn");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -824,7 +824,7 @@ public class Csv2dbTest {
 					config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 					config.setValue(Config.DBSCHEMA, "csvtodbschema");
 					config.setValue(Config.TABLE, "csvimporttablelimited");
-					Import2db csv2db=new Csv2db();
+					AbstractImport2db csv2db=new Csv2db();
 					csv2db.importData(data, jdbcConnection, config);
 				}
 				{
@@ -897,7 +897,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -942,7 +942,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -983,7 +983,7 @@ public class Csv2dbTest {
 			// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 			fail();
 		}catch(IoxException e) {
@@ -1025,7 +1025,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			// TABLE: "csvimportwithheader" not set
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
@@ -1070,7 +1070,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
@@ -1116,7 +1116,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/NotExist");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -1159,7 +1159,7 @@ public class Csv2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 			config.setValue(Config.DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.TABLE, "csvimportwithheader");
-			Import2db csv2db=new Csv2db();
+			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 			}catch(IoxException e) {
@@ -1202,7 +1202,7 @@ public class Csv2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.TABLE, "csvimport");
-				Import2db csv2db=new Csv2db();
+				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 				csv2db.importData(data, jdbcConnection, config);
 				fail();

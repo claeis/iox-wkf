@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.shp;
+package ch.interlis.ioxwkf.shp;
 
 import static org.junit.Assert.*;
 import java.io.File;
@@ -20,6 +20,8 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.iox_j.jts.Iox2jtsException;
+import ch.interlis.ioxwkf.shp.ShapeReader;
+import ch.interlis.ioxwkf.shp.ShapeWriter;
 
 public class ShapeWriterTest {
 	

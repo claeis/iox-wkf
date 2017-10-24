@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.dbimport;
+package ch.interlis.ioxwkf.dbtools;
 
 import static org.junit.Assert.*;
 import java.io.File;
@@ -13,21 +13,21 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.dbimport.Import2db;
-import ch.interlis.dbimport.Shp2db;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
 import ch.interlis.ili2c.config.FileEntryKind;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.shp.ShapeReader;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import ch.interlis.configuration.Config;
+import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
+import ch.interlis.ioxwkf.dbtools.Config;
+import ch.interlis.ioxwkf.dbtools.Shp2db;
+import ch.interlis.ioxwkf.shp.ShapeReader;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Shp2dbTest {
@@ -71,7 +71,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -143,7 +143,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiPoint");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -215,7 +215,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -281,7 +281,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiLineString");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -347,7 +347,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Polygon");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -414,7 +414,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiPolygon");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -481,7 +481,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
 				//config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimportnoschematable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -547,7 +547,7 @@ public class Shp2dbTest {
 				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -613,7 +613,7 @@ public class Shp2dbTest {
 				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
 				config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimporttable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -677,7 +677,7 @@ public class Shp2dbTest {
 				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
 				//config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(Config.TABLE, "shpimportnoschematable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
@@ -793,7 +793,7 @@ public class Shp2dbTest {
 					config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 					config.setValue(Config.DBSCHEMA, "shptodbschema");
 					config.setValue(Config.TABLE, "shpimporttablelimited");
-					Import2db shp2db=new Shp2db();
+					AbstractImport2db shp2db=new Shp2db();
 					shp2db.importData(data, jdbcConnection, config);
 				}
 				{
@@ -864,7 +864,7 @@ public class Shp2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			config.setValue(Config.TABLE, "shpimportnoattrsfound");
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -901,7 +901,7 @@ public class Shp2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			config.setValue(Config.TABLE, "shpimporttable");
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -937,7 +937,7 @@ public class Shp2dbTest {
 			// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 			fail();
 		}catch(Exception e) {
@@ -972,7 +972,7 @@ public class Shp2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			// TABLE: "shpimporttable"
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -1018,7 +1018,7 @@ public class Shp2dbTest {
 			// SETTING_ILIDIRS: "src/test/data/Shp2DB/Attributes"
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			config.setValue(Config.TABLE, "shpimporttable");
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -1054,7 +1054,7 @@ public class Shp2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/NotExist");
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			config.setValue(Config.TABLE, "shpimporttable");
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
@@ -1101,7 +1101,7 @@ public class Shp2dbTest {
 			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 			config.setValue(Config.DBSCHEMA, "shptodbschema");
 			config.setValue(Config.TABLE, "shpimporttable");
-			Import2db shp2db=new Shp2db();
+			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 			}catch(Exception e) {
@@ -1146,7 +1146,7 @@ public class Shp2dbTest {
 				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
 				// DBSCHEMA: "shptodbschema"
 				config.setValue(Config.TABLE, "shpimportnoschematable");
-				Import2db shp2db=new Shp2db();
+				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 				shp2db.importData(data, jdbcConnection, config);
 				fail();

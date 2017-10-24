@@ -1,4 +1,4 @@
-package ch.interlis.configuration;
+package ch.interlis.ioxwkf.dbtools;
 
 public class Config {
 	private Config() {}

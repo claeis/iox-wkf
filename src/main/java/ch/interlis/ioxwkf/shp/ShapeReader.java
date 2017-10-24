@@ -1,4 +1,4 @@
-package ch.interlis.iom_j.shp;
+package ch.interlis.ioxwkf.shp;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,8 +28,8 @@ import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.converter.WkfJts2iox;
 import ch.interlis.iox_j.jts.Jts2iox;
+import ch.interlis.ioxwkf.converter.WkfJts2iox;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;

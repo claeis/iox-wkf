@@ -1,4 +1,4 @@
-package ch.interlis.dbimport;
+package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
 import java.sql.Connection;
@@ -13,16 +13,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.configuration.Config;
 import ch.interlis.ili2c.Ili2cException;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxException;
 
-public abstract class Import2db {
+public abstract class AbstractImport2db {
 	
-	public Import2db() {};
+	public AbstractImport2db() {};
 	
 	/** import Data to database.
 	 * @param file

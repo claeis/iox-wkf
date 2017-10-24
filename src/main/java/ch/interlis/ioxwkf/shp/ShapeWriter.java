@@ -20,7 +20,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  */
-package ch.interlis.iom_j.shp;
+package ch.interlis.ioxwkf.shp;
 
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
@@ -73,9 +73,9 @@ import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.jts.Iox2jtsException;
+import ch.interlis.ioxwkf.converter.Iox2multijts;
 import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
-import ch.interlis.iom_j.converter.Iox2multijts;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
 import ch.interlis.ili2c.generator.Iligml20Generator;
 import ch.interlis.ili2c.metamodel.AttributeDef;
