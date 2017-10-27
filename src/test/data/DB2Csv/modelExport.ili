@@ -1,0 +1,11 @@
+INTERLIS 2.3;
+
+MODEL modelExport (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+	TOPIC modelExportTopic =
+		CLASS modelExportClass =
+			idname : TEXT*40;
+			abbreviation : TEXT*40;
+			state : TEXT*40;
+		END modelExportClass;
+	END modelExportTopic;
+END modelExport.
