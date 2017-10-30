@@ -19,6 +19,7 @@ import ch.interlis.ili2c.config.FileEntryKind;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxEvent;
+import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
@@ -876,16 +877,7 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die gesetzte Connection nicht funktioniert.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FEHLER: data base attribute names ... not found.
+	// Testet, ob connection=null zu einer IoxException fuehrt 
 	@Test
 	public void import_ConnectionFailed_Fail() throws Exception
 	{
@@ -894,19 +886,15 @@ public class Shp2dbTest {
 		Connection jdbcConnection=null;
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, "12345");
+	        jdbcConnection = null;
 	        // shp
 			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrs");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
-			config.setValue(Config.TABLE, "shpimporttable");
-			AbstractImport2db shp2db=new Shp2db();
+			Shp2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("FATAL: Passwort-Authentifizierung"));
-			assertTrue(e.getMessage().contains("fehlgeschlagen"));
+			assertEquals(IoxException.class,e.getClass());
+			assertEquals("connection==null",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

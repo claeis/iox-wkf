@@ -6,13 +6,18 @@ targetCompatibility = "1.6"
 dependencies {
     compile group: 'org.geotools', name: 'gt-shapefile', version: "10.8"
     testCompile group: 'junit', name: 'junit', version: '4.+'
-    compile fileTree(dir: 'extLibs', include: ['*.jar'])
+    compile group: 'ch.interlis', name: 'iox-ili', version: '1.+' // use SNAPSHOT
+    compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.+' // use SNAPSHOT
 	testCompile group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
 }
 
 // java6 (latest version 10.8)
 repositories {
+    mavenLocal()
+    maven {
+        url "http://jars.interlis.ch"
+    }
     maven {
         url "http://download.java.net/maven/2"
     }
@@ -20,18 +25,19 @@ repositories {
 		url "http://download.osgeo.org/webdav/geotools/"
     }
     maven {
-		url "https://mvnrepository.com/artifact/org.geotools/gt-shapefile"
-    }
-    maven {
     	url "http://maven.geo-solutions.it"
     }
     maven {
     	url "http://repo.maven.apache.org/maven2"
     }
-    maven {
-        url "https://mvnrepository.com/artifact/org.geotools/gt-epsg-hsql"
-    }
-    maven {
-        url "https://mvnrepository.com/artifact/org.postgresql/postgresql"
-    }
+    mavenCentral()
+}
+test {
+	// when Gradle forks a new Java process, it does not automatically pass the 
+	// environment variable values along to the new environment. One has to 
+	// explicitly pass these variables
+	systemProperty 'dburl', System.getProperty('dburl')
+	systemProperty 'dbusr', System.getProperty('dbusr')
+	systemProperty 'dbpwd', System.getProperty('dbpwd')
+    testLogging.exceptionFormat = 'full'
 }

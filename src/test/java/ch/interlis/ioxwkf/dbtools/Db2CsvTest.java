@@ -1619,16 +1619,7 @@ public class Db2CsvTest {
 		}
 	}
 	
-	
-	// Es soll eine Fehlermeldung ausgegeben werden, weil das Passwort bei der Verbindung zur Datenbank nicht stimmt.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FATAL: Passwort-Authentifizierung fehlgeschlagen
+	// Testet, ob connection=null zu einer IoxException fuehrt 
 	@Test
 	public void export_ConnectionFailed_Fail() throws Exception
 	{
@@ -1637,31 +1628,16 @@ public class Db2CsvTest {
 		Connection jdbcConnection=null;
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, "12345");
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE dbtocsvschema.csvexportnopk(idname text, abbreviation text, state text) WITH (OIDS=FALSE);");
-	        	// import data to table
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.csvexportnopk (idname, abbreviation, state) VALUES ('10', 'CH', 'Schweiz')");
-	        	preStmt.close();
-	        }
+	        jdbcConnection = null;
 			// csv
 			File data=new File(TEST_OUT+"export_ConnectionFailed_Fail.csv");
-			config.setValue(Config.SETTING_MODELNAMES, "model2");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
-			config.setValue(Config.DBSCHEMA, "dbtocsvschema");
 			config.setValue(Config.TABLE, "csvexportnopk");
-			AbstractExportFromdb db2Csv=new Db2Csv();
+			Db2Csv db2Csv=new Db2Csv();
 			db2Csv.exportData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("FATAL: Passwort-Authentifizierung"));
-			assertTrue(e.getMessage().contains("fehlgeschlagen"));
+			assertEquals(IoxException.class,e.getClass());
+			assertEquals("connection==null",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

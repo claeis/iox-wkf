@@ -909,13 +909,7 @@ public class Csv2dbTest {
 		}
 	}
 	
-	// connection to database failed
-	// import test
-	// - header present
-	// - model set
-	// - model path set
-	// - db schema set
-	// - db table set
+	// Testet, ob connection=null zu einer IoxException fuehrt 
 	@Test
 	public void import_ConnectionFailed_Fail() throws Exception
 	{
@@ -923,31 +917,15 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, "12345");
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
-	        	preStmt.close();
-	        }
+	        jdbcConnection = null;
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-			config.setValue(Config.HEADER, Config.HEADERPRESENT);
-			config.setValue(Config.SETTING_MODELNAMES, "model2");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Csv2DB");
-			config.setValue(Config.DBSCHEMA, "csvtodbschema");
-			config.setValue(Config.TABLE, "csvimportwithheader");
-			AbstractImport2db csv2db=new Csv2db();
+			Csv2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("FATAL: Passwort-Authentifizierung"));
-			assertTrue(e.getMessage().contains("fehlgeschlagen"));
+			assertEquals(IoxException.class,e.getClass());
+			assertEquals("connection==null",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

@@ -58,7 +58,7 @@ public class Shp2db extends AbstractImport2db {
 		
 		// validity of connection
 		if(db==null) {
-			throw new IoxException("expected url, username and password");
+			throw new IoxException("connection==null");
 		}else if(!(db.isValid(0))) {
 			throw new IoxException("connection to: "+db+" failed");
 		}
