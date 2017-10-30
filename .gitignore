@@ -134,3 +134,4 @@ build
 /src/test/data/DB2Csv/export_TableDataNotFound_Fail.csv
 /src/test/data/DB2Csv/export_TableNotFound_Fail.csv
 /src/test/data/DB2Csv/export_TableNotSet_Fail.csv
+/bin/
