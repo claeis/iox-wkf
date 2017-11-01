@@ -43,7 +43,10 @@ repositories {
 }
 
 Properties properties = new Properties()
-properties.load(project.rootProject.file('user.properties').newDataInputStream())
+File propFile=project.rootProject.file('user.properties')
+if(propFile.exists()){
+	properties.load(propFile.newDataInputStream())
+}
 def git = System.getProperty('git',properties.get('git','git'))
 def repos_pwd = System.getProperty('repos_pwd',properties.get('repos_pwd','repos_pwd'))
 def repos_usr = System.getProperty('repos_usr',properties.get('repos_usr','repos_usr'))
@@ -72,12 +75,12 @@ sourceSets {
 
 task generateMyResources {
 	doLast {
-		def prop = new Properties()
-		prop.setProperty('version', "$project.version")
-		prop.setProperty('versionCommit', getGitHash())
-		def propFile = new File(generatedResources,"ch/interlis/ioxwkf/Version.properties")
-		propFile.getParentFile().mkdirs();
-		prop.store(propFile.newWriter(), null);
+		def versionProps = new Properties()
+		versionProps.setProperty('version', "$project.version")
+		versionProps.setProperty('versionCommit', getGitHash())
+		def versionPropsFile = new File(generatedResources,"ch/interlis/ioxwkf/Version.properties")
+		versionPropsFile.getParentFile().mkdirs();
+		versionProps.store(versionPropsFile.newWriter(), null);
 	}
 }
 
