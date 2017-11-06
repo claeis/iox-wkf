@@ -3,15 +3,16 @@ package ch.interlis.ioxwkf.dbtools;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.Main;
-import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
@@ -30,31 +31,30 @@ public class Shp2db extends AbstractImport2db {
 	 */
 	@Override
 	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, String> attributes=new HashMap<String, String>();
+		Map<String, AttributePool> attrsPool=new HashMap<String, AttributePool>();
 		ShapeReader shpReader;
+		Set notFoundAttrs=new HashSet();
+		
+		if(!(file.exists())) {
+			throw new IoxException("shp file: "+file.getAbsolutePath()+" not found");
+		}else if(!(file.canRead())) {
+			throw new IoxException("shp file: "+file.getAbsolutePath()+" not readable");
+		}else {
+			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
+		}
+		
 		try {
 			shpReader = new ShapeReader(file);
 		} catch (IOException e) {
 			throw new IoxException(e);
 		}
-		String definedIliDirs=config.getValue(Config.SETTING_ILIDIRS);
-		String definedModelNames=config.getValue(Config.SETTING_MODELNAMES);
-		String definedSchemaName=config.getValue(Config.DBSCHEMA);
-		String definedTableName=config.getValue(Config.TABLE);
-		List<String> modelNames=null;
-		TransferDescription td=null;
 		
-		EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
-		if(definedModelNames!=null){
-			EhiLogger.logState("modelNames <"+definedModelNames+">");
-		}
-		
-		if(!(file.exists())) {
-			throw new IoxException("shp file: "+file.getAbsolutePath()+" not found");
-		}
-		if(!(file.canRead())) {
-			throw new IoxException("shp file: "+file.getAbsolutePath()+" not readable");
-		}
+		/** optional: set database schema, if table is not in default schema.
+		 */
+		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		/** mandatory: set database table to insert data into.
+		 */
+		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
 		
 		// validity of connection
 		if(db==null) {
@@ -63,87 +63,84 @@ public class Shp2db extends AbstractImport2db {
 			throw new IoxException("connection to: "+db+" failed");
 		}
 		
-		// model directory validity
-		List<String> dirList=new ArrayList<String>();
-		if(definedIliDirs!=null) {
-			String[] dirs=definedIliDirs.split(";");
-			for(String dir:dirs) {
-				dirList.add(dir);
-			}
-		}
-		
-		// models validity
-		if(definedModelNames!=null) {
-			modelNames=getSpecifiedModelNames(definedModelNames);
-			String filePath=null;
-			if(definedIliDirs==null) {
-				filePath=new java.io.File(file.getPath().toString()).getAbsoluteFile().getParentFile().getAbsolutePath();
-			}else {
-				filePath=new java.io.File(dirList.get(0).toString()).getAbsoluteFile().getAbsolutePath();
-			}
-			td=compileIli(modelNames, null,filePath,Main.getIli2cHome(),config);
-			if(td==null){
-				throw new IoxException("models "+modelNames.toString()+" not found");
-			}else {
-				shpReader.setModel(td);
-			}
-		}
-		
 		// read IoxEvents
 		IoxEvent event=shpReader.read();
 		while(event instanceof IoxEvent){
 			if(event instanceof ObjectEvent) {
+				attrsPool.clear();
 				IomObject iomObj=((ObjectEvent)event).getIomObject();
 				
-				// schema validity
-				if(definedSchemaName!=null) {
-					if(!(schemaExists(definedSchemaName, db))){
-						throw new IoxException("schema "+definedSchemaName+" not found");
-					}
-				}
-				
 				// table validity
-				List<String> databaseAttrNames=new ArrayList<String>();
-				if(config.getValue(Config.TABLE)!=null){
-					if(definedSchemaName==null) {
-						// default schema
-					}
-					if(dbTableExists(definedSchemaName, definedTableName, db)) {
-						// attribute names of database table
-						databaseAttrNames=getAttrNamesOfTable(definedSchemaName, definedTableName, db);
-					}else {
+				ResultSet tableInDb=null;
+				ResultSet geoColumnTableInDb=null;		
+				if(config.getValue(Config.SETTING_DBTABLE)!=null){
+					// get data of geometry inside table-columns.
+					try {
+						tableInDb=openTableInDb(definedSchemaName, definedTableName, db);
+					}catch(Exception e) {
 						throw new IoxException("table "+definedTableName+" not found");
 					}
 				}else {
 					throw new IoxException("expected tablename");
 				}
+				// build attributes				
+				ResultSetMetaData rsmd=tableInDb.getMetaData();
+				ResultSetMetaData rsmdGeomTable=null;
 				
-				// build attributes
-				attributes.clear();
-				for(int i=0;i<iomObj.getattrcount();i++) {
-					if(databaseAttrNames.contains(iomObj.getattrname(i))) {
-						String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
-						if(attrValue==null) {
-							attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
-						}
-						if(attrValue!=null) {
-							attributes.put(iomObj.getattrname(i), attrValue);
+				notFoundAttrs.clear();
+				
+				for(int k=1;k<rsmd.getColumnCount()+1;k++) {
+					String columnName=rsmd.getColumnName(k);
+					int columnType=rsmd.getColumnType(k);
+					String columnTypeName=rsmd.getColumnTypeName(k);
+					for(int i=0;i<iomObj.getattrcount();i++) {
+						AttributePool attrData=null;
+						if(columnName.equals(iomObj.getattrname(i))){
+							String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
+							if(attrValue==null) {
+								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
+							}
+							if(attrValue!=null) {
+								attrData=new AttributePool();
+								attrData.setAttributeName(iomObj.getattrname(i));
+								attrData.setAttributeType(columnType);
+								attrData.setAttributeTypeName(columnTypeName);
+								if(columnTypeName.equals("geometry")) {
+									// attribute names of database table
+									try {
+										geoColumnTableInDb=openGeometryColumnTableInDb(definedSchemaName, definedTableName, iomObj.getattrname(i), db);
+										rsmdGeomTable=geoColumnTableInDb.getMetaData();
+									}catch(Exception e) {
+										throw new IoxException(e);
+									}
+									while(geoColumnTableInDb.next()) {
+										attrData.setSrid(geoColumnTableInDb.getInt(6));
+										attrData.setGeoColumnTypeName(geoColumnTableInDb.getString(7));
+										attrData.setCoordDimension(geoColumnTableInDb.getInt(5));
+									}
+								}
+								attrsPool.put(iomObj.getattrname(i), attrData);
+							}
+						}else {
+							notFoundAttrs.add(iomObj.getattrname(i));
 						}
 					}
 				}
-				if(attributes.size()==0) {
-					throw new IoxException("data base attribute names: "+databaseAttrNames.toString()+" not found in "+file.getAbsolutePath());
+				if(attrsPool.size()==0) {
+					throw new IoxException("data base attribute names: "+notFoundAttrs.toString()+" not found in "+file.getAbsolutePath());
 				}
-				
 				// insert attributes to database
-				insertIntoTable(definedSchemaName, definedTableName, attributes, db, iomObj);
+				try {
+					insertIntoTable(definedSchemaName, definedTableName, attrsPool, db, iomObj);
+				} catch (Exception e) {
+					throw new IoxException(e);
+				}
 				event=shpReader.read();
 			}else {
 				// next IoxEvent
 				event=shpReader.read();
 			}
 		}
-		
 		// close shpReader
 		if(shpReader!=null) {
 			shpReader.close();

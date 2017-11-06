@@ -105,7 +105,7 @@ public abstract class AbstractExportFromdb {
 		ArrayList modeldirv=new ArrayList();
 		String ilidirs=settings.getValue(Config.SETTING_ILIDIRS);
 		if(ilidirs==null){
-			ilidirs=Config.SETTING_DEFAULT_ILIDIRS;
+			ilidirs=Config.SET_ILIDIRS_DEFAULT_VALUE;
 		}
 		EhiLogger.logState("ilidirs <"+ilidirs+">");
 		String modeldirs[]=ilidirs.split(";");

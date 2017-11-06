@@ -1,25 +1,31 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.io.InputStream;
+import java.sql.Blob;
 import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Map.Entry;
-import ch.ehi.basics.logging.EhiLogger;
+import java.util.TimeZone;
+
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.Ili2cException;
-import ch.interlis.ili2c.Ili2cFailure;
-import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.ehi.ili2db.converter.ConverterException;
+import ch.ehi.ili2pg.converter.PostgisColumnConverter;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxException;
 
 public abstract class AbstractImport2db {
+	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
+	private Integer srsCode=Config.SET_DEFAULT_SRSCODE;
 	
 	public AbstractImport2db() {};
 	
@@ -32,21 +38,6 @@ public abstract class AbstractImport2db {
 	 */
 	public abstract void importData(File file,Connection db,Settings config) throws SQLException, IoxException;
 
-	/** get user defined model names and return them in a list of strings.
-	 * @param modelNames
-	 * @return separated model names in list
-	 */
-	protected final static List<String> getSpecifiedModelNames(String modelNames) {
-		List<String> ret=new ArrayList<String>();
-		if(modelNames!=null){
-			String[] modelNameList = modelNames.split(";");
-			for(String modelName:modelNameList){
-				ret.add(modelName);
-			}
-		}
-		return ret;
-	}
-
 	/** insert attribute-values of IomObject from attribute-names of data base table,
 	 * to data base (existing schema, else default schema) in contained table (if exists),
 	 * via given data base connection details.
@@ -57,197 +48,264 @@ public abstract class AbstractImport2db {
 	 * @param iomObj
 	 * @throws IoxException
 	 * @throws SQLException
+	 * @throws ConverterException 
 	 */
-	protected final static void insertIntoTable(String schemaName, String tableName, Map<String, String> attributes,Connection db, IomObject iomObj) throws IoxException, SQLException {
-		String comma1="";
-		String comma2="";
-		StringBuilder attrNames=new StringBuilder();
-		StringBuilder attrValues=new StringBuilder();
+	protected void insertIntoTable(String schemaName, String tableName, Map<String, AttributePool> attrsPool, Connection db, IomObject iomObj) throws IoxException, SQLException, ConverterException {
+		StringBuffer queryBuild=new StringBuffer();
 		
-		for(Entry<String,String> attribute:attributes.entrySet()){
-			// attribute names
-			attrNames.append(comma1);
-			attrNames.append(attribute.getKey());
-			comma1=",";
-			
-			// attribute values
-			attrValues.append(comma2);
-			attrValues.append("'"+attribute.getValue()+"'");
-			comma2=",";
-		}
-		Statement stmt = db.createStatement();
+		// create insert statement
+		queryBuild.append("INSERT INTO ");
 		if(schemaName!=null) {
-			try {
-				int result=stmt.executeUpdate("INSERT INTO "+schemaName+"."+tableName+"("+attrNames.toString()+") VALUES ("+attrValues.toString()+")");
-			}catch(SQLException e) {
-				throw new IoxException("import of "+iomObj.toString()+" to "+schemaName+"."+tableName+" failed",e);
+			queryBuild.append(schemaName);
+			queryBuild.append(".");
+		}
+		queryBuild.append(tableName);
+		queryBuild.append("(");
+		String comma="";
+		StringBuilder attrsNotInserted=new StringBuilder();
+		for(Entry<String, AttributePool> attribute:attrsPool.entrySet()) {
+			AttributePool attrObject=attribute.getValue();
+			String attrName=attrObject.getAttributeName();
+			attrsNotInserted.append(comma);
+			queryBuild.append(comma);
+			comma=", ";
+			attrsNotInserted.append(attrName);
+			queryBuild.append(attrName);
+		}
+		queryBuild.append(")VALUES(");
+		comma="";
+		int position=1;
+		for(Entry<String, AttributePool> attribute:attrsPool.entrySet()) {
+			AttributePool attrObject=attribute.getValue();
+			String dataTypeName=attrObject.getAttributeTypeName();
+			Integer datatype=attrObject.getAttributeType();
+			
+			queryBuild.append(comma);
+			if(datatype.equals(Types.OTHER)) {
+				if(dataTypeName.equals("geometry")) {
+					String geoColumnType=attrObject.getGeoColumnTypeName();
+					srsCode=attrObject.getSrid();
+					if(geoColumnType.equals("POINT")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
+					}else if(geoColumnType.equals("MULTIPOINT")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
+					}else if(geoColumnType.equals("LINESTRING")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperPolyline("?", srsCode));
+					}else if(geoColumnType.equals("MULTILINESTRING")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperMultiPolyline("?", srsCode));
+					}else if(geoColumnType.equals("POLYGON")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperSurface("?", srsCode));
+					}else if(geoColumnType.equals("MULTIPOLYGON")) {
+						queryBuild.append(pgConverter.getInsertValueWrapperMultiSurface("?", srsCode));
+					}
+				}else {
+					queryBuild.append("?");
+				}
+			}else {
+				queryBuild.append("?");
 			}
-		}else {
-			try {
-				int result=stmt.executeUpdate("INSERT INTO "+tableName+"("+attrNames.toString()+") VALUES ("+attrValues.toString()+")");
-			}catch(SQLException e) {
-				throw new IoxException("import of "+iomObj.toString()+" to "+tableName+" failed",e);
+			comma=", ";
+		}
+		queryBuild.append(")");
+		PreparedStatement ps=null;
+		try {
+			ps = db.prepareStatement(queryBuild.toString());
+			ps.clearParameters();
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+		
+		position=1;
+		for(Entry<String, AttributePool> attribute:attrsPool.entrySet()) {
+			AttributePool attrObject=attribute.getValue();
+			String dataTypeName=attrObject.getAttributeTypeName();
+			Integer dataType=attrObject.getAttributeType();
+			String attrName=attrObject.getAttributeName();
+			String attrValue=iomObj.getattrvalue(attrName);
+			Integer coordDimension=attrObject.getCoordDimension();
+			IomObject value=null;
+			boolean is3D=false;
+			
+			if(attrValue==null || attrValue.isEmpty()){
+				value=iomObj.getattrobj(attrName,0);
 			}
+			
+			if((attrValue!=null && !attrValue.isEmpty()) || value!=null){
+				if(dataType.equals(Types.OTHER)) {
+					if(dataTypeName.equals("geometry")) {
+						String geoColumnType=attrObject.getGeoColumnTypeName();
+						srsCode=attrObject.getSrid();
+						if(coordDimension==3) {
+							is3D=true;
+						}else {
+							is3D=false;
+						}
+						// point
+						if(geoColumnType.equals(Config.SET_GEOMETRY_POINT)) {
+							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
+						// multipoint
+						}else if(geoColumnType.equals(Config.SET_GEOMETRY_MULTIPOINT)) {
+							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
+						// line
+						}else if(geoColumnType.equals(Config.SET_GEOMETRY_LINESTRING)) {
+							ps.setObject(position, pgConverter.fromIomPolyline(value, srsCode, is3D, 0));
+						// multiline
+						}else if(geoColumnType.equals(Config.SET_GEOMETRY_MULTILINESTRING)) {
+							ps.setObject(position, pgConverter.fromIomMultiPolyline(value, srsCode, is3D, 0));
+						// polygon
+						}else if(geoColumnType.equals(Config.SET_GEOMETRY_POLYGON)) {
+							ps.setObject(position, pgConverter.fromIomSurface(value, srsCode, false, is3D, 0));
+						// multipolygon
+						}else if(geoColumnType.equals(Config.SET_GEOMETRY_MULTIPOLYGON)) {
+							ps.setObject(position, pgConverter.fromIomMultiSurface(value, srsCode, false, is3D, 0));
+						}
+					}else {
+						// uuid
+						if(dataTypeName.equals(Config.SET_UUID)) {
+							ps.setObject(position, pgConverter.fromIomUuid(attrValue));
+						// xml	
+						}else if(dataTypeName.equals(Config.SET_XML)) {
+							ps.setObject(position, pgConverter.fromIomXml(attrValue));
+						}
+					}
+				}else {
+					if(dataType.equals(Types.BIT)) {
+						if(dataTypeName.equals("bool")) {
+							if(attrValue.equals("t")
+									|| attrValue.equals("true")
+									|| attrValue.equals("y")
+									|| attrValue.equals("yes")
+									|| attrValue.equals("on")
+									|| attrValue.equals("1")) {
+								ps.setObject(position, "t", Types.BOOLEAN);
+							}else {
+								ps.setObject(position, "f", Types.BOOLEAN);
+							}
+						}else {
+							ps.setObject(position, attrValue.charAt(0), Types.BIT);
+						}
+					}else if(dataType.equals(Types.BLOB)) {
+						Blob b = db.createBlob();
+					    InputStream out = b.getBinaryStream(position, Long.valueOf(attrValue));
+						ps.setBinaryStream(position, out);
+					}else if(dataType.equals(Types.BINARY)) {
+						ps.setByte(position, Byte.valueOf(attrValue));
+					}else if(dataType.equals(Types.NUMERIC)) {
+						ps.setObject(position, attrValue, Types.NUMERIC);
+					}else if(dataType.equals(Types.SMALLINT)) {
+						ps.setObject(position, attrValue, Types.SMALLINT);
+					}else if(dataType.equals(Types.TINYINT)) {
+						ps.setObject(position, attrValue, Types.TINYINT);
+					}else if(dataType.equals(Types.INTEGER)) {
+						ps.setObject(position, attrValue, Types.INTEGER);
+					}else if(dataType.equals(Types.BIGINT)) {
+						ps.setObject(position, attrValue, Types.BIGINT);
+					}else if(dataType.equals(Types.FLOAT)) {
+						ps.setFloat(position, Float.valueOf(attrValue));
+					}else if(dataType.equals(Types.DOUBLE)) {
+						ps.setDouble(position, Double.valueOf(attrValue));
+					}else if(dataType.equals(Types.LONGNVARCHAR)) {
+						ps.setLong(position, Long.valueOf(attrValue));
+					}else if(dataType.equals(Types.DECIMAL)) {
+						Long decLong=Long.valueOf(attrValue);
+						ps.setBigDecimal(position, java.math.BigDecimal.valueOf(decLong));
+					}else if(dataType.equals(Types.CHAR)) {
+						ps.setObject(position, attrValue, Types.CHAR);
+					}else if(dataType.equals(Types.VARCHAR)) {
+						ps.setObject(position, attrValue, Types.VARCHAR);
+					}else if(dataType.equals(Types.LONGVARCHAR)) {
+						ps.setObject(position, attrValue, Types.LONGVARCHAR);
+					}else if(dataType.equals(Types.BOOLEAN)) {
+						ps.setObject(position, attrValue, Types.BOOLEAN);
+					}else if(dataType.equals(Types.DECIMAL)) {
+						Long decLong=Long.valueOf(attrValue);
+						ps.setBigDecimal(position, java.math.BigDecimal.valueOf(decLong));
+					}else if(dataType.equals(Types.DATE)) {
+						// year format: year-1900, month-1 (0-11)
+						String[] date=attrValue.split("T|\\-|\\.|\\,|\\:");
+						ps.setDate(position, new Date(Integer.valueOf(date[0])-1900, Integer.valueOf(date[1])-1, Integer.valueOf(date[2])));
+					}else if(dataType.equals(Types.TIME)) {
+						String[] time=attrValue.split("T|\\-|\\.|\\,|\\:");
+						ps.setTime(position, new Time(Integer.valueOf(time[0]), Integer.valueOf(time[1]), Integer.valueOf(time[2])));
+					}else if(dataType.equals(Types.TIMESTAMP)) {
+						Calendar cal=null;
+						String[] dateTime=attrValue.split("T|\\-|\\.|\\,|\\:");
+						// year format: year-1900, month-1 (0-11)
+						ps.setTimestamp(position, new Timestamp(Integer.valueOf(dateTime[0])-1900, Integer.valueOf(dateTime[1])-1, Integer.valueOf(dateTime[2]), Integer.valueOf(dateTime[3]), Integer.valueOf(dateTime[4]), Integer.valueOf(dateTime[5]), Integer.valueOf(dateTime[6])), cal);
+					}else {
+						ps.setObject(position, attrValue, dataType);
+					}
+				}
+			}else {
+				ps.setNull(position, dataType);
+			}
+			position+=1;
+		}
+		try {
+			int rs = ps.executeUpdate();
+			if(rs==0) {
+				if(schemaName!=null) {
+					throw new IoxException("import of "+attrsNotInserted.toString()+" to "+schemaName+"."+tableName+" failed");
+				}else {
+					throw new IoxException("import of "+attrsNotInserted.toString()+" to "+tableName+" failed");
+				}
+			}
+		}catch(SQLException e) {
+			throw new IoxException(e);
 		}
 	}
-
-	/** create selection to table inside schema and get the attribute names on data base table.
+	
+	/** create selection to table inside schema and get resultset of data base table.
 	 * @param schemaName
 	 * @param tableName
 	 * @param db
-	 * @return attribute names
+	 * @return resultset of db table
 	 * @throws IoxException
 	 */
-	protected final static List<String> getAttrNamesOfTable(String schemaName, String tableName, Connection db) throws IoxException {
-		List<String> dbAttrs = new ArrayList<String>();
+	public ResultSet openTableInDb(String schemaName, String tableName, Connection db) throws IoxException {
 		ResultSet rs =null;
+		StringBuffer queryBuild=new StringBuffer();
+		queryBuild.append("SELECT * FROM ");
+		
+		if(schemaName!=null) {
+			queryBuild.append(schemaName+".");
+		}
+		queryBuild.append(tableName+";");
+		
 		try {
 			Statement stmt = db.createStatement();
-			if(schemaName!=null) {
-				rs = stmt.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_schema ='"+schemaName+"' AND table_name = '"+tableName+"'");
-			}else {
-				rs = stmt.executeQuery("SELECT column_name FROM information_schema.columns WHERE table_name = '"+tableName+"'");
-			}
+			rs=stmt.executeQuery(queryBuild.toString());
 			if(rs==null) {
 				throw new IoxException("table "+schemaName+"."+tableName+" not found");
-			}
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int columnCount = rsmd.getColumnCount();
-			if(columnCount>1) {
-				throw new IoxException("tablename multiple times defined in data base");
-			}
-			while(rs.next()){
-				for(int i=1;i<=columnCount;i++){
-					dbAttrs.add(rs.getString(i));
-				}
 			}
 		} catch (SQLException e) {
 			throw new IoxException(e);
 		}
-		return dbAttrs;
+		return rs;
 	}
-
-	/** check if table inside schema exists in data base.
-	 * depends on schema exist.
+	
+	/** get resultset of geometry columns.
 	 * @param schemaName
 	 * @param tableName
 	 * @param db
-	 * @return true if table exist, false if table not exist
-	 * @throws SQLException
+	 * @return resultset of geometry columns.
+	 * @throws IoxException
 	 */
-	protected final static boolean dbTableExists(String schemaName, String tableName, Connection db) throws SQLException {
-		Statement stmt=db.createStatement();
+	public ResultSet openGeometryColumnTableInDb(String schemaName, String tableName, String attrName, Connection db) throws IoxException {
 		ResultSet rs =null;
+		StringBuffer queryBuild=new StringBuffer();
+		queryBuild.append("SELECT * FROM geometry_columns WHERE ");
 		if(schemaName!=null) {
-			rs =stmt.executeQuery("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = '"+schemaName+"' AND table_name='"+tableName+"');");
-		}else {
-			rs =stmt.executeQuery("SELECT EXISTS (SELECT * FROM "+tableName+");");
+			queryBuild.append("f_table_schema='"+schemaName+"' AND ");
 		}
-		stmt.close();
-		if(rs!=null) {
-			return true;
-		}
-		return false;
-	}
-
-	/** check if schema exists in data base.
-	 * @param schemaName
-	 * @param db
-	 * @return true if schema exist, false if schema not exist
-	 * @throws SQLException
-	 */
-	protected final static boolean schemaExists(String schemaName, Connection db) throws SQLException {
-		Statement stmt=db.createStatement();
-		ResultSet rs =stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+schemaName+"';");
-		stmt.close();
-		if(rs!=null) {
-			return true;
-		}
-		return false;
-	}
-	
-	/** Compiles the required Interlis models.
-	 * @param aclass Interlis qualified class name of a required class.
-	 * @param ilifile Interlis model file to read. null if not known.
-	 * @param modelDir Folder with Interlis model files or null.
-	 * @param appHome Folder of program. Function will check in ilimodels sub-folder for Interlis models.
-	 * @param config Configuration of program.
-	 * @return root object of java representation of Interlis model.
-	 * @throws IoxException 
-	 * @see #SETTING_ILIDIRS
-	 */
-	public static TransferDescription compileIli(List<String> modelNames,File ilifile,String itfDir,String appHome,Settings settings) {
-		ArrayList modeldirv=new ArrayList();
-		String ilidirs=settings.getValue(Config.SETTING_ILIDIRS);
-		if(ilidirs==null){
-			ilidirs=Config.SETTING_DEFAULT_ILIDIRS;
-		}
-	
-		EhiLogger.logState("ilidirs <"+ilidirs+">");
-		String modeldirs[]=ilidirs.split(";");
-		HashSet ilifiledirs=new HashSet();
-		for(int modeli=0;modeli<modeldirs.length;modeli++){
-			String m=modeldirs[modeli];
-			if(m.contains(Config.FILE_DIR)){
-				m=m.replace(Config.FILE_DIR, itfDir);
-				if(m!=null && m.length()>0){
-					if(!modeldirv.contains(m)){
-						modeldirv.add(m);				
-					}
-				}
-			}else if(m.contains(Config.JAR_DIR)){
-				if(appHome!=null){
-					m=m.replace(Config.JAR_DIR,appHome);
-				}
-				if(m!=null){
-					m=new java.io.File(m).getAbsolutePath();
-				}
-				if(m!=null && m.length()>0){
-					modeldirv.add(m);				
-				}
-			}else{
-				if(m!=null && m.length()>0){
-					modeldirv.add(m);				
-				}
-			}
-		}		
-		ch.interlis.ili2c.Main.setHttpProxySystemProperties(settings);
-		TransferDescription td=null;
-		ch.interlis.ili2c.config.Configuration ili2cConfig=null;
-		if(ilifile!=null){
-			try {
-				ch.interlis.ilirepository.IliManager modelManager=new ch.interlis.ilirepository.IliManager();
-				modelManager.setRepositories((String[])modeldirv.toArray(new String[]{}));
-				ArrayList<String> ilifiles=new ArrayList<String>();
-				ilifiles.add(ilifile.getPath());
-				ili2cConfig=modelManager.getConfigWithFiles(ilifiles);
-				ili2cConfig.setGenerateWarnings(false);
-			} catch (Ili2cException ex) {
-				EhiLogger.logError(ex);
-				return null;
-			}
-		}else{
-			ArrayList<String> modelv=new ArrayList<String>();
-			if(modelNames!=null){
-				modelv.addAll(modelNames);
-			}
-			try {
-				ch.interlis.ilirepository.IliManager modelManager=new ch.interlis.ilirepository.IliManager();
-				modelManager.setRepositories((String[])modeldirv.toArray(new String[]{}));
-				ili2cConfig=modelManager.getConfig(modelv, 0.0);
-				ili2cConfig.setGenerateWarnings(false);
-			} catch (Ili2cException ex) {
-				EhiLogger.logError(ex);
-				return null;
-			}
-		}
+		queryBuild.append("f_table_name='"+tableName+"' "); 
+				queryBuild.append("AND f_geometry_column='"+attrName+"';");
 		try {
-			ch.interlis.ili2c.Ili2c.logIliFiles(ili2cConfig);
-			td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
-		} catch (Ili2cFailure ex) {
-			EhiLogger.logError(ex);
-			return null;
+			Statement stmt = db.createStatement();
+			rs=stmt.executeQuery(queryBuild.toString());
+		} catch (SQLException e) {
+			throw new IoxException(e);
 		}
-		return td;
+		return rs;
 	}
 }

@@ -10,6 +10,9 @@ dependencies {
     compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.+' // use SNAPSHOT
 	testCompile group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
+	compile('ch.interlis:ili2pg:3.10.+'){
+        exclude group: 'ch.interlis', module: 'iox-ili'
+    }
 }
 
 // java6 (latest version 10.8)
@@ -32,12 +35,12 @@ repositories {
     }
     mavenCentral()
 }
-test {
+//test {
 	// when Gradle forks a new Java process, it does not automatically pass the 
 	// environment variable values along to the new environment. One has to 
 	// explicitly pass these variables
-	systemProperty 'dburl', System.getProperty('dburl')
-	systemProperty 'dbusr', System.getProperty('dbusr')
-	systemProperty 'dbpwd', System.getProperty('dbpwd')
-    testLogging.exceptionFormat = 'full'
-}
+	//systemProperty 'dburl', System.getProperty('dburl')
+	//systemProperty 'dbusr', System.getProperty('dbusr')
+	//systemProperty 'dbpwd', System.getProperty('dbpwd')
+    //testLogging.exceptionFormat = 'full'
+//}

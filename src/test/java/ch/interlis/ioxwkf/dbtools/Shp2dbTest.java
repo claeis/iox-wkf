@@ -2,23 +2,19 @@ package ch.interlis.ioxwkf.dbtools;
 
 import static org.junit.Assert.*;
 import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.config.Configuration;
-import ch.interlis.ili2c.config.FileEntry;
-import ch.interlis.ili2c.config.FileEntryKind;
-import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxEvent;
+import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
@@ -28,7 +24,7 @@ import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
 import ch.interlis.ioxwkf.dbtools.Config;
 import ch.interlis.ioxwkf.dbtools.Shp2db;
-import ch.interlis.ioxwkf.shp.ShapeReader;
+import ch.interlis.ioxwkf.shp.ShapeWriter;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Shp2dbTest {
@@ -36,19 +32,15 @@ public class Shp2dbTest {
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
 	private Statement stmt=null;
-	private static final String ROW="row";
-	private Map<String, List<String>> rows=null;
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines Point's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_Point_Ok() throws Exception
+	public void import_Point_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -62,46 +54,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrs");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
 			{
-				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.textname, shptodbschema.shpimporttable.doublename, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String textValue = rs.getString(2);
-					String doubleValue= rs.getString(3);
-					String theGeomValue= rs.getString(4);
-					row.add(idValue);
-					row.add(textValue);
-					row.add(doubleValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).equals("1")) {
-						assertTrue(rowValue.get(1).equals("text1"));
-						assertTrue(rowValue.get(2).equals("53434"));
-						assertTrue(rowValue.get(3).equals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.228571428571429 0.568831168831169)", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -111,16 +86,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines MultiPoint's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_MultiPoint_Ok() throws Exception
+	public void import_MultiPoint_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -134,46 +107,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(MULTIPOINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/MultiPoint/MultiPoint2.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiPoint");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				File data=new File("src/test/data/Shp2DB/MultiPoint/MultiPoint.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).equals("111")) {
-						assertTrue(
-							rowValue.get(1).contains("COORD {C1 -0.5852801213385155, C2 0.7454355863114989}") ||
-							rowValue.get(1).contains("COORD {C1 -0.45787468006446114, C2 0.6607109678642527}") ||
-							rowValue.get(1).contains("COORD {C1 -0.4196530476822448, C2 0.7562650488197935}") ||
-							rowValue.get(1).contains("COORD {C1 -0.39098682339558255, C2 0.5587866148450091}") ||
-							rowValue.get(1).contains("COORD {C1 -0.6171314816570291, C2 0.5301203905583469}") ||
-							rowValue.get(1).contains("COORD {C1 -0.4196530476822448, C2 0.7562650488197935}")
-						);
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -183,16 +139,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines Linestring's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_LineString_Ok() throws Exception
+	public void import_LineString_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -206,40 +160,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(LINESTRING,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("111")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0462287104622872, C2 0.47688564476885653}, COORD {C1 0.5547445255474452, C2 0.15328467153284664}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("SRID=2056;LINESTRING", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -249,16 +192,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines Multilinestring's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_MultiLineString_Ok() throws Exception
+	public void import_MultiLineString_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -272,40 +213,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(MULTILINESTRING,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/MultiLineString/MultiLineString.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiLineString");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("5555")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0, C2 0.8321167883211679}, COORD {C1 0.5547445255474452, C2 0.8272506082725061}, COORD {C1 -1.02676399026764, C2 0.4720194647201946}, COORD {C1 0.4866180048661801, C2 0.3211678832116788}, COORD {C1 -1.0608272506082725, C2 0.11678832116788318}, COORD {C1 0.49148418491484214, C2 -0.05109489051094884}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("SRID=2056;MULTILINESTRING((-0.228571428571429 0.568831168831169,-0.225571428571429 0.565831168831169),(-0.225571428571429 0.565831168831169,-0.227551428571429 0.555835168831169))", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -315,16 +245,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines Polygon's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_Polygon_Ok() throws Exception
+	public void import_Polygon_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -338,41 +266,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(POLYGON,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Polygon/Polygon.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Polygon");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).equals("888")) {
-					  	assertTrue(
-							rowValue.get(1).contains("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.6374695863746959, C2 0.6618004866180048}, COORD {C1 0.6520681265206811, C2 0.6788321167883211}, COORD {C1 0.6618004866180052, C2 -0.36253041362530425}, COORD {C1 -0.6472019464720195, C2 -0.34793187347931886}, COORD {C1 -0.6374695863746959, C2 0.6618004866180048}]}}}}}")
-						);
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("SRID=2056;POLYGON((-0.228571428571429 0.568831168831169,-0.158571428571429 0.588831168831169,-0.158571428571429 0.588831168831169,-0.158571428571429 0.568831168831169,-0.158571428571429 0.568831168831169,-0.228571428571429 0.568831168831169))", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -382,16 +298,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob der Import eines Multipolygon's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	public void import_SetAll_MultiPolygon_Ok() throws Exception
+	public void import_MultiPolygon_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -405,43 +319,30 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(MULTIPOLYGON,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/MultiPolygon/MultiPolygon.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/MultiPolygon");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(2, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).equals("456")) {
-					  	assertTrue(rowValue.get(1).contains("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -3.3585766423357675, C2 1.780413625304136}, COORD {C1 -3.2357055961070573, C2 1.780413625304136}, COORD {C1 -3.2925790754257918, C2 1.7156326034063258}, COORD {C1 -3.3859489051094904, C2 1.73661800486618}, COORD {C1 -3.3585766423357675, C2 1.780413625304136}]}}}}}"));
-				  	}else if(rowValue.get(0).equals("34")) {
-					  	assertTrue(rowValue.get(1).contains("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -3.402372262773724, C2 1.6846107055961068}, COORD {C1 -3.2810218978102204, C2 1.675486618004866}, COORD {C1 -3.3156934306569354, C2 1.6031021897810218}, COORD {C1 -3.4045012165450133, C2 1.648722627737226}, COORD {C1 -3.402372262773724, C2 1.6846107055961068}]}}}}}"));
-				  	}else if(rowValue.get(0).equals("356")) {
-					  	assertTrue(rowValue.get(1).contains("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -3.2332725060827263, C2 1.729318734793187}, COORD {C1 -3.1739659367396604, C2 1.7247566909975667}, COORD {C1 -3.1757907542579087, C2 1.66970802919708}, COORD {C1 -3.2509124087591252, C2 1.7101581508515813}, COORD {C1 -3.2332725060827263, C2 1.729318734793187}]}}}}}"));
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertTrue(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((-0.228 0.568,-0.158 0.588,-0.158 0.588,-0.158 0.568,-0.158 0.568,-0.228 0.568)))") ||
+				  			(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((0.228 1.3,0.158 0.5,0.158 0.5,0.158 1.568,0.158 1.568,0.228 1.3)))")));
 				}
 			}
 		}finally{
@@ -451,10 +352,8 @@ public class Shp2dbTest {
 		}
 	}
 
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
+	// Testet ob der Import eines Linestring's in die Datenbank funktioniert,
+	// wenn das datenbank-schema nicht gesetzt wird und die Test-Konfiguration wie folgt gesetzt wird:
 	// - NOT SET: database-schema
 	// - set: database-table
 	// --
@@ -472,40 +371,81 @@ public class Shp2dbTest {
 	        	// drop table
 	        	preStmt.execute("DROP TABLE IF EXISTS shpimportnoschematable CASCADE");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shpimportnoschematable(idname text NOT NULL,textname text,doublename text,the_geom text,CONSTRAINT shpimporttable_pkey PRIMARY KEY (idname)) WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shpimportnoschematable(idname character varying NOT NULL,the_geom geometry(POINT,2056),CONSTRAINT shpimporttable_pkey PRIMARY KEY (idname)) WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
+				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
 				//config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimportnoschematable");
+				config.setValue(Config.SETTING_DBTABLE, "shpimportnoschematable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shpimportnoschematable.idname, shpimportnoschematable.the_geom FROM shpimportnoschematable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shpimportnoschematable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("111")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0462287104622872, C2 0.47688564476885653}, COORD {C1 0.5547445255474452, C2 0.15328467153284664}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shpimportnoschematable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.228571428571429 0.568831168831169)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=bigint
+	@Test
+	public void import_Datatype_BigInt_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr bigint,the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Bigint/DataTypeBigInt.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(Long.valueOf("123"), rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -515,16 +455,14 @@ public class Shp2dbTest {
 		}
 	}
 
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - NOT SET: model-path
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
 	// - set: database-schema
 	// - set: database-table
 	// --
-	// Erwartung: SUCCESS.
+	// Erwartung: SUCCESS: datatype=bit
 	@Test
-	public void import_PathNotSet_Ok() throws Exception
+	public void import_Datatype_Bit_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -538,40 +476,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr boolean, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				File data=new File("src/test/data/Shp2DB/Attributes/Bit/DataTypeBit.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("111")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0462287104622872, C2 0.47688564476885653}, COORD {C1 0.5547445255474452, C2 0.15328467153284664}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(true, rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -581,16 +508,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - NOT SET: model
-	// - NOT SET: model-path
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
 	// - set: database-schema
 	// - set: database-table
 	// --
-	// Erwartung: SUCCESS.
+	// Erwartung: SUCCESS: datatype=boolean
 	@Test
-	public void import_ModelAndPathNotSet_Ok() throws Exception
+	public void import_Datatype_Boolean_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -604,40 +529,29 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text)WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr boolean, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				//config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
-				config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimporttable");
+				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shptodbschema.shpimporttable.idname, shptodbschema.shpimporttable.the_geom FROM shptodbschema.shpimporttable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("111")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0462287104622872, C2 0.47688564476885653}, COORD {C1 0.5547445255474452, C2 0.15328467153284664}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(true, rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -647,16 +561,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - NOT SET: model
-	// - NOT SET: model-path
-	// - NOT SET: database-schema
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
 	// - set: database-table
 	// --
-	// Erwartung: SUCCESS.
+	// Erwartung: SUCCESS: datatype=char
 	@Test
-	public void import_ModelAndPathNotSet_SchemaNotSet_Ok() throws Exception
+	public void import_Datatype_Char_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -665,43 +577,34 @@ public class Shp2dbTest {
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop table
-	        	preStmt.execute("DROP TABLE IF EXISTS shpimportnoschematable CASCADE");
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shpimportnoschematable(idname text NOT NULL,textname text,doublename text,the_geom text,CONSTRAINT shpimporttable_pkey PRIMARY KEY (idname)) WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr character, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				//config.setValue(Config.SETTING_MODELNAMES, "ShapeModel");
-				//config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/LineString");
-				//config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.TABLE, "shpimportnoschematable");
+				File data=new File("src/test/data/Shp2DB/Attributes/Char/DataTypeChar.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT shpimportnoschematable.idname, shpimportnoschematable.the_geom FROM shpimportnoschematable");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					String idValue = rs.getString(1);
-					String theGeomValue= rs.getString(2);
-					row.add(idValue);
-					row.add(theGeomValue);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("111")) {
-						assertTrue(rowValue.get(1).equals("MULTIPOLYLINE {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -1.0462287104622872, C2 0.47688564476885653}, COORD {C1 0.5547445255474452, C2 0.15328467153284664}]}}}"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("a", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -711,131 +614,540 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird eine Shape-Datei gelesen, welche die folgenden Attribute beinhaltet:
-	// - idname
-	// - textname
-	// - doublename
-	// - the_geom
-	// --
-	// Nun werden die Attribute-Werte, nach den Attribute-Namen welche im Model definiert sind,
-	// aus der Shapedatei herausgelesen:
-	// - idname
-	// - textname
-	// - doublename
-	// - the_geom
-	// --
-	// Von diesen Attributen werden nun Einschraenkungen durch das Datenbank-Schema gemacht
-	// und die folgenden Daten in die Datenbank-Tabelle importiert:
-	// - textname
-	// - the_geom
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
 	// - set: database-schema
 	// - set: database-table
 	// --
-	// Erwartung: SUCCESS.
+	// Erwartung: SUCCESS: datatype=varchar
 	@Test
-	public void import_LimitedSelection_Ok() throws Exception{
-		{
-			// reader test
-			ShapeReader reader=null;
-			TransferDescription tdM=null;
-			Configuration ili2cConfig=new Configuration();
-			FileEntry fileEntryConditionClass=new FileEntry("src/test/data/Shp2DB/Attributes/ShapeModelAttrsLimited.ili", FileEntryKind.ILIMODELFILE);
-			ili2cConfig.addFileEntry(fileEntryConditionClass);
-			tdM=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
-			assertNotNull(tdM);
-			try {
-				reader=new ShapeReader(new File("src/test/data/Shp2DB/Attributes/testPointAttrsLimited.shp"));
-				reader.setModel(tdM);
-				assertTrue(reader.read() instanceof StartTransferEvent);
-				assertTrue(reader.read() instanceof StartBasketEvent);
-				IoxEvent event=reader.read();
-				if(event instanceof ObjectEvent){
-		        	IomObject iomObj=((ObjectEvent)event).getIomObject();
-		        	assertTrue(iomObj.getattrcount()==4);
-		        	assertTrue(iomObj.getattrvalue("doublename").equals("54321"));
-		        	assertTrue(iomObj.getattrvalue("idname").equals("1"));
-		        	assertTrue(iomObj.getattrvalue("textname").equals("text1"));
-		        	assertTrue(iomObj.getattrobj("the_geom", 0).toString().equals("COORD {C1 -0.5332351148239034, C2 0.7382312503416462}"));
-				}
-				assertTrue(reader.read() instanceof EndBasketEvent);
-				assertTrue(reader.read() instanceof EndTransferEvent);
-			}finally {
-				if(reader!=null) {
-			    	reader.close();
-					reader=null;
-		    	}
+	public void import_Datatype_VarChar_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr character varying, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Varchar/DataTypeVarChar.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
 			}
-		}
-		{
-			// import test
-			Settings config=new Settings();
-			Connection jdbcConnection=null;
-			try{
-		        Class driverClass = Class.forName("org.postgresql.Driver");
-		        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-		        {
-		        	Statement preStmt=jdbcConnection.createStatement();
-		        	// drop schema
-		        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
-		        	// create schema
-		        	preStmt.execute("CREATE SCHEMA shptodbschema");
-		        	// create table in schema
-		        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttablelimited(textname text,the_geom text)WITH (OIDS=FALSE)");
-		        	preStmt.close();
-		        }
-		        {
-					// shp
-					File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrsLimited.shp");
-					config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrsLimited");
-					config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-					config.setValue(Config.DBSCHEMA, "shptodbschema");
-					config.setValue(Config.TABLE, "shpimporttablelimited");
-					AbstractImport2db shp2db=new Shp2db();
-					shp2db.importData(data, jdbcConnection, config);
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				{
-					rows = new HashMap<String, List<String>>();
-					stmt=jdbcConnection.createStatement();
-					ResultSet rs = stmt.executeQuery("SELECT * FROM shptodbschema.shpimporttablelimited");
-					ResultSetMetaData rsmd = rs.getMetaData();
-					int rowCount=rs.getRow();
-					while(rs.next()){
-						List<String> row = new ArrayList<String>();
-						String textValue = rs.getString(1);
-						String theGeomValue= rs.getString(2);
-						row.add(textValue);
-						row.add(theGeomValue);
-						rows.put(ROW+String.valueOf(rowCount), row);
-						rowCount+=1;
-					}
-					for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-					  	List<String> rowValue = entry.getValue();
-					  	if(rowValue.get(0).equals("text1")) {
-							assertTrue(rowValue.get(1).equals("COORD {C1 -0.5332351148239034, C2 0.7382312503416462}"));
-							break;
-					  	}
-					}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12345", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
-			}finally{
-				if(jdbcConnection!=null){
-					jdbcConnection.close();
-				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
 			}
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Spalten-Namen (Attribute-Namen) der gesuchten Datenbank-Tabelle,
-	// welche sich innerhalb des gesuchten Datenbank-Schemas befindet,
-	// weder in den gesetzten Modellen, noch in der Shape-Datei gefunden werden koennen.
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void import_Datatype_Date_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr date, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Date/DataTypeDate.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("2017-10-20", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=integer
+	@Test
+	public void import_Datatype_Integer_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr integer, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Integer/DataTypeInteger.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(12, rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=numeric
+	@Test
+	public void import_Datatype_Numeric_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr numeric, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Numeric/DataTypeNumeric.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(java.math.BigDecimal.valueOf(Long.valueOf("12")), rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=text
+	@Test
+	public void import_Datatype_Text_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr character varying, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Text/DataTypeText.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("testtext", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=time
+	@Test
+	public void import_Datatype_Time_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr time without time zone, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Time/DataTypeTime.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(new java.sql.Time(10, 10, 11), rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=smallint
+	@Test
+	public void import_Datatype_Smallint_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr smallint, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Smallint/DataTypeSmallint.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals(1, rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}	
+	
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=timestamp
+	@Test
+	public void import_Datatype_Timestamp_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr timestamp, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Timestamp/DataTypeTimestamp.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("2014-05-15 12:30:30.555", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=uuid	
+	@Test
+	public void import_Datatype_Uuid_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr uuid, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Uuid/DataTypeUuid.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("123e4567-e89b-12d3-a456-426655440000", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+
+	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=xml
+	@Test
+	public void import_Datatype_Xml_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr xml, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
+				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertTrue(rs.getString(1).equals("<attrText>text</attrText>"));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}	
+	
+	// Testet ob der richtige Fehler ausgegeben wird, wenn die
+	// Attribute der Tabelle innerhalb der Shp-Datei nicht gefunden werden kann.
 	// --
 	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
@@ -849,27 +1161,25 @@ public class Shp2dbTest {
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-			{
-				Statement preStmt=jdbcConnection.createStatement();
-				// drop schema
-				preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
-				// create schema
-				preStmt.execute("CREATE SCHEMA shptodbschema");
-				// create table in schema
-				preStmt.execute("CREATE TABLE shptodbschema.shpimportnoattrsfound(id text,name text,state text) WITH (OIDS=FALSE)");
-				preStmt.close();
-			}
-	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrsNotFound");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
-			config.setValue(Config.TABLE, "shpimportnoattrsfound");
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr2 xml, the_geom2 geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+			// csv
+			File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
+			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+			config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("model attribute names: '[id2, name2, lastname2, phonenumber2]' not found in"));
+			assertTrue(e.getMessage().contains("data base attribute names: [the_geom, attr] not found in D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\Shp2DB\\Attributes\\Xml\\DataTypeXml.shp"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -877,7 +1187,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Testet, ob connection=null zu einer IoxException fuehrt 
+	// Wenn die Verbindung zu Datenbank: null ist,
+	// muss die Fehlermeldung: connection=null ausgegeben werden.
+	// --
+	// Die Test-Konfiguration wird wie folgt gesetzt:
+	// - set: Csv-file
+	// - NOT SET: connection content.
+	// --
+	// Erwartung: FEHLER: connection=null.
 	@Test
 	public void import_ConnectionFailed_Fail() throws Exception
 	{
@@ -888,7 +1205,7 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = null;
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
+			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
 			Shp2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
@@ -902,10 +1219,9 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - NOT SET: model
-	// - NOT SET: model-path
+	// Testet ob die Fehlermeldung: expected tablename ausgegeben wird,
+	// wenn keine Parameter gesetzt sind.
+	// --
 	// - NOT SET: database-schema
 	// - NOT SET: database-table
 	// --
@@ -920,9 +1236,7 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			// SETTING_MODELNAMES: "model2" not set
-			// SETTING_ILIDIRS: "src/test/data/Csv2DB" not set
+			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
 			AbstractImport2db shp2db=new Shp2db();
@@ -937,10 +1251,9 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Test-Konfiguration wie folgt gesetzt wird:
-	// - set: model
-	// - set: model-path
+	// Testet ob die Fehlermeldung: expected tablename ausgegeben wird,
+	// wenn die Datenbank-Tabelle nicht als Parameter gesetzt wird.
+	// --
 	// - set: database-schema
 	// - NOT SET: database-table
 	// --
@@ -955,10 +1268,8 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrs");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
+			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
 			// TABLE: "shpimporttable"
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
@@ -972,63 +1283,15 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Attribute-Namen innerhalb des Modells nicht gefunden werden koennen.
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - NOT SET: model-path
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FEHLER: model attribute names: '[id2, name2, lastname2, phonenumber2]' not found in ... .csv file
-	@Test
-	public void import_AttrNamesNotFoundInModel_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA shptodbschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text) WITH (OIDS=FALSE)");
-	        	preStmt.close();
-	        }
-	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrsNotFound");
-			// SETTING_ILIDIRS: "src/test/data/Shp2DB/Attributes"
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
-			config.setValue(Config.TABLE, "shpimporttable");
-			AbstractImport2db shp2db=new Shp2db();
-			shp2db.importData(data, jdbcConnection, config);
-	    	fail();
-		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("model attribute names: '[id2, name2, lastname2, phonenumber2]' not found"));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
+	// Testet ob die Fehlermeldung: shapefile .. not found ausgegeben wird,
 	// wenn die gesetzte shp Datei nicht existiert.
 	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
 	// Erwartung: FEHLER: shapefile ... not found
 	@Test
-	public void import_CsvFileNotFound_Fail() throws Exception
+	public void import_ShpFileNotFound_Fail() throws Exception
 	{
 		Settings config=null;
 		config=new Settings();
@@ -1038,15 +1301,13 @@ public class Shp2dbTest {
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
 			File data=new File("src/test/data/Shp2DB/NotExist/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrs");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/NotExist");
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
-			config.setValue(Config.TABLE, "shpimporttable");
+			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+			config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("shapefile"));
+			assertTrue(e.getMessage().contains("shp file"));
 			assertTrue(e.getMessage().contains("not found"));
 		}finally{
 			if(jdbcConnection!=null){
@@ -1055,61 +1316,14 @@ public class Shp2dbTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn das gesetzte Model/die Modelle nicht existieren.
+	// Testet ob die Fehlermeldung: import failed ausgegeben wird,
+	// wenn die id als primary key in der Datenbank-Tabelle gesetzt wurde,
+	// und die gleichen Daten in die Spalte id importiert werden soll.
 	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
 	// - set: database-schema
 	// - set: database-table
 	// --
-	// Erwartung: FEHLER: model ... not found
-	@Test
-	public void import_ModelNotFound_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA shptodbschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname text,textname text,doublename text,the_geom text) WITH (OIDS=FALSE)");
-	        	preStmt.close();
-	        }
-	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-			config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrsNotFound");
-			config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
-			config.setValue(Config.DBSCHEMA, "shptodbschema");
-			config.setValue(Config.TABLE, "shpimporttable");
-			AbstractImport2db shp2db=new Shp2db();
-			shp2db.importData(data, jdbcConnection, config);
-	    	fail();
-			}catch(Exception e) {
-				assertTrue(e.getMessage().contains("model attribute names: '[id2, name2, lastname2, phonenumber2]' not found in"));
-			}finally{
-				if(jdbcConnection!=null){
-					jdbcConnection.close();
-				}
-			}
-	}
-	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird,
-	// wenn die Daten bereits in der Datenbank vorhanden sind.
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: model
-	// - set: model-path
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FEHLER: pkid ... bereits vorhanden in datenbank
+	// Erwartung: FEHLER: import failed.
 	@Test
 	public void import_UniqueConstraint_Fail() throws Exception
 	{
@@ -1124,27 +1338,690 @@ public class Shp2dbTest {
 	        	// drop table
 	        	preStmt.execute("DROP TABLE IF EXISTS shpimportnoschematable CASCADE");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shpimportnoschematable(idname text NOT NULL,textname text,doublename text,the_geom text,CONSTRAINT shpimporttable_pkey PRIMARY KEY (idname)) WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shpimportnoschematable(attr boolean NOT NULL,the_geom geometry(POINT,2056),CONSTRAINT shpimporttable_pkey PRIMARY KEY (attr)) WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
 		        // shp
-				File data=new File("src/test/data/Shp2DB/Attributes/testPointAttrs.shp");
-				config.setValue(Config.SETTING_MODELNAMES, "ShapeModelAttrs");
-				config.setValue(Config.SETTING_ILIDIRS, "src/test/data/Shp2DB/Attributes");
+				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
 				// DBSCHEMA: "shptodbschema"
-				config.setValue(Config.TABLE, "shpimportnoschematable");
+				config.setValue(Config.SETTING_DBTABLE, "shpimportnoschematable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 				shp2db.importData(data, jdbcConnection, config);
 				fail();
 			}
-		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("import of ShapeModelAttrs.Topic1.testPointAttrs oid o2 {idname 1, doublename 53434, the_geom COORD {C1 -0.4025974025974026, C2 1.3974025974025972}, textname text1} to shpimportnoschematable failed"));
+		}catch(IoxException e) {
+			assertTrue(e.getMessage().contains("(attr)=(t)« existiert bereits."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
 			}
+		}
+	}
+	
+	// create shp file to test attribute-types.
+	//@Test
+	public void datatype_bigint_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "123");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Bigint/DataTypeBigInt.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_boolean_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "true");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_bit_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "1");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Bit/DataTypeBit.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_char_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "a");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Char/DataTypeChar.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_varchar_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "12345");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Varchar/DataTypeVarChar.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_date_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "2017-10-20");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Date/DataTypeDate.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_integer_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "12");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Integer/DataTypeInteger.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_numeric_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "12");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Numeric/DataTypeNumeric.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_text_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "testtext");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Text/DataTypeText.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_time_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "10:10:11");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Time/DataTypeTime.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_smallint_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "1");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Smallint/DataTypeSmallint.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_timestamp_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "2014-05-15T12:30:30.555000000");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Timestamp/DataTypeTimestamp.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_uuid_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "123e4567-e89b-12d3-a456-426655440000");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Uuid/DataTypeUuid.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_xml_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		inputObj.setattrvalue("attr", "<attrText>text</attrText>");
+		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_point_Ok() throws IoxException, IOException{
+		Iom_jObject objPointSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objPointSuccess.setattrvalue("idname", "12");
+		IomObject coordValue=objPointSuccess.addattrobj("the_geom", "COORD");
+		coordValue.setattrvalue("C1", "-0.22857142857142854");
+		coordValue.setattrvalue("C2", "0.5688311688311687");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Point/Point.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objPointSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objMultiPointSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objMultiPointSuccess.setattrvalue("idname", "12");
+		@SuppressWarnings("deprecation")
+		IomObject multiCoordValue=objMultiPointSuccess.addattrobj("attrMPoint", "MULTICOORD");
+		@SuppressWarnings("deprecation")
+		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+		
+		@SuppressWarnings("deprecation")
+		IomObject coordValue2=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue2.setattrvalue("C1", "-0.19220779220779216");
+		coordValue2.setattrvalue("C2", "0.6935064935064934");
+		
+		@SuppressWarnings("deprecation")
+		IomObject coordValue3=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue3.setattrvalue("C1", "-0.48831168831168836");
+		coordValue3.setattrvalue("C2", "0.32727272727272716");
+		
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiPoint/MultiPoint.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objMultiPointSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_lineString_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objPolylineSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objPolylineSuccess.setattrvalue("idname", "12");
+		IomObject polylineValue=objPolylineSuccess.addattrobj("attrLineString", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject coordStart=segments.addattrobj("segment", "COORD");
+		IomObject coordEnd=segments.addattrobj("segment", "COORD");
+		coordStart.setattrvalue("C1", "-0.22857142857142854");
+		coordStart.setattrvalue("C2", "0.5688311688311687");
+		coordEnd.setattrvalue("C1", "-0.22557142857142853");
+		coordEnd.setattrvalue("C2", "0.5658311688311687");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/LineString/LineString.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objPolylineSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_multiLineString_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objMultiPolylineSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objMultiPolylineSuccess.setattrvalue("idname", "12");
+		IomObject multiPolylineValue=objMultiPolylineSuccess.addattrobj("attrMLineString", "MULTIPOLYLINE");
+		
+		IomObject polylineValue=multiPolylineValue.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject coordStart=segments.addattrobj("segment", "COORD");
+		IomObject coordEnd=segments.addattrobj("segment", "COORD");
+		coordStart.setattrvalue("C1", "-0.22857142857142854");
+		coordStart.setattrvalue("C2", "0.5688311688311687");
+		coordEnd.setattrvalue("C1", "-0.22557142857142853");
+		coordEnd.setattrvalue("C2", "0.5658311688311687");
+		
+		IomObject polylineValue2=multiPolylineValue.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject coordStart2=segments2.addattrobj("segment", "COORD");
+		IomObject coordEnd2=segments2.addattrobj("segment", "COORD");
+		coordStart2.setattrvalue("C1", "-0.22557142857142853");
+		coordStart2.setattrvalue("C2", "0.5658311688311687");
+		coordEnd2.setattrvalue("C1", "-0.22755142857142853");
+		coordEnd2.setattrvalue("C2", "0.5558351688311687");
+		
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiLineString/MultiLineString.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objMultiPolylineSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_polygon_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objSurfaceSuccess.setattrvalue("idname", "12");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrPolygon", "MULTISURFACE");
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+		// polyline
+		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment=segments.addattrobj("segment", "COORD");
+		startSegment.setattrvalue("C1", "-0.22857142857142854");
+		startSegment.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment=segments.addattrobj("segment", "COORD");
+		endSegment.setattrvalue("C1", "-0.15857142857142854");
+		endSegment.setattrvalue("C2", "0.5688311688311687");
+		// polyline 2
+		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+		startSegment2.setattrvalue("C1", "-0.15857142857142854");
+		startSegment2.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+		endSegment2.setattrvalue("C1", "-0.15857142857142854");
+		endSegment2.setattrvalue("C2", "0.5888311688311687");
+		// polyline 3
+		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+		startSegment3.setattrvalue("C1", "-0.15857142857142854");
+		startSegment3.setattrvalue("C2", "0.5888311688311687");
+		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+		endSegment3.setattrvalue("C1", "-0.22857142857142854");
+		endSegment3.setattrvalue("C2", "0.5688311688311687");
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Polygon/Polygon.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	//@Test
+	public void datatype_multiPolygon_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objMultiSurfaceSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		objMultiSurfaceSuccess.setattrvalue("idname", "12");
+		IomObject multisurfaceValue=objMultiSurfaceSuccess.addattrobj("attrMultiPolygon", "MULTISURFACE");
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+		// polyline
+		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment=segments.addattrobj("segment", "COORD");
+		startSegment.setattrvalue("C1", "-0.228");
+		startSegment.setattrvalue("C2", "0.568");
+		IomObject endSegment=segments.addattrobj("segment", "COORD");
+		endSegment.setattrvalue("C1", "-0.158");
+		endSegment.setattrvalue("C2", "0.568");
+		// polyline 2
+		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+		startSegment2.setattrvalue("C1", "-0.158");
+		startSegment2.setattrvalue("C2", "0.568");
+		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+		endSegment2.setattrvalue("C1", "-0.158");
+		endSegment2.setattrvalue("C2", "0.588");
+		// polyline 3
+		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+		startSegment3.setattrvalue("C1", "-0.158");
+		startSegment3.setattrvalue("C2", "0.588");
+		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+		endSegment3.setattrvalue("C1", "-0.228");
+		endSegment3.setattrvalue("C2", "0.568");
+		}
+		
+		IomObject surfaceValue2 = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+		IomObject outerBoundary = surfaceValue2.addattrobj("boundary", "BOUNDARY");
+		// polyline
+		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment=segments.addattrobj("segment", "COORD");
+		startSegment.setattrvalue("C1", "0.228");
+		startSegment.setattrvalue("C2", "1.300");
+		IomObject endSegment=segments.addattrobj("segment", "COORD");
+		endSegment.setattrvalue("C1", "0.158");
+		endSegment.setattrvalue("C2", "1.568");
+		// polyline 2
+		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+		startSegment2.setattrvalue("C1", "0.158");
+		startSegment2.setattrvalue("C2", "1.568");
+		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+		endSegment2.setattrvalue("C1", "0.158");
+		endSegment2.setattrvalue("C2", "0.500");
+		// polyline 3
+		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+		startSegment3.setattrvalue("C1", "0.158");
+		startSegment3.setattrvalue("C2", "0.500");
+		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+		endSegment3.setattrvalue("C1", "0.228");
+		endSegment3.setattrvalue("C2", "1.300");
+		}
+		ShapeWriter writer = null;
+		try {
+			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiPolygon/MultiPolygon.shp"));
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objMultiSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
 		}
 	}
 }
