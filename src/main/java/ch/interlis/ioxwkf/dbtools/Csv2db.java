@@ -2,15 +2,17 @@ package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.Main;
-import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.ehi.ili2db.converter.ConverterException;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.csv.CsvReader;
 import ch.interlis.iox.IoxEvent;
@@ -28,29 +30,35 @@ public class Csv2db extends AbstractImport2db {
 	 */
 	@Override
 	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, String> attributes=new HashMap<String, String>();
-		CsvReader csvReader=new CsvReader(file);
-		String definedHeader=config.getValue(Config.HEADER);
-		String definedIliDirs=config.getValue(Config.SETTING_ILIDIRS);
-		String definedModelNames=config.getValue(Config.SETTING_MODELNAMES);
-		String definedDelimiter=config.getValue(Config.DELIMITER);
-		String definedRecordDelimiter=config.getValue(Config.RECORD_DELIMITER);
-		String definedSchemaName=config.getValue(Config.DBSCHEMA);
-		String definedTableName=config.getValue(Config.TABLE);
-		List<String> modelNames=null;
-		TransferDescription td=null;
-		
-		EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
-		if(definedModelNames!=null){
-			EhiLogger.logState("modelNames <"+definedModelNames+">");
-		}
+		Map<String, AttributePool> attrsPool=new HashMap<String, AttributePool>();
+		Set notFoundAttrs=new HashSet();
 		
 		if(!(file.exists())) {
 			throw new IoxException("csv file: "+file.getAbsolutePath()+" not found");
-		}
-		if(!(file.canRead())) {
+		}else if(!(file.canRead())) {
 			throw new IoxException("csv file: "+file.getAbsolutePath()+" not readable");
+		}else {
+			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
 		}
+		
+		/** mandatory: set csv file, which contains data to import.
+		 */
+		CsvReader csvReader=new CsvReader(file);
+		/** optional: set header on firstline, if csv file contain a header on first line.
+		 */
+		String definedFirstline=config.getValue(Config.SETTING_FIRSTLINE);
+		/** optional: set quotationmark, to define start and end of value.
+		 */
+		String definedQuotationmark=config.getValue(Config.SETTING_QUOTATIONMARK);
+		/** optional: set valuedelimiter, to define separate values.
+		 */
+		String definedValueDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
+		/** optional: set database schema, if table is not in default schema.
+		 */
+		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		/** mandatory: set database table to insert data into.
+		 */
+		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
 		
 		// validity of connection
 		if(db==null) {
@@ -60,55 +68,28 @@ public class Csv2db extends AbstractImport2db {
 		}
 		
 		// header validity
-		if(definedHeader==null || !definedHeader.equals(Config.HEADERPRESENT)) {
-			definedHeader=Config.HEADERABSENT;
-		}
-		
-		// model directory validity
-		List<String> dirList=new ArrayList<String>();
-		if(definedIliDirs!=null) {
-			String[] dirs=definedIliDirs.split(";");
-			for(String dir:dirs) {
-				dirList.add(dir);
-			}
-		}
-				
-		// models validity
-		if(definedModelNames!=null) {
-			modelNames=getSpecifiedModelNames(definedModelNames);
-			String filePath=null;
-			if(definedIliDirs==null) {
-				filePath=new java.io.File(file.getPath().toString()).getAbsoluteFile().getParentFile().getAbsolutePath();
-			}else {
-				filePath=new java.io.File(dirList.get(0).toString()).getAbsoluteFile().getAbsolutePath();
-			}
-			td=compileIli(modelNames,null,filePath,Main.getIli2cHome(),config);
-			if(td==null){
-				throw new IoxException("models "+modelNames.toString()+" not found");
-			}
+		if(definedFirstline==null || !definedFirstline.equals(Config.SET_FIRSTLINE_AS_HEADER)) {
+			definedFirstline=Config.SET_FIRSTLINE_AS_VALUE;
 		}
 		
 		// delimiter validity
-		if(definedDelimiter==null) {
-			definedDelimiter=Config.DEFAULT_DELIMITER;
+		if(definedQuotationmark==null) {
+			definedQuotationmark=Config.SET_QUOTATIONMARK;
 		}
 		
 		// record delimiter validity
-		if(definedRecordDelimiter==null) {
-			definedRecordDelimiter=Config.DEFAULT_RECORD_DELIMITER;
+		if(definedValueDelimiter==null) {
+			definedValueDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
 		}
 		
 		// build csvReader
-		if(definedHeader.equals(Config.HEADERPRESENT)) {
-			csvReader.setHeader(Config.HEADERPRESENT);
+		if(definedFirstline.equals(Config.SET_FIRSTLINE_AS_HEADER)) {
+			csvReader.setHeader(Config.SET_FIRSTLINE_AS_HEADER);
 		}else {
-			csvReader.setHeader(Config.HEADERABSENT);
+			csvReader.setHeader(Config.SET_FIRSTLINE_AS_VALUE);
 		}
-		CsvReader.setDelimiter(definedDelimiter);
-		csvReader.setRecordDelimiter(definedRecordDelimiter);
-		if(td!=null) {
-			csvReader.setModel(td);
-		}
+		CsvReader.setDelimiter(definedQuotationmark);
+		csvReader.setRecordDelimiter(definedValueDelimiter);
 		
 		// read IoxEvents
 		IoxEvent event=csvReader.read();
@@ -116,50 +97,57 @@ public class Csv2db extends AbstractImport2db {
 			if(event instanceof ObjectEvent) {
 				IomObject iomObj=((ObjectEvent)event).getIomObject();
 				
-				// schema validity
-				if(definedSchemaName!=null) {
-					if(!(schemaExists(definedSchemaName, db))){
-						throw new IoxException("schema "+definedSchemaName+" not found");
-					}
-				}
-				
 				// table validity
-				List<String> databaseAttrNames=new ArrayList<String>();
-				if(config.getValue(Config.TABLE)!=null){
-					if(definedSchemaName==null) {
-						// default schema
-					}
-					if(dbTableExists(definedSchemaName, definedTableName, db)) {
-						// attribute names of database table
-						databaseAttrNames=getAttrNamesOfTable(definedSchemaName, definedTableName, db);
-					}else {
+				ResultSet tableInDb=null;
+				if(config.getValue(Config.SETTING_DBTABLE)!=null){
+					// attribute names of database table
+					try {
+						tableInDb=openTableInDb(definedSchemaName, definedTableName, db);
+					}catch(Exception e) {
 						throw new IoxException("table "+definedTableName+" not found");
 					}
 				}else {
 					throw new IoxException("expected tablename");
 				}
 				
+				attrsPool.clear();
+				notFoundAttrs.clear();
 				// build attributes
-				attributes.clear();
-				for(int i=0;i<iomObj.getattrcount();i++) {
-					if(databaseAttrNames.contains(iomObj.getattrname(i))) {
-						String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
-						if(attrValue==null) {
-							attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
+				attrsPool.clear();
+				ResultSetMetaData rsmd=tableInDb.getMetaData();
+				for(int k=1;k<rsmd.getColumnCount()+1;k++) {
+					String columnName=rsmd.getColumnName(k);
+					int columnType=rsmd.getColumnType(k);
+					String columnTypeName=rsmd.getColumnTypeName(k);
+					
+					for(int i=0;i<iomObj.getattrcount();i++) {
+						if(columnName.equals(iomObj.getattrname(i))){
+							String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
+							if(attrValue==null) {
+								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
+							}
+							if(attrValue!=null) {
+								AttributePool attrData=new AttributePool();
+								attrData.setAttributeName(iomObj.getattrname(i));
+								attrData.setAttributeType(columnType);
+								attrData.setAttributeTypeName(columnTypeName);
+								attrsPool.put(iomObj.getattrname(i), attrData);
+							}
+						}else {
+							notFoundAttrs.add(iomObj.getattrname(i));
 						}
-						if(attrValue!=null) {
-							attributes.put(iomObj.getattrname(i), attrValue);
-						}
-					}else {
-						
 					}
 				}
-				if(attributes.size()==0) {
-					throw new IoxException("data base attribute names: "+databaseAttrNames.toString()+" not found in "+file.getAbsolutePath());
+				if(attrsPool.size()==0) {
+					throw new IoxException("data base attribute names: "+notFoundAttrs.toString()+" not found in "+file.getName());
 				}
-				
+
 				// insert attributes to database
-				insertIntoTable(definedSchemaName, definedTableName, attributes, db, iomObj);
+				try {
+					insertIntoTable(definedSchemaName, definedTableName, attrsPool, db,iomObj);
+				} catch (ConverterException e) {
+					throw new IoxException("import failed"+e);
+				}
 				event=csvReader.read();
 			}else {
 				// next IoxEvent
