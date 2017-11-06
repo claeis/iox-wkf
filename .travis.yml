@@ -1,0 +1,35 @@
+language: java
+  
+branches:
+  only:
+    - master
+    - stable
+
+addons:
+  postgresql: "9.6"
+  apt:
+    packages:
+    - postgresql-9.6-postgis-2.3
+
+install: true
+
+before_script:
+    - psql -c 'create database ioxwkf;' -U postgres
+    - psql -c 'select version();' -d ioxwkf -U postgres
+    - psql -c 'create extension postgis;' -d ioxwkf -U postgres
+    - psql -c 'create extension "uuid-ossp";' -d ioxwkf -U postgres
+    - psql -c 'select postgis_full_version();' -d ioxwkf -U postgres
+  
+script: 
+  - gradle -Ddburl=jdbc:postgresql:ioxwkf -Ddbusr=postgres build 
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE upload
+    on:
+      branch: master
+  - provider: script
+    skip_cleanup: true
+    script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE -Drelease=final upload
+    on:
+      branch: stable
