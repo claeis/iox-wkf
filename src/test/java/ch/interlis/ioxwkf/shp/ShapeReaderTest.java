@@ -841,54 +841,7 @@ public class ShapeReaderTest {
 		}
 	}
 	
-	// Es wird eine Shape-Datei gelesen, welche die folgenden Attribute beinhaltet:
-	// - idname
-	// - textname
-	// - doublename
-	// - the_geom
-	// --
-	// Nun werden die Attribute-Werte, nach den Attribute-Namen welche im Model definiert sind,
-	// aus der Shapedatei herausgelesen:
-	// - idname
-	// - textname
-	// - doublename
-	// - the_geom
-	// --
-	// Erwartung: SUCCESS.
-	@Test
-	public void limitedSelectionRead_Ok() throws Exception
-	{
-		// ili-datei lesen
-		ShapeReader reader=null;
-		TransferDescription tdM=null;
-		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntryConditionClass=new FileEntry("src/test/data/Shp2DB/Attributes/ShapeModelAttrsLimited.ili", FileEntryKind.ILIMODELFILE);
-		ili2cConfig.addFileEntry(fileEntryConditionClass);
-		tdM=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
-		assertNotNull(tdM);
-		try {
-			reader=new ShapeReader(new File("src/test/data/Shp2DB/Attributes/testPointAttrsLimited.shp"));
-			reader.setModel(tdM);
-			assertTrue(reader.read() instanceof StartTransferEvent);
-			assertTrue(reader.read() instanceof StartBasketEvent);
-			IoxEvent event=reader.read();
-			if(event instanceof ObjectEvent){
-	        	IomObject iomObj=((ObjectEvent)event).getIomObject();
-	        	assertTrue(iomObj.getattrcount()==4);
-	        	assertTrue(iomObj.getattrvalue("doublename").equals("54321"));
-	        	assertTrue(iomObj.getattrvalue("idname").equals("1"));
-	        	assertTrue(iomObj.getattrvalue("textname").equals("text1"));
-	        	assertTrue(iomObj.getattrobj("the_geom", 0).toString().equals("COORD {C1 -0.5332351148239034, C2 0.7382312503416462}"));
-			}
-			assertTrue(reader.read() instanceof EndBasketEvent);
-			assertTrue(reader.read() instanceof EndTransferEvent);
-		}finally {
-			if(reader!=null) {
-		    	reader.close();
-				reader=null;
-	    	}
-		}
-	}
+
 	
 	// Es wird getestet ob Attribute Elemente in Interlis IomObjects convertiert werden koennen und die Attributenamen mit den Model Attribute Namen uebereinstimmen.
 	// Model wurde gesetzt.
