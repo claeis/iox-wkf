@@ -1402,7 +1402,9 @@ public class ShapeWriterTest {
 			writer.write(new ObjectEvent(objSuccess));
 			fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().equals("class Test1.Topic1.Point99 not found in model Test1"));
+			assertTrue(e.getMessage().contains("Test1.Topic1.Point99"));
+			assertTrue(e.getMessage().contains("not found in"));
+			assertTrue(e.getMessage().contains("Test1"));
 		}finally {
 	    	if(writer!=null) {
 	    		try {
