@@ -978,7 +978,11 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("data base attribute names: [planet, name, lastname] not found in AttributesHeader3.csv"));
+			assertTrue(e.getMessage().contains("data base attribute names:"));
+			assertTrue(e.getMessage().contains("planet"));
+			assertTrue(e.getMessage().contains("name"));
+			assertTrue(e.getMessage().contains("lastname"));
+			assertTrue(e.getMessage().contains("not found in AttributesHeader3.csv"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
