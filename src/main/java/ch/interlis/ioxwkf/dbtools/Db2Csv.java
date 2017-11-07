@@ -48,10 +48,10 @@ public class Db2Csv extends AbstractExportFromdb {
 		CsvWriter csvWriter=new CsvWriter(file);
 		String definedIliDirs=config.getValue(Config.SETTING_ILIDIRS);
 		String definedModelNames=config.getValue(Config.SETTING_MODELNAMES);
-		String definedDelimiter=config.getValue(Config.DELIMITER);
-		String definedRecordDelimiter=config.getValue(Config.RECORD_DELIMITER);
-		String definedSchemaName=config.getValue(Config.DBSCHEMA);
-		String definedTableName=config.getValue(Config.TABLE);
+		String definedDelimiter=config.getValue(Config.SETTING_QUOTATIONMARK);
+		String definedRecordDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
+		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
 		List<String> modelNames=null;
 		
 		EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
@@ -114,18 +114,18 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		// delimiter validity
 		if(definedDelimiter==null) {
-			definedDelimiter=Config.DEFAULT_DELIMITER;
+			definedDelimiter=Config.SET_QUOTATIONMARK;
 			EhiLogger.logState("delimiter <"+definedDelimiter+">");
 		}
 		
 		// record delimiter validity
 		if(definedRecordDelimiter==null) {
-			definedRecordDelimiter=Config.DEFAULT_RECORD_DELIMITER;
+			definedRecordDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
 			EhiLogger.logState("record delimiter <"+definedRecordDelimiter+">");
 		}
 		
 		// build csvWriter
-		csvWriter.setHeader(Config.HEADERPRESENT);
+		csvWriter.setHeader(Config.SET_FIRSTLINE_AS_VALUE);
 		EhiLogger.logState("create header");
 		csvWriter.setDelimiter(definedDelimiter);
 		csvWriter.setRecordDelimiter(definedRecordDelimiter);
