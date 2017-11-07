@@ -862,7 +862,11 @@ public class ShapeReaderTest {
 			assertTrue(reader.read() instanceof ObjectEvent);
 			fail();
     	}catch(IoxException ex){
-    		assertTrue(ex.getMessage().contains("model attribute names: '[id2, name2, lastname2]' not found"));
+    		assertTrue(ex.getMessage().contains("model attribute names:"));
+    		assertTrue(ex.getMessage().contains("id2"));
+    		assertTrue(ex.getMessage().contains("name2"));
+    		assertTrue(ex.getMessage().contains("lastname2"));
+    		assertTrue(ex.getMessage().contains("not found"));
     	}finally {
     		td2=null;
     		ili2cConfig=null;
