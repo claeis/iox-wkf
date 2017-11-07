@@ -1177,7 +1177,11 @@ public class Shp2dbTest {
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("data base attribute names: [the_geom, attr] not found in D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\Shp2DB\\Attributes\\Xml\\DataTypeXml.shp"));
+			assertTrue(e.getMessage().contains("data base attribute names:"));
+			assertTrue(e.getMessage().contains("the_geom"));
+			assertTrue(e.getMessage().contains("attr"));
+			assertTrue(e.getMessage().contains("not found in"));
+			assertTrue(e.getMessage().contains("DataTypeXml.shp"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
