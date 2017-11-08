@@ -213,12 +213,12 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         		if(features!=null) {
         			writeFeatureCollectionToShapefile(features);
         		}else {
-        			throw new IoxException("no feature found in "+iomObj.toString());
+        			throw new IoxException("no feature found in "+iomObj.getobjecttag());
         		}
 			} catch (IOException e) {
-				throw new IoxException("failed to write object "+iomObj.toString(),e);
+				throw new IoxException("failed to write object "+iomObj.getobjecttag(),e);
 			} catch (Iox2jtsException e) {
-				throw new IoxException("failed to convert "+iomObj.toString()+" in jts",e);
+				throw new IoxException("failed to convert "+iomObj.getobjecttag()+" in jts",e);
 			}
             close();
 		}else if(event instanceof EndBasketEvent){
@@ -332,7 +332,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 								// convert ili to jts
 								jtsCoord=ch.interlis.iox_j.jts.Iox2jts.coord2JTS(child);
 							} catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.toString()+" to jts",e);
+								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
 							if(valueCount > 1){
 								throw new IoxException("max one COORD value allowed ("+attrName+")");
@@ -356,7 +356,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							try {
 								jtsCoords=Iox2multijts.multiCoord2JTS(child);
 							} catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.toString()+" to jts",e);
+								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
 							if(valueCount > 1){
 								throw new IoxException("max one MULTICOORD value allowed ("+attrName+")");
@@ -381,7 +381,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							try{
 								jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(child, true, 0.00);
 							}catch (Iox2jtsException e){
-								throw new IoxException("failed to convert "+child.toString()+" to jts",e);
+								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
 							if(valueCount > 1){
 								throw new IoxException("max one POLYLINE value allowed ("+attrName+")");
@@ -409,7 +409,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							try {
 								lineStrings=Iox2multijts.multiLineString2JTS(child);
 							} catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.toString()+" to jts",e);
+								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
 							if(valueCount > 1){
 								throw new IoxException("max one MULTIPOLYLINE value allowed ("+attrName+")");
@@ -450,7 +450,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 									simpleFeatureList.add(feature);
 								}
 							}catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.toString()+" to jts",e);
+								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
 						}
 					}else {
