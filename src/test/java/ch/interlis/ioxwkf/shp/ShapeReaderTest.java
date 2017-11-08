@@ -841,45 +841,27 @@ public class ShapeReaderTest {
 		}
 	}
 	
-
-	
-	// Es wird getestet ob Attribute Elemente in Interlis IomObjects convertiert werden koennen und die Attributenamen mit den Model Attribute Namen uebereinstimmen.
+	// Es wird getestet ob der ShapeFile Name, als Klassenname innerhalb der Modelle gefunden werden kann.
 	// Model wurde gesetzt.
-	// Erwartung: FEHLER: model attribute names: '[id2, name2, lastname2, phonenumber2]' not found in ... .csv file
+	// Erwartung: FEHLER: class not found in ... .model
 	@Test
-	public void attrNamesNotFoundInModel_Fail() throws Exception {
-		// compile model
-		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_IN+"Attributes/ShapeModelAttrs2.ili", FileEntryKind.ILIMODELFILE);
-		ili2cConfig.addFileEntry(fileEntry);
-		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+	public void classNotFoundInModel_False() throws IoxException, IOException{
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_IN+"Attributes/Attributes3.shp"));
+			reader=new ShapeReader(new File(TEST_IN+"LineString/LineString.shp"));
+			reader.setModel(td);
 			assertTrue(reader.read() instanceof StartTransferEvent);
-			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartBasketEvent);
-			assertTrue(reader.read() instanceof ObjectEvent);
+			reader.read();
 			fail();
-    	}catch(IoxException ex){
-    		assertTrue(ex.getMessage().contains("model attribute names:"));
-    		assertTrue(ex.getMessage().contains("id2"));
-    		assertTrue(ex.getMessage().contains("name2"));
-    		assertTrue(ex.getMessage().contains("lastname2"));
-    		assertTrue(ex.getMessage().contains("not found"));
+		}catch(IoxException ex){
+    		assertTrue(ex.getMessage().contains("class: 'LineString' not found in model: 'ShapeModel'."));
     	}finally {
-    		td2=null;
-    		ili2cConfig=null;
-    		fileEntry=null;
 	    	if(reader!=null) {
-	    		try {
-	    			reader.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		reader=null;
+		    	reader.close();
+				reader=null;
 	    	}
-		}
+    	}
 	}
 	
 	// Es wird getestet ob ein Point Element in ein Interlis IomObject convertiert werden kann.
