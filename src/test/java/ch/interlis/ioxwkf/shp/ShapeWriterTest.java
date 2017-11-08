@@ -33,7 +33,7 @@ public class ShapeWriterTest {
 	{
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		assertNotNull(td);
@@ -187,7 +187,6 @@ public class ShapeWriterTest {
 	@Test
 	public void point_Ok() throws IoxException, IOException{
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
-		@SuppressWarnings("deprecation")
 		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
 		coordValue.setattrvalue("C2", "0.5688311688311687");
@@ -246,7 +245,6 @@ public class ShapeWriterTest {
 		inputObj.setattrvalue("id1", "1");
 		inputObj.setattrvalue("Text", "text1");
 		inputObj.setattrvalue("Double", "53434");
-		@SuppressWarnings("deprecation")
 		IomObject coordValue=inputObj.addattrobj("attrPoint2", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
@@ -271,7 +269,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -367,19 +365,15 @@ public class ShapeWriterTest {
 	@Test
 	public void multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint", "o1");
-		@SuppressWarnings("deprecation")
 		IomObject multiCoordValue=objSuccessFormat.addattrobj("attrMPoint", "MULTICOORD");
-		@SuppressWarnings("deprecation")
 		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue1.setattrvalue("C1", "-0.22857142857142854");
 		coordValue1.setattrvalue("C2", "0.5688311688311687");
 		
-		@SuppressWarnings("deprecation")
 		IomObject coordValue2=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue2.setattrvalue("C1", "-0.19220779220779216");
 		coordValue2.setattrvalue("C2", "0.6935064935064934");
 		
-		@SuppressWarnings("deprecation")
 		IomObject coordValue3=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue3.setattrvalue("C1", "-0.48831168831168836");
 		coordValue3.setattrvalue("C2", "0.32727272727272716");
@@ -405,7 +399,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -481,7 +475,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		
@@ -525,13 +519,9 @@ public class ShapeWriterTest {
 	@Test
 	public void lineString_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.LineString", "o1");
-		@SuppressWarnings("deprecation")
 		IomObject polylineValue=objStraightsSuccess.addattrobj("attrLineString", "POLYLINE");
-		@SuppressWarnings("deprecation")
 		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
-		@SuppressWarnings("deprecation")
 		IomObject coordStart=segments.addattrobj("segment", "COORD");
-		@SuppressWarnings("deprecation")
 		IomObject coordEnd=segments.addattrobj("segment", "COORD");
 		coordStart.setattrvalue("C1", "-0.22857142857142854");
 		coordStart.setattrvalue("C2", "0.5688311688311687");
@@ -558,7 +548,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -630,7 +620,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -713,7 +703,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -810,7 +800,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -918,7 +908,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -1019,7 +1009,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -1153,7 +1143,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -1286,7 +1276,7 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry("src/test/data/ShapeWriter/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
@@ -1342,7 +1332,7 @@ public class ShapeWriterTest {
 			writer.write(new ObjectEvent(objSuccess));
 			fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().equals("no feature found in Test1.Topic1.Point oid o1 {}"));
+			assertTrue(e.getMessage().equals("no feature found in Test1.Topic1.Point"));
 		}finally {
 	    	if(writer!=null) {
 	    		try {
@@ -1433,7 +1423,7 @@ public class ShapeWriterTest {
 			writer.write(new ObjectEvent(objSuccess));
 			fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().equals("failed to convert COORD {C3 0.5688311688311687, C1 -0.22857142857142854} to jts"));
+			assertTrue(e.getMessage().equals("failed to convert COORD to jts"));
 		}finally {
 	    	if(writer!=null) {
 	    		try {
