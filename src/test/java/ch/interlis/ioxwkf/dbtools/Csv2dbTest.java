@@ -62,34 +62,19 @@ public class Csv2dbTest {
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
-			{
-				String id=null;
-				String abbreviation=null;
-				String state=null;
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportwithheadernopk.idname, csvtodbschema.csvimportwithheadernopk.abbreviation, csvtodbschema.csvimportwithheadernopk.state FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportwithheadernopk");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					id = rs.getString(1);
-					abbreviation = rs.getString(2);
-					state= rs.getString(3);
-					row.add(id);
-					row.add(abbreviation);
-					row.add(state);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM csvtodbschema.csvimportwithheadernopk;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				// test on attribute-names: id, abbreviation, state.
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).contains("20")) {
-						assertTrue(rowValue.get(1).equals("AU"));
-						assertTrue(rowValue.get(2).equals("Deutschland"));
-						break;
-				  	}
+				ResultSet rs = stmt.executeQuery("SELECT idname,abbreviation,state FROM csvtodbschema.csvimportwithheadernopk;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(3, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("20", rs.getObject(1));
+				  	assertEquals("AU", rs.getObject(2));
+				  	assertEquals("Deutschland", rs.getObject(3));
 				}
 			}
 		}finally{
@@ -134,26 +119,17 @@ public class Csv2dbTest {
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
-			{
-				String attr1=null;
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT public.csvimportnopkcolumn.attr1 FROM public.csvimportnopkcolumn");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=rs.getRow();
-				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					attr1 = rs.getString(1);
-					row.add(attr1);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM csvimportnopkcolumn;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
 				}
-				// test on attribute-names: id, abbreviation, state.
-				boolean dataFound=false;
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	assertEquals("Holland",rowValue.get(0));
-				  	break;
+				ResultSet rs = stmt.executeQuery("SELECT attr1 FROM csvimportnopkcolumn;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(1, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("Holland", rs.getObject(1));
 				}
 			}
 		}catch(Exception e) {
@@ -203,36 +179,20 @@ public class Csv2dbTest {
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
-			{
-				rows = new HashMap<String, List<String>>();
+	        {
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvimportwithheader.idname, csvimportwithheader.abbreviation, csvimportwithheader.state FROM csvimportwithheader");
-				ResultSetMetaData rsmd = rs.getMetaData();
-				int rowCount=1;
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM csvimportwithheader;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT idname,abbreviation,state FROM csvimportwithheader;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(3, rsmd.getColumnCount());
 				while(rs.next()){
-					List<String> row = new ArrayList<String>();
-					id = rs.getString(1);
-					abbreviation = rs.getString(2);
-					state= rs.getString(3);
-					row.add(id);
-					row.add(abbreviation);
-					row.add(state);
-					rows.put(ROW+String.valueOf(rowCount), row);
-					rowCount+=1;
+					assertEquals("20", rs.getObject(1));
+				  	assertEquals("AU", rs.getObject(2));
+				  	assertEquals("Deutschland", rs.getObject(3));
 				}
-				// test on attribute-names: id, abbreviation, state.
-				boolean attrValuesFound=false;
-				for (Map.Entry<String,List<String>> entry : rows.entrySet()) {
-				  	List<String> rowValue = entry.getValue();
-				  	if(rowValue.get(0).equals("20")&&rowValue.get(1).equals("AU")&&rowValue.get(2).equals("Deutschland")){
-				  		attrValuesFound=true;
-				  	}
-				}
-				if(!attrValuesFound) {
-					attrValuesFound=false;
-					fail();
-				}
-				attrValuesFound=false;
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1012,7 +972,6 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertEquals(IoxException.class,e.getClass());
 			assertEquals("connection==null",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
@@ -1142,7 +1101,6 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
-			assertEquals(IoxException.class,e.getClass());
 			assertTrue(e.getMessage().contains("csv file"));
 			assertTrue(e.getMessage().contains("not found"));
 		}finally{
