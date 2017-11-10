@@ -30,7 +30,7 @@ public class Csv2db extends AbstractImport2db {
 	 */
 	@Override
 	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, AttributePool> attrsPool=new HashMap<String, AttributePool>();
+		Map<String, PgAttributeObject> attrsPool=new HashMap<String, PgAttributeObject>();
 		Set notFoundAttrs=new HashSet();
 		
 		if(!(file.exists())) {
@@ -127,7 +127,7 @@ public class Csv2db extends AbstractImport2db {
 								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
 							}
 							if(attrValue!=null) {
-								AttributePool attrData=new AttributePool();
+								PgAttributeObject attrData=new PgAttributeObject();
 								attrData.setAttributeName(iomObj.getattrname(i));
 								attrData.setAttributeType(columnType);
 								attrData.setAttributeTypeName(columnTypeName);
