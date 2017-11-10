@@ -1,12 +1,9 @@
 package ch.interlis.ioxwkf.dbtools;
 
-public class AttributePool {
+public class PgAttributeObject {
 	private String attributeName=null;
 	private Integer attributeType=null;
 	private String attributeTypeName=null;
-	private Integer srid=null;
-	private Integer coordDimension=0;
-	private String geoColumnTypeName=null;
 	
 	public String getAttributeName() {
 		return attributeName;
@@ -25,23 +22,5 @@ public class AttributePool {
 	}
 	public void setAttributeTypeName(String attributeTypeName) {
 		this.attributeTypeName = attributeTypeName;
-	}
-	public Integer getSrid() {
-		return srid;
-	}
-	public void setSrid(Integer srid) {
-		this.srid = srid;
-	}
-	public Integer getCoordDimension() {
-		return coordDimension;
-	}
-	public void setCoordDimension(Integer coordDimension) {
-		this.coordDimension = coordDimension;
-	}
-	public String getGeoColumnTypeName() {
-		return geoColumnTypeName;
-	}
-	public void setGeoColumnTypeName(String geoColumnTypeName) {
-		this.geoColumnTypeName = geoColumnTypeName;
 	}
 }

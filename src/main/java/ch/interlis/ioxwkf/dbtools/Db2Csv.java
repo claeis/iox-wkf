@@ -5,19 +5,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.Main;
-import ch.interlis.ili2c.metamodel.DataModel;
-import ch.interlis.ili2c.metamodel.Element;
-import ch.interlis.ili2c.metamodel.Model;
-import ch.interlis.ili2c.metamodel.Topic;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.csv.CsvWriter;
 import ch.interlis.iox.IoxException;
@@ -28,14 +17,14 @@ import ch.interlis.iox_j.StartTransferEvent;
 
 public class Db2Csv extends AbstractExportFromdb {
 	
-	private String modelName=null;
-	private String topicName=null;
-	private String className=null;
-	private TransferDescription td=null;
-	private HashMap<Viewable, Topic> iliTopics=null;
-	private List<HashMap<Viewable, Model>> listOfIliClasses=null;
-	private HashMap<Viewable, Model> iliClasses=null;
-
+	/** default model content.
+	 */
+	private static final String MODELNAME="model";
+	
+	/** default topic content.
+	 */
+	private static final String TOPICNAME="topic";
+	
 	/** export from data base table to csv file.
 	 * @param file
 	 * @param db
@@ -45,233 +34,166 @@ public class Db2Csv extends AbstractExportFromdb {
 	 */
 	@Override
 	public void exportData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		CsvWriter csvWriter=new CsvWriter(file);
-		String definedIliDirs=config.getValue(Config.SETTING_ILIDIRS);
-		String definedModelNames=config.getValue(Config.SETTING_MODELNAMES);
-		String definedDelimiter=config.getValue(Config.SETTING_QUOTATIONMARK);
-		String definedRecordDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
-		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
-		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
-		List<String> modelNames=null;
-		
-		EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
-		if(definedModelNames!=null){
-			EhiLogger.logState("modelNames <"+definedModelNames+">");
-		}
-		if(definedIliDirs!=null){
-			EhiLogger.logState("ilidirs <"+definedIliDirs+">");
-		}
-		if(definedDelimiter!=null){
-			EhiLogger.logState("delimiter <"+definedDelimiter+">");
-		}
-		if(definedRecordDelimiter!=null){
-			EhiLogger.logState("record delimiter <"+definedRecordDelimiter+">");
-		}
-		
-		if(definedTableName!=null){
-			EhiLogger.logState("tablename <"+definedTableName+">");
+		/** mandatory: set target csv file to write to.
+		 */
+		if(file!=null) {
+			EhiLogger.logState("CSV file to write to: <"+file.getAbsolutePath()+">");
 		}else {
-			throw new IoxException("expected tablename");
+			throw new IoxException("CSV-file==null.");
 		}
 		
-		// validity of connection
+		/** first line is everytime header line. firstline is not changeable.
+		 */
+		String definedFirstline=Config.SET_FIRSTLINE_AS_HEADER;
+		EhiLogger.logState("firstline: <header>.");
+		
+		/** optional: set quotationmark, to define start and end of value.
+		 */
+		String definedQuotationmark=config.getValue(Config.SETTING_QUOTATIONMARK);
+		if(definedQuotationmark==null) {
+			definedQuotationmark=Config.SET_QUOTATIONMARK;
+		}
+		EhiLogger.logState("quotationmark: <"+definedQuotationmark+">.");
+		
+		/** optional: set valuedelimiter, to define separate values.
+		 */
+		String definedValueDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
+		if(definedValueDelimiter==null) {
+			definedValueDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
+		}
+		EhiLogger.logState("value delimiter: <"+definedValueDelimiter+">.");
+		
+		/** optional: set database schema, if table is not in default schema.
+		 */
+		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		if(definedSchemaName==null) {
+			EhiLogger.logState("no db schema name defined, get default schema.");
+		}else {
+			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+		}
+		
+		/** mandatory: set database table to insert data into.
+		 */
+		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
+		if(definedTableName==null) {
+			throw new IoxException("database table==null.");
+		}else {
+			EhiLogger.logState("db table name: <"+definedTableName+">.");
+		}
+		
+		/** data base connection has not to be null.
+		 */
 		if(db==null) {
 			throw new IoxException("connection==null");
 		}else if(!(db.isValid(0))) {
-			throw new IoxException("connection to: "+db+" failed");
-		}else {
-			EhiLogger.logState("connection to <"+db+"> successful");
+			throw new IoxException("connection to database: <failed>.");
 		}
+		EhiLogger.logState("connection to database: <success>.");
 		
-		// model directory validity
-		List<String> dirList=new ArrayList<String>();
-		if(definedIliDirs!=null) {
-			String[] dirs=definedIliDirs.split(";");
-			for(String dir:dirs) {
-				dirList.add(dir);
-			}
-		}
-				
-		// models validity
-		if(definedModelNames!=null) {
-			modelNames=getSpecifiedModelNames(definedModelNames);
-			String filePath=null;
-			if(definedIliDirs==null) {
-				filePath=new java.io.File(file.getPath()).getAbsoluteFile().getParentFile().getAbsolutePath();
-			}else {
-				filePath=new java.io.File(dirList.get(0)).getAbsoluteFile().getAbsolutePath();
-			}
-			td=compileIli(modelNames,null,filePath,Main.getIli2cHome(),config);
-			if(td==null){
-				throw new IoxException("models "+modelNames.toString()+" not found");
-			}
-		}else {
-			// set modelname
-			modelName=file.getName();
-			topicName="Topic1";
-			className="Class1";
-		}
-		
-		// delimiter validity
-		if(definedDelimiter==null) {
-			definedDelimiter=Config.SET_QUOTATIONMARK;
-			EhiLogger.logState("delimiter <"+definedDelimiter+">");
-		}
-		
-		// record delimiter validity
-		if(definedRecordDelimiter==null) {
-			definedRecordDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
-			EhiLogger.logState("record delimiter <"+definedRecordDelimiter+">");
-		}
-		
-		// build csvWriter
-		csvWriter.setHeader(Config.SET_FIRSTLINE_AS_VALUE);
-		EhiLogger.logState("create header");
-		csvWriter.setDelimiter(definedDelimiter);
-		csvWriter.setRecordDelimiter(definedRecordDelimiter);
-		if(td!=null) {
-			csvWriter.setModel(td);
-		}
-		List<IomObject> objectList = new ArrayList<IomObject>();
-		// get db table content
-		ResultSet tableInDb=null;
+		/** create and set settings to csvWriter.
+		 */
+		CsvWriter csvWriter=new CsvWriter(file);
+		csvWriter.setHeader(definedFirstline);
+		csvWriter.setDelimiter(definedQuotationmark);
+		csvWriter.setRecordDelimiter(definedValueDelimiter);
+
+		/** create selection to get information about attributes of target data base table.
+		 */
+		ResultSet dbTable=null;
 		try {
-			tableInDb=AbstractExportFromdb.openTableInDb(definedSchemaName, definedTableName, db);
+			dbTable=openTableInDb(definedSchemaName, definedTableName, db);
+			if(definedSchemaName!=null) {
+				EhiLogger.logState("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: exist.");
+			}else {
+				EhiLogger.logState("db table <"+definedTableName+"> inside default db schema: exist.");
+			}
 		}catch(Exception e) {
 			if(definedSchemaName!=null) {
-				throw new IoxException("table "+definedSchemaName+"."+definedTableName+" not found");
+				throw new IoxException("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: not found.",e);
+			}else{
+				throw new IoxException("db table "+definedTableName+" inside default db schema: not found.",e);
+			}
+		}
+		
+		/** set attribute data to target attribute, to create wrapper selection.
+		 */
+		ResultSetMetaData metadataDbTable=dbTable.getMetaData();
+		for(int k=1;k<metadataDbTable.getColumnCount()+1;k++) {
+			// columnName
+			String columnName=metadataDbTable.getColumnName(k);
+			// columnType
+			int columnType=metadataDbTable.getColumnType(k);
+			// columnTypeName
+			String columnTypeName=metadataDbTable.getColumnTypeName(k);
+			
+			// set PG Attribute Object data.
+			PgAttributeObject pgAttrObj=createPgAttrObj(columnName);
+			pgAttrObj.setAttributeName(columnName);
+			pgAttrObj.setAttributeType(columnType);
+			pgAttrObj.setAttributeTypeName(columnTypeName);
+			
+			// put columnName alias attrName and PG Attribute Object alias PgAttrObj to PG Attribute Object Map.
+			addAttrObjToMap(columnName, pgAttrObj);
+		}
+		if(sizeOfCurrentPgAttrMap()==0) {
+			if(definedSchemaName!=null) {
+				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside db schema: <"+definedSchemaName+">.");
 			}else {
-				throw new IoxException("table "+definedTableName+" not found");
+				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside default db schema.");
 			}
 		}
-		ResultSetMetaData rsmd = tableInDb.getMetaData();
 		
-		List<String> attributeNames=AbstractExportFromdb.getAttributeNames(rsmd);
-		if(attributeNames.size()!=0) {
-			if(td!=null) {
-				// compare columnNames with models and get model with same attribute names.
-				Viewable modelClass=getAppropriateClassOfModel(td, attributeNames);
-				if(modelClass==null) {
-					throw new IoxException("class attribute names "+attributeNames.toString()+" not found in given models "+modelNames.toString());
-				}else {
-					className=modelClass.getName();
-				}
-			}
-		}else {
-			throw new IoxException("no attributes found on table "+definedTableName);
+		/** create selection for appropriate datatypes.
+		 *  geometry datatypes are wrapped from pg to ili.
+		 */
+		ResultSet pg2IliConvertedTable=null;
+		try {
+			pg2IliConvertedTable=openPgToIliConvertedTableInDb(definedSchemaName, definedTableName, db);
+		}catch(IoxException e) {
+			throw new IoxException(e);
 		}
 		
-		int columnCount = rsmd.getColumnCount();
-		while(tableInDb.next()){
-			IomObject iomObj=createIomObject(modelName+"."+topicName+"."+className);
-			for(int i=1;i<=columnCount;i++){
-				String attrName = rsmd.getColumnName(i);
-				String attrValue=null;
-				// db value null, set empty String="".
-				if(tableInDb.getObject(i)==null) {
-					attrValue="";
-				}else {
-					attrValue=(String) tableInDb.getObject(i);
-				}
-				iomObj.setattrvalue(attrName, attrValue);
-			}
-			objectList.add(iomObj);
-		}
-		if(objectList.size()==0) {
-			throw new IoxException("no attributes found in data base table");
-		}
-		
-		// write IoxEvents
+		/** The final IomObjects will be send in ioxObjectEvents and written as individual records to the given CSV file.
+		 */
+		EhiLogger.logState("start transfer to csv file.");
 		csvWriter.write(new StartTransferEvent());
-		csvWriter.write(new StartBasketEvent(modelName+"."+topicName,"b1"));
+		csvWriter.write(new StartBasketEvent(MODELNAME+"."+TOPICNAME,"b1"));
+		EhiLogger.logState("start to write records.");
 		
-		for(IomObject iomObj:objectList) {
-			csvWriter.write(new ch.interlis.iox_j.ObjectEvent(iomObj));
+		IomObject iomObject=null;
+		// add attribute value, converted in appropriate type, to map of PG attribute objects.
+		while(pg2IliConvertedTable.next()) {
+			/** Objects within the object list will be written to CSV file as a records.
+			 */
+			// create iomObjects
+			try {
+				iomObject=getRecordsAsIomObjects(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, pg2IliConvertedTable, db);
+			} catch (IoxException e) {
+				throw new IoxException(e);
+			}
+			if(iomObject.getattrcount()==0) {
+				throw new IoxException("no data found to export to CSV file.");
+			}
+			try {
+				csvWriter.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
+			}catch(Exception e) {
+				throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to csv file: <"+file.getAbsolutePath()+"> failed.",e);
+			}
 		}
+		EhiLogger.logState("conversion of attributes: <successful>.");
 		
+		EhiLogger.logState("all records are written.");
 		csvWriter.write(new EndBasketEvent());
 		csvWriter.write(new EndTransferEvent());
+		EhiLogger.logState("end transfer to csv file.");
+		EhiLogger.logState("export: <successful>.");
 		
-		// close csvReader
+		/** close, clear and delete all dependencies to used elements.
+		 */
 		if(csvWriter!=null) {
 			csvWriter.close();
 			csvWriter=null;
-			modelName=null;
-			topicName=null;
-			className=null;
-			td=null;
-			EhiLogger.logState("export to <"+file.getAbsolutePath()+"> successful");
+			clearPgAttrObjMapSize();
 		}
-	}
-	
-    /** Iterate through ili file
-	 */
-    private void setupNameMapping(){
-    	iliTopics=new HashMap<Viewable, Topic>();
-    	listOfIliClasses=new ArrayList<HashMap<Viewable, Model>>();
-		Iterator tdIterator = td.iterator();
-		while(tdIterator.hasNext()){
-			iliClasses=new HashMap<Viewable, Model>();
-			Object modelObj = tdIterator.next();
-			if(!(modelObj instanceof DataModel)){
-				continue;
-			}
-			// iliModel
-			DataModel model = (DataModel) modelObj;
-			modelName=model.getName();
-			Iterator modelIterator = model.iterator();
-			while(modelIterator.hasNext()){
-				Object topicObj = modelIterator.next();
-				if(!(topicObj instanceof Topic)){
-					continue;
-				}
-				// iliTopic
-				Topic topic = (Topic) topicObj;
-				topicName=topic.getName();
-				// iliClass
-				Iterator classIter=topic.iterator();
-		    	while(classIter.hasNext()){
-		    		Object classObj=classIter.next();
-		    		if(!(classObj instanceof Viewable)){
-    					continue;
-    				}
-		    		Viewable viewable = (Viewable) classObj;
-	    			iliClasses.put(viewable, model);
-	    			iliTopics.put(viewable, topic);
-		    	}
-			}
-			listOfIliClasses.add(iliClasses);
-		}
-    }
-    
-	private Viewable getAppropriateClassOfModel(TransferDescription td, List<String> attrNames) throws IoxException {
-		List<String> foundClasses=null;
-    	Viewable viewable=null;
-    	if(iliClasses==null){
-    		setupNameMapping();
-    	}
-    	foundClasses=new ArrayList<String>();
-    	// first last model file.
-    	for(HashMap<Viewable, Model> mapIliClasses : listOfIliClasses){
-    		for(Viewable iliViewable : mapIliClasses.keySet()){
-    			List<String> iliAttrs=new ArrayList<String>();
-    			Iterator attrIter=iliViewable.getAttributes();
-    			while(attrIter.hasNext()){
-    				Element attribute=(Element) attrIter.next();
-    				iliAttrs.add(attribute.getName());
-    			}
-    			if(iliAttrs.equals(attrNames)){
-					viewable=iliViewable;
-					modelName=mapIliClasses.get(iliViewable).getName();
-					foundClasses.add(viewable.getScopedName());
-				}
-    		}
-    	}
-    	if(foundClasses.size()>1) {
-    		throw new IoxException("several possible classes were found: "+foundClasses.toString());
-    	}else if(foundClasses.size()==1){
-    		return viewable;
-    	}
-    	return null;
 	}
 }

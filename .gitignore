@@ -1,10 +1,5 @@
 /.gradle
-build
-/bin/ch/interlis/configuration/*.class
-/bin/ch/interlis/dbimport/*.class
-/bin/ch/interlis/iom_j/converter/*.class
-/bin/ch/interlis/iom_j/dbimport/*.class
-/bin/ch/interlis/iom_j/shp/*.class
+build/
 /bin/
 /.classpath
 /.project

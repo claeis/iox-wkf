@@ -27,8 +27,9 @@ public class Config {
 	public final static String SET_DEFAULT_VALUEDELIMITER=",";
 	// epsg/srs code
 	public final static String SETTING_SRSCODE=IMPORT_PREFIX+".settingSrsCode";
-	public final static int SET_DEFAULT_SRSCODE=2056;
+	public final static Integer SET_DEFAULT_SRSCODE=2056;
 	// geometry types
+	public final static String SET_GEOMETRY="geometry";
 	public final static String SET_GEOMETRY_POINT="POINT";
 	public final static String SET_GEOMETRY_MULTIPOINT="MULTIPOINT";
 	public final static String SET_GEOMETRY_LINESTRING="LINESTRING";
