@@ -31,7 +31,7 @@ public class Shp2db extends AbstractImport2db {
 	 */
 	@Override
 	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, AttributePool> attrsPool=new HashMap<String, AttributePool>();
+		Map<String, PgAttributeObject> attrsPool=new HashMap<String, PgAttributeObject>();
 		ShapeReader shpReader;
 		Set notFoundAttrs=new HashSet();
 		
@@ -72,7 +72,6 @@ public class Shp2db extends AbstractImport2db {
 				
 				// table validity
 				ResultSet tableInDb=null;
-				ResultSet geoColumnTableInDb=null;		
 				if(config.getValue(Config.SETTING_DBTABLE)!=null){
 					// get data of geometry inside table-columns.
 					try {
@@ -85,7 +84,6 @@ public class Shp2db extends AbstractImport2db {
 				}
 				// build attributes				
 				ResultSetMetaData rsmd=tableInDb.getMetaData();
-				ResultSetMetaData rsmdGeomTable=null;
 				
 				notFoundAttrs.clear();
 				
@@ -94,31 +92,17 @@ public class Shp2db extends AbstractImport2db {
 					int columnType=rsmd.getColumnType(k);
 					String columnTypeName=rsmd.getColumnTypeName(k);
 					for(int i=0;i<iomObj.getattrcount();i++) {
-						AttributePool attrData=null;
+						PgAttributeObject attrData=null;
 						if(columnName.equals(iomObj.getattrname(i))){
 							String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
 							if(attrValue==null) {
 								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
 							}
 							if(attrValue!=null) {
-								attrData=new AttributePool();
+								attrData=new PgAttributeObject();
 								attrData.setAttributeName(iomObj.getattrname(i));
 								attrData.setAttributeType(columnType);
 								attrData.setAttributeTypeName(columnTypeName);
-								if(columnTypeName.equals("geometry")) {
-									// attribute names of database table
-									try {
-										geoColumnTableInDb=openGeometryColumnTableInDb(definedSchemaName, definedTableName, iomObj.getattrname(i), db);
-										rsmdGeomTable=geoColumnTableInDb.getMetaData();
-									}catch(Exception e) {
-										throw new IoxException(e);
-									}
-									while(geoColumnTableInDb.next()) {
-										attrData.setSrid(geoColumnTableInDb.getInt(6));
-										attrData.setGeoColumnTypeName(geoColumnTableInDb.getString(7));
-										attrData.setCoordDimension(geoColumnTableInDb.getInt(5));
-									}
-								}
 								attrsPool.put(iomObj.getattrname(i), attrData);
 							}
 						}else {
