@@ -51,7 +51,7 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -115,7 +115,7 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk10");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -180,8 +180,8 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_QUOTATIONMARK, "|");
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_VALUEDELIMITER, "|");
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -246,8 +246,8 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_VALUEDELIMITER, "|");
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_VALUESEPARATOR, "|");
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -313,9 +313,9 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_QUOTATIONMARK, "|");
-				config.setValue(Config.SETTING_VALUEDELIMITER, ":");
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_VALUEDELIMITER, "|");
+				config.setValue(Config.SETTING_VALUESEPARATOR, ":");
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -379,7 +379,7 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_VALUE);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_VALUE);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -447,7 +447,7 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvexportnopk");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -517,7 +517,7 @@ public class Db2CsvTest {
 				if(data.exists()) {
 					data.delete();
 				}
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_ILIDIRS, TEST_OUT);
 				// DBSCHEMA: "dbtocsvschema" not set
 				config.setValue(Config.SETTING_DBTABLE, "defaultcsvexportnopk");
@@ -581,7 +581,7 @@ public class Db2CsvTest {
 			if(data.exists()) {
 				data.delete();
 			}
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 			config.setValue(Config.SETTING_DBTABLE, "defaultcsvexportnopk");
 			AbstractExportFromdb db2Csv=new Db2Csv();
@@ -645,7 +645,7 @@ public class Db2CsvTest {
 			if(data.exists()) {
 				data.delete();
 			}
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 			// DBSCHEMA: "dbtocsvschema" not set
 			config.setValue(Config.SETTING_DBTABLE, "defaultcsvexportnopk");
 			AbstractExportFromdb db2Csv=new Db2Csv();
@@ -704,7 +704,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeBigint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -762,7 +762,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeBoolean.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -820,7 +820,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeBit.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -878,7 +878,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeChar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -936,7 +936,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeVarchar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -994,7 +994,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeDate.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1052,7 +1052,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeInteger.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1110,7 +1110,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeNumeric.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1168,7 +1168,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeText.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1226,7 +1226,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeTime.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1284,7 +1284,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeSmallint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1342,7 +1342,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeTimestamp.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1400,7 +1400,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeUuid.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();
@@ -1458,7 +1458,7 @@ public class Db2CsvTest {
 	        {
 				// csv
 				File data=new File(TEST_OUT,"export_DataTypeXml.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "dbtocsvschema");
 				config.setValue(Config.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Csv=new Db2Csv();

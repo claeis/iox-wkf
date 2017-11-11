@@ -8,26 +8,26 @@ public class Config {
 	// import
 	public final static String IMPORT_PREFIX="ch.interlis.dbimport";
 	// schema
-	public final static String SETTING_DBSCHEMA=IMPORT_PREFIX+".settingDBSchema";
+	public final static String SETTING_DBSCHEMA=IMPORT_PREFIX+".dbSchema";
 	// table
-	public final static String SETTING_DBTABLE=IMPORT_PREFIX+".settingDBTable";
+	public final static String SETTING_DBTABLE=IMPORT_PREFIX+".dbTable";
 	// models
-	public final static String SETTING_MODELNAMES=IMPORT_PREFIX+".settingModelNames";
+	public final static String SETTING_MODELNAMES=IMPORT_PREFIX+".modelNames";
 	public final static String SETTING_ILIDIRS=IMPORT_PREFIX+".settingIliDirs";
-	public final static String SET_ILIDIRS_DEFAULT_VALUE=FILE_DIR+";http://models.interlis.ch/;"+JAR_DIR+"/ilimodels";
+	public final static String SETTING_ILIDIRS_DEFAULT=FILE_DIR+";http://models.interlis.ch/;"+JAR_DIR+"/ilimodels";
 	// firstline
-	public final static String SETTING_FIRSTLINE=IMPORT_PREFIX+".settingFirstline";
-	public final static String SET_FIRSTLINE_AS_HEADER="present";
-	public final static String SET_FIRSTLINE_AS_VALUE="absent";
+	public final static String SETTING_FIRSTLINE=IMPORT_PREFIX+".firstLine";
+	public final static String SETTING_FIRSTLINE_AS_HEADER="header";
+	public final static String SETTING_FIRSTLINE_AS_VALUE="data";
 	// quotationMark
-	public final static String SETTING_QUOTATIONMARK=IMPORT_PREFIX+".settingQuotationMark";
-	public final static String SET_QUOTATIONMARK="\"";
+	public final static String SETTING_VALUEDELIMITER=IMPORT_PREFIX+".valueDelimiter";
+	public final static char SETTING_VALUEDELIMITER_DEFAULT='\"';
 	// value delimiter
-	public final static String SETTING_VALUEDELIMITER=IMPORT_PREFIX+".settingValueDelimiter";
-	public final static String SET_DEFAULT_VALUEDELIMITER=",";
+	public final static String SETTING_VALUESEPARATOR=IMPORT_PREFIX+".valueSeparator";
+	public final static char SETTING_VALUESEPARATOR_DEFAULT=',';
 	// epsg/srs code
 	public final static String SETTING_SRSCODE=IMPORT_PREFIX+".settingSrsCode";
-	public final static Integer SET_DEFAULT_SRSCODE=2056;
+	public final static int SET_DEFAULT_SRSCODE=2056;
 	// geometry types
 	public final static String SET_GEOMETRY="geometry";
 	public final static String SET_GEOMETRY_POINT="POINT";

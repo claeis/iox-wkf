@@ -42,26 +42,30 @@ public class Db2Csv extends AbstractExportFromdb {
 			throw new IoxException("CSV-file==null.");
 		}
 		
-		/** first line is everytime header line. firstline is not changeable.
-		 */
-		String definedFirstline=Config.SET_FIRSTLINE_AS_HEADER;
-		EhiLogger.logState("firstline: <header>.");
-		
-		/** optional: set quotationmark, to define start and end of value.
-		 */
-		String definedQuotationmark=config.getValue(Config.SETTING_QUOTATIONMARK);
-		if(definedQuotationmark==null) {
-			definedQuotationmark=Config.SET_QUOTATIONMARK;
+		boolean firstLineIsHeader=false;
+		{
+			String val=config.getValue(Config.SETTING_FIRSTLINE);
+			if(Config.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
+				firstLineIsHeader=true;
+			}
 		}
-		EhiLogger.logState("quotationmark: <"+definedQuotationmark+">.");
-		
-		/** optional: set valuedelimiter, to define separate values.
-		 */
-		String definedValueDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
-		if(definedValueDelimiter==null) {
-			definedValueDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
+		char valueDelimiter=Config.SETTING_VALUEDELIMITER_DEFAULT;
+		{
+			String val=config.getValue(Config.SETTING_VALUEDELIMITER);
+			if(val!=null) {
+				valueDelimiter=val.charAt(0);
+			}
 		}
-		EhiLogger.logState("value delimiter: <"+definedValueDelimiter+">.");
+		char valueSeparator=Config.SETTING_VALUESEPARATOR_DEFAULT;
+		{
+			String val=config.getValue(Config.SETTING_VALUESEPARATOR);
+			if(val!=null) {
+				valueSeparator=val.charAt(0);
+			}
+		}
+		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
+		EhiLogger.traceState("valueSeparator <"+valueSeparator+">.");
+		EhiLogger.traceState("valueDelimiter <"+valueDelimiter+">.");
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
@@ -93,9 +97,9 @@ public class Db2Csv extends AbstractExportFromdb {
 		/** create and set settings to csvWriter.
 		 */
 		CsvWriter csvWriter=new CsvWriter(file);
-		csvWriter.setHeader(definedFirstline);
-		csvWriter.setDelimiter(definedQuotationmark);
-		csvWriter.setRecordDelimiter(definedValueDelimiter);
+		csvWriter.setWriteHeader(firstLineIsHeader);
+		csvWriter.setValueDelimiter(valueDelimiter);
+		csvWriter.setValueSeparator(valueSeparator);
 
 		/** create selection to get information about attributes of target data base table.
 		 */

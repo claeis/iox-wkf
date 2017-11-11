@@ -44,15 +44,27 @@ public class Csv2db extends AbstractImport2db {
 		/** mandatory: set csv file, which contains data to import.
 		 */
 		CsvReader csvReader=new CsvReader(file);
-		/** optional: set header on firstline, if csv file contain a header on first line.
-		 */
-		String definedFirstline=config.getValue(Config.SETTING_FIRSTLINE);
-		/** optional: set quotationmark, to define start and end of value.
-		 */
-		String definedQuotationmark=config.getValue(Config.SETTING_QUOTATIONMARK);
-		/** optional: set valuedelimiter, to define separate values.
-		 */
-		String definedValueDelimiter=config.getValue(Config.SETTING_VALUEDELIMITER);
+		boolean firstLineIsHeader=false;
+		{
+			String val=config.getValue(Config.SETTING_FIRSTLINE);
+			if(Config.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
+				firstLineIsHeader=true;
+			}
+		}
+		char valueDelimiter=Config.SETTING_VALUEDELIMITER_DEFAULT;
+		{
+			String val=config.getValue(Config.SETTING_VALUEDELIMITER);
+			if(val!=null) {
+				valueDelimiter=val.charAt(0);
+			}
+		}
+		char valueSeparator=Config.SETTING_VALUESEPARATOR_DEFAULT;
+		{
+			String val=config.getValue(Config.SETTING_VALUESEPARATOR);
+			if(val!=null) {
+				valueSeparator=val.charAt(0);
+			}
+		}
 		/** optional: set database schema, if table is not in default schema.
 		 */
 		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
@@ -66,30 +78,11 @@ public class Csv2db extends AbstractImport2db {
 		}else if(!(db.isValid(0))) {
 			throw new IoxException("connection to: "+db+" failed");
 		}
-		
-		// header validity
-		if(definedFirstline==null || !definedFirstline.equals(Config.SET_FIRSTLINE_AS_HEADER)) {
-			definedFirstline=Config.SET_FIRSTLINE_AS_VALUE;
-		}
-		
-		// delimiter validity
-		if(definedQuotationmark==null) {
-			definedQuotationmark=Config.SET_QUOTATIONMARK;
-		}
-		
-		// record delimiter validity
-		if(definedValueDelimiter==null) {
-			definedValueDelimiter=Config.SET_DEFAULT_VALUEDELIMITER;
-		}
-		
+				
 		// build csvReader
-		if(definedFirstline.equals(Config.SET_FIRSTLINE_AS_HEADER)) {
-			csvReader.setHeader(Config.SET_FIRSTLINE_AS_HEADER);
-		}else {
-			csvReader.setHeader(Config.SET_FIRSTLINE_AS_VALUE);
-		}
-		CsvReader.setDelimiter(definedQuotationmark);
-		csvReader.setRecordDelimiter(definedValueDelimiter);
+		csvReader.setFirstLineIsHeader(firstLineIsHeader);
+		csvReader.setValueDelimiter(valueDelimiter);
+		csvReader.setValueSeparator(valueSeparator);
 		
 		// read IoxEvents
 		IoxEvent event=csvReader.read();

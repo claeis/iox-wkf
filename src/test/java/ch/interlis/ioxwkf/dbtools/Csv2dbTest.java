@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,7 +57,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportwithheadernopk");
 				AbstractImport2db csv2db=new Csv2db();
@@ -173,7 +174,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				// DBSCHEMA: not set "csvtodbschema"
 				config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
 				AbstractImport2db csv2db=new Csv2db();
@@ -228,7 +229,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBigint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -278,7 +279,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBoolean.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -328,7 +329,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBit.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -378,7 +379,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeChar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -428,7 +429,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeVarchar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -478,7 +479,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeDate.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -528,7 +529,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeInteger.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -578,7 +579,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeNumeric.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -628,7 +629,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeText.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -678,7 +679,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeTime.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -728,7 +729,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeSmallint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -778,7 +779,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeTimestamp.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -828,7 +829,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeUuid.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -878,7 +879,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeXml.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
@@ -931,7 +932,7 @@ public class Csv2dbTest {
 	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader3.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
 			AbstractImport2db csv2db=new Csv2db();
@@ -1049,7 +1050,7 @@ public class Csv2dbTest {
 	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 			// TABLE: "csvimportwithheader" not set
 			AbstractImport2db csv2db=new Csv2db();
@@ -1094,7 +1095,7 @@ public class Csv2dbTest {
 	        }
 	        // csv
 			File data=new File("src/test/data/NotExist/AttributesHeader.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_HEADER);
+			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
 			config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
 			AbstractImport2db csv2db=new Csv2db();
@@ -1139,7 +1140,7 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SET_FIRSTLINE_AS_VALUE);
+				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_VALUE);
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(Config.SETTING_DBTABLE, "csvimport");
@@ -1149,8 +1150,11 @@ public class Csv2dbTest {
 				fail();
 			}
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("Holland"));
-			assertTrue(e.getMessage().contains("existiert bereits"));
+			System.out.println(e.getMessage());
+			assertTrue(e.getCause() instanceof SQLException);
+			assertEquals("23505",((SQLException) e.getCause()).getSQLState());
+		}catch(SQLException e) {
+			fail();
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
