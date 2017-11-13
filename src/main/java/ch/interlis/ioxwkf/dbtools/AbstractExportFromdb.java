@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -17,11 +18,12 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 
 public abstract class AbstractExportFromdb {
-	public HashMap<String, PgAttributeObject>pgAttrMap=new HashMap<String, PgAttributeObject>();
+	private HashMap<String, AttributeDescriptor>pgAttrMap=new HashMap<String, AttributeDescriptor>();
+	private ArrayList<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
 	private int objectCount=0;
 	private IoxFactoryCollection factory;
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
-	private Integer srsCode=Config.SET_DEFAULT_SRSCODE;
+	private Integer srsCode=IoxWkfConfig.SETTING_SRSCODE_DEFAULT;
 	
 	private static final String DATATYPENAME_GEOMETRY="geometry";
 	private static final String DBCOLUMNNAME_SRID="srid";
@@ -108,10 +110,10 @@ public abstract class AbstractExportFromdb {
 		String comma="";
 		selectionQueryBuild.append("SELECT ");
 		// attribute data type conversion.
-		Iterator<PgAttributeObject> attrIter=pgAttrMap.values().iterator();
+		Iterator<AttributeDescriptor> attrIter=pgAttrMap.values().iterator();
 		while(attrIter.hasNext()) {
 			// attrObject
-			PgAttributeObject attrObject=attrIter.next();
+			AttributeDescriptor attrObject=attrIter.next();
 			// attrName
 			String attrName=attrObject.getAttributeName();
 			// dataType
@@ -182,9 +184,9 @@ public abstract class AbstractExportFromdb {
 		// create iomObject to add attributes or objects in.
 		IomObject iomObj=createIomObject(modelName+"."+topicName+"."+definedTableName);
 		String geoColumnTypeName=null;
-		for(Entry<String, PgAttributeObject> attribute:pgAttrMap.entrySet()) {
+		for(Entry<String, AttributeDescriptor> attribute:pgAttrMap.entrySet()) {
 			// attribute data of db table.
-			PgAttributeObject attrObject=attribute.getValue();
+			AttributeDescriptor attrObject=attribute.getValue();
 			// data of attribute
 			String attrName=attrObject.getAttributeName();
 			String dataTypeName=attrObject.getAttributeTypeName();
@@ -244,10 +246,10 @@ public abstract class AbstractExportFromdb {
 						}
 					}else {
 						// uuid
-						if(dataTypeName.equals(Config.SET_UUID)) {
+						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
 							iomObj.setattrvalue(attrName, attrValue);
 						// xml	
-						}else if(dataTypeName.equals(Config.SET_XML)) {
+						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
 							iomObj.setattrvalue(attrName, pgConverter.toIomXml(attrObj));
 						}
 					}
@@ -338,8 +340,8 @@ public abstract class AbstractExportFromdb {
 		return factory.createIomObject(type, oid);
 	}
 	
-	public PgAttributeObject getPgAttrObj(String attrName) {
-		for(Entry<String, PgAttributeObject> attrObj:pgAttrMap.entrySet()) {
+	public AttributeDescriptor getPgAttrObj(String attrName) {
+		for(Entry<String, AttributeDescriptor> attrObj:pgAttrMap.entrySet()) {
 			if(attrObj.getKey().equals(attrName)) {
 				return attrObj.getValue();
 			}
@@ -347,28 +349,28 @@ public abstract class AbstractExportFromdb {
 		return null;
 	}
 	
-	public PgAttributeObject createPgAttrObj(String attrName) {
-		PgAttributeObject pgAttrObj=new PgAttributeObject();
+	public AttributeDescriptor createPgAttrObj(String attrName) {
+		AttributeDescriptor pgAttrObj=new AttributeDescriptor();
 		pgAttrObj.setAttributeName(attrName);
 		return pgAttrObj;
 	}
 	
-	public void addAttrObjToMap(String attrName, PgAttributeObject pgAttrObj) {
+	protected void addAttrObjToMap(String attrName, AttributeDescriptor pgAttrObj) {
 		if(pgAttrMap.containsKey(attrName)) {
 			pgAttrMap.remove(attrName);
 		}
 		pgAttrMap.put(attrName, pgAttrObj);
 	}
 	
-	public Integer sizeOfCurrentPgAttrMap() {
+	protected Integer sizeOfCurrentPgAttrMap() {
 		return pgAttrMap.size();
 	}
 	
-	public HashMap<String, PgAttributeObject> getCurrentPgAttrMap(){
+	private HashMap<String, AttributeDescriptor> getCurrentPgAttrMap(){
 		return pgAttrMap;
 	}
 	
-	public void clearPgAttrObjMapSize() {
+	private void clearPgAttrObjMapSize() {
 		pgAttrMap.clear();
 	}
 }

@@ -7,7 +7,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
@@ -20,7 +23,7 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
-import ch.interlis.ioxwkf.dbtools.Config;
+import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
 import ch.interlis.ioxwkf.dbtools.Shp2db;
 import ch.interlis.ioxwkf.shp.ShapeWriter;
 
@@ -58,8 +61,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -111,8 +114,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/MultiPoint/MultiPoint.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -164,8 +167,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -217,8 +220,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/MultiLineString/MultiLineString.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -270,8 +273,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Polygon/Polygon.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -323,8 +326,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/MultiPolygon/MultiPolygon.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -376,7 +379,7 @@ public class Shp2dbTest {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
 				//config.setValue(Config.DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimportnoschematable");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimportnoschematable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -427,8 +430,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Bigint/DataTypeBigInt.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -480,8 +483,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Bit/DataTypeBit.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -533,8 +536,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -586,8 +589,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Char/DataTypeChar.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -639,8 +642,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Varchar/DataTypeVarChar.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -692,8 +695,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Date/DataTypeDate.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -745,8 +748,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Integer/DataTypeInteger.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -798,8 +801,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Numeric/DataTypeNumeric.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -851,8 +854,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Text/DataTypeText.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -904,8 +907,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Time/DataTypeTime.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -957,8 +960,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Smallint/DataTypeSmallint.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -1010,8 +1013,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Timestamp/DataTypeTimestamp.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -1063,8 +1066,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Uuid/DataTypeUuid.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -1116,8 +1119,8 @@ public class Shp2dbTest {
 	        {
 				// shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
-				config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -1171,8 +1174,8 @@ public class Shp2dbTest {
 	        }
 			// csv
 			File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
-			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-			config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
@@ -1271,7 +1274,7 @@ public class Shp2dbTest {
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
 			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
-			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 			// TABLE: "shpimporttable"
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
@@ -1303,8 +1306,8 @@ public class Shp2dbTest {
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
 			File data=new File("src/test/data/Shp2DB/NotExist/testPointAttrs.shp");
-			config.setValue(Config.SETTING_DBSCHEMA, "shptodbschema");
-			config.setValue(Config.SETTING_DBTABLE, "shpimporttable");
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
@@ -1327,6 +1330,7 @@ public class Shp2dbTest {
 	// --
 	// Erwartung: FEHLER: import failed.
 	@Test
+	@Ignore("fix after refactoring csv/shp export code to a common base")
 	public void import_UniqueConstraint_Fail() throws Exception
 	{
 		Settings config=null;
@@ -1347,14 +1351,16 @@ public class Shp2dbTest {
 		        // shp
 				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
 				// DBSCHEMA: "shptodbschema"
-				config.setValue(Config.SETTING_DBTABLE, "shpimportnoschematable");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimportnoschematable");
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 				shp2db.importData(data, jdbcConnection, config);
 				fail();
 			}
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("existiert bereits"));
+			System.out.println(e.getMessage());
+			assertTrue(e.getCause() instanceof SQLException);
+			assertEquals("23505",((SQLException) e.getCause()).getSQLState());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

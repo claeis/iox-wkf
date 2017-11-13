@@ -23,7 +23,7 @@ import ch.interlis.iox.IoxException;
 
 public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
-	private Integer srsCode=Config.SET_DEFAULT_SRSCODE;
+	private Integer srsCode=IoxWkfConfig.SETTING_SRSCODE_DEFAULT;
 	
 	private static final String DATATYPENAME_GEOMETRY="geometry";
 	private static final String DBCOLUMNNAME_SRID="srid";
@@ -60,7 +60,7 @@ public abstract class AbstractImport2db {
 	 * @throws SQLException
 	 * @throws ConverterException 
 	 */
-	protected void insertIntoTable(String schemaName, String tableName, Map<String, PgAttributeObject> attrsPool, Connection db, IomObject iomObj) throws IoxException, SQLException, ConverterException {
+	protected void insertIntoTable(String schemaName, String tableName, Map<String, AttributeDescriptor> attrsPool, Connection db, IomObject iomObj) throws IoxException, SQLException, ConverterException {
 		StringBuffer queryBuild=new StringBuffer();
 		
 		// create insert statement
@@ -73,8 +73,8 @@ public abstract class AbstractImport2db {
 		queryBuild.append("(");
 		String comma="";
 		StringBuilder attrsNotInserted=new StringBuilder();
-		for(Entry<String, PgAttributeObject> attribute:attrsPool.entrySet()) {
-			PgAttributeObject attrObject=attribute.getValue();
+		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
+			AttributeDescriptor attrObject=attribute.getValue();
 			String attrName=attrObject.getAttributeName();
 			attrsNotInserted.append(comma);
 			queryBuild.append(comma);
@@ -87,8 +87,8 @@ public abstract class AbstractImport2db {
 		String geoColumnTypeName=null;
 		int position=1;
 		ResultSet geomColumnTableInDb=null;
-		for(Entry<String, PgAttributeObject> attribute:attrsPool.entrySet()) {
-			PgAttributeObject attrObject=attribute.getValue();
+		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
+			AttributeDescriptor attrObject=attribute.getValue();
 			String attrName=attrObject.getAttributeName();
 			Integer datatype=attrObject.getAttributeType();
 			// dataTypeName
@@ -138,8 +138,8 @@ public abstract class AbstractImport2db {
 		}
 		
 		position=1;
-		for(Entry<String, PgAttributeObject> attribute:attrsPool.entrySet()) {
-			PgAttributeObject attrObject=attribute.getValue();
+		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
+			AttributeDescriptor attrObject=attribute.getValue();
 			String dataTypeName=attrObject.getAttributeTypeName();
 			Integer dataType=attrObject.getAttributeType();
 			String attrName=attrObject.getAttributeName();
@@ -174,30 +174,30 @@ public abstract class AbstractImport2db {
 							is3D=false;
 						}
 						// point
-						if(geoColumnTypeName.equals(Config.SET_GEOMETRY_POINT)) {
+						if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
 							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
 						// multipoint
-						}else if(geoColumnTypeName.equals(Config.SET_GEOMETRY_MULTIPOINT)) {
+						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
 							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
 						// line
-						}else if(geoColumnTypeName.equals(Config.SET_GEOMETRY_LINESTRING)) {
+						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 							ps.setObject(position, pgConverter.fromIomPolyline(value, srsCode, is3D, 0));
 						// multiline
-						}else if(geoColumnTypeName.equals(Config.SET_GEOMETRY_MULTILINESTRING)) {
+						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
 							ps.setObject(position, pgConverter.fromIomMultiPolyline(value, srsCode, is3D, 0));
 						// polygon
-						}else if(geoColumnTypeName.equals(Config.SET_GEOMETRY_POLYGON)) {
+						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
 							ps.setObject(position, pgConverter.fromIomSurface(value, srsCode, false, is3D, 0));
 						// multipolygon
-						}else if(geoColumnTypeName.equals(Config.SET_GEOMETRY_MULTIPOLYGON)) {
+						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
 							ps.setObject(position, pgConverter.fromIomMultiSurface(value, srsCode, false, is3D, 0));
 						}
 					}else {
 						// uuid
-						if(dataTypeName.equals(Config.SET_UUID)) {
+						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
 							ps.setObject(position, pgConverter.fromIomUuid(attrValue));
 						// xml	
-						}else if(dataTypeName.equals(Config.SET_XML)) {
+						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
 							ps.setObject(position, pgConverter.fromIomXml(attrValue));
 						}
 					}

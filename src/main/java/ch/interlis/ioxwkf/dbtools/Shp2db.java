@@ -31,7 +31,7 @@ public class Shp2db extends AbstractImport2db {
 	 */
 	@Override
 	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, PgAttributeObject> attrsPool=new HashMap<String, PgAttributeObject>();
+		Map<String, AttributeDescriptor> attrsPool=new HashMap<String, AttributeDescriptor>();
 		ShapeReader shpReader;
 		Set notFoundAttrs=new HashSet();
 		
@@ -51,10 +51,10 @@ public class Shp2db extends AbstractImport2db {
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
-		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
 		/** mandatory: set database table to insert data into.
 		 */
-		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
+		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
 		
 		// validity of connection
 		if(db==null) {
@@ -72,7 +72,7 @@ public class Shp2db extends AbstractImport2db {
 				
 				// table validity
 				ResultSet tableInDb=null;
-				if(config.getValue(Config.SETTING_DBTABLE)!=null){
+				if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
 					// get data of geometry inside table-columns.
 					try {
 						tableInDb=openTableInDb(definedSchemaName, definedTableName, db);
@@ -92,14 +92,14 @@ public class Shp2db extends AbstractImport2db {
 					int columnType=rsmd.getColumnType(k);
 					String columnTypeName=rsmd.getColumnTypeName(k);
 					for(int i=0;i<iomObj.getattrcount();i++) {
-						PgAttributeObject attrData=null;
+						AttributeDescriptor attrData=null;
 						if(columnName.equals(iomObj.getattrname(i))){
 							String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
 							if(attrValue==null) {
 								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
 							}
 							if(attrValue!=null) {
-								attrData=new PgAttributeObject();
+								attrData=new AttributeDescriptor();
 								attrData.setAttributeName(iomObj.getattrname(i));
 								attrData.setAttributeType(columnType);
 								attrData.setAttributeTypeName(columnTypeName);

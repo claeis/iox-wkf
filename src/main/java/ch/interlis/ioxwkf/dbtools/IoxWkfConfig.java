@@ -1,7 +1,7 @@
 package ch.interlis.ioxwkf.dbtools;
 
-public class Config {
-	private Config() {}
+public class IoxWkfConfig {
+	private IoxWkfConfig() {}
 	public final static String APP_JAR="iox-wkf.jar";
 	public final static String FILE_DIR="%CSV_DIR";
 	public final static String JAR_DIR="%JAR_DIR";
@@ -27,17 +27,5 @@ public class Config {
 	public final static char SETTING_VALUESEPARATOR_DEFAULT=',';
 	// epsg/srs code
 	public final static String SETTING_SRSCODE=IMPORT_PREFIX+".settingSrsCode";
-	public final static int SET_DEFAULT_SRSCODE=2056;
-	// geometry types
-	public final static String SET_GEOMETRY="geometry";
-	public final static String SET_GEOMETRY_POINT="POINT";
-	public final static String SET_GEOMETRY_MULTIPOINT="MULTIPOINT";
-	public final static String SET_GEOMETRY_LINESTRING="LINESTRING";
-	public final static String SET_GEOMETRY_MULTILINESTRING="MULTILINESTRING";
-	public final static String SET_GEOMETRY_POLYGON="POLYGON";
-	public final static String SET_GEOMETRY_MULTIPOLYGON="MULTIPOLYGON";
-	// uuid type
-	public final static String SET_UUID="uuid";
-	// xml type
-	public final static String SET_XML="xml";
+	public final static int SETTING_SRSCODE_DEFAULT=2056;
 }

@@ -16,7 +16,7 @@ import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxException;
 import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
-import ch.interlis.ioxwkf.dbtools.Config;
+import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
 import ch.interlis.ioxwkf.dbtools.Csv2db;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
@@ -57,9 +57,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportwithheadernopk");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheadernopk");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -116,7 +116,7 @@ public class Csv2dbTest {
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
 				// DBSCHEMA: "csvtodbschema" not set
-				config.setValue(Config.SETTING_DBTABLE, "csvimportnopkcolumn");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportnopkcolumn");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -174,9 +174,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				// DBSCHEMA: not set "csvtodbschema"
-				config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -229,9 +229,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBigint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -239,7 +239,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("9223372036854775807"));
@@ -279,9 +279,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBoolean.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -289,7 +289,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("t"));
@@ -329,9 +329,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeBit.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -339,7 +339,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("t"));
@@ -379,9 +379,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeChar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -389,7 +389,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("a"));
@@ -429,9 +429,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeVarchar.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -439,7 +439,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("aaaaaaaaa"));
@@ -479,9 +479,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeDate.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -489,7 +489,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("2017-02-02"));
@@ -529,9 +529,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeInteger.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -539,7 +539,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("123"));
@@ -579,9 +579,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeNumeric.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -589,7 +589,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("12345"));
@@ -629,9 +629,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeText.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -639,7 +639,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("testtext"));
@@ -679,9 +679,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeTime.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -689,7 +689,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("10:10:59"));
@@ -729,9 +729,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeSmallint.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -739,7 +739,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("12"));
@@ -779,9 +779,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeTimestamp.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -789,7 +789,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("2014-05-15 12:30:30.555"));
@@ -829,9 +829,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeUuid.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -839,7 +839,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("123e4567-e89b-12d3-a456-426655440000"));
@@ -879,9 +879,9 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/DataTypeXml.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-				config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-				config.setValue(Config.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 			}
@@ -889,7 +889,7 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
-				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(Config.SETTING_DBSCHEMA)+".csvimportdatatype");
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
 					attrValue = rs.getString(1);
 					assertTrue(attrValue.equals("<attrText>text</attrText>"));
@@ -932,9 +932,9 @@ public class Csv2dbTest {
 	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader3.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-			config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
+			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
 			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
@@ -1050,8 +1050,8 @@ public class Csv2dbTest {
 	        }
 			// csv
 			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
+			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 			// TABLE: "csvimportwithheader" not set
 			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
@@ -1095,9 +1095,9 @@ public class Csv2dbTest {
 	        }
 	        // csv
 			File data=new File("src/test/data/NotExist/AttributesHeader.csv");
-			config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_HEADER);
-			config.setValue(Config.SETTING_DBSCHEMA, "csvtodbschema");
-			config.setValue(Config.SETTING_DBTABLE, "csvimportwithheader");
+			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
 			AbstractImport2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
@@ -1140,10 +1140,10 @@ public class Csv2dbTest {
 	        {
 				// csv
 				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
-				config.setValue(Config.SETTING_FIRSTLINE, Config.SETTING_FIRSTLINE_AS_VALUE);
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_VALUE);
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
 				// DBSCHEMA: "csvtodbschema" not set
-				config.setValue(Config.SETTING_DBTABLE, "csvimport");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimport");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
 				csv2db.importData(data, jdbcConnection, config);

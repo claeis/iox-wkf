@@ -44,21 +44,21 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		boolean firstLineIsHeader=false;
 		{
-			String val=config.getValue(Config.SETTING_FIRSTLINE);
-			if(Config.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
+			String val=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE);
+			if(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
 				firstLineIsHeader=true;
 			}
 		}
-		char valueDelimiter=Config.SETTING_VALUEDELIMITER_DEFAULT;
+		char valueDelimiter=IoxWkfConfig.SETTING_VALUEDELIMITER_DEFAULT;
 		{
-			String val=config.getValue(Config.SETTING_VALUEDELIMITER);
+			String val=config.getValue(IoxWkfConfig.SETTING_VALUEDELIMITER);
 			if(val!=null) {
 				valueDelimiter=val.charAt(0);
 			}
 		}
-		char valueSeparator=Config.SETTING_VALUESEPARATOR_DEFAULT;
+		char valueSeparator=IoxWkfConfig.SETTING_VALUESEPARATOR_DEFAULT;
 		{
-			String val=config.getValue(Config.SETTING_VALUESEPARATOR);
+			String val=config.getValue(IoxWkfConfig.SETTING_VALUESEPARATOR);
 			if(val!=null) {
 				valueSeparator=val.charAt(0);
 			}
@@ -69,7 +69,7 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
-		String definedSchemaName=config.getValue(Config.SETTING_DBSCHEMA);
+		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
 		if(definedSchemaName==null) {
 			EhiLogger.logState("no db schema name defined, get default schema.");
 		}else {
@@ -78,7 +78,7 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		/** mandatory: set database table to insert data into.
 		 */
-		String definedTableName=config.getValue(Config.SETTING_DBTABLE);
+		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
 		if(definedTableName==null) {
 			throw new IoxException("database table==null.");
 		}else {
@@ -131,7 +131,7 @@ public class Db2Csv extends AbstractExportFromdb {
 			String columnTypeName=metadataDbTable.getColumnTypeName(k);
 			
 			// set PG Attribute Object data.
-			PgAttributeObject pgAttrObj=createPgAttrObj(columnName);
+			AttributeDescriptor pgAttrObj=createPgAttrObj(columnName);
 			pgAttrObj.setAttributeName(columnName);
 			pgAttrObj.setAttributeType(columnType);
 			pgAttrObj.setAttributeTypeName(columnTypeName);
@@ -197,7 +197,6 @@ public class Db2Csv extends AbstractExportFromdb {
 		if(csvWriter!=null) {
 			csvWriter.close();
 			csvWriter=null;
-			clearPgAttrObjMapSize();
 		}
 	}
 }
