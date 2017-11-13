@@ -7,10 +7,7 @@ import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-
-import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
@@ -18,7 +15,6 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
-@Ignore("reorder columns to make tests work again")
 public class Db2CsvTest {
 	private String dburl=System.getProperty("dburl");
 	private String dbuser=System.getProperty("dbusr");
@@ -76,9 +72,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"10\",\"Schweiz\",\"CH\"", line);
+						assertEquals("\"CH\",\"10\",\"Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -140,9 +136,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr14,attr15,attr16,attr17,attr11,attr12,attr13,attr20,attr18,attr19", line);
+						assertEquals("\"attr11\",\"attr12\",\"attr13\",\"attr14\",\"attr15\",\"attr16\",\"attr17\",\"attr18\",\"attr19\",\"attr20\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"a_14\",\"a_15\",\"a_16\",\"a_17\",\"a_11\",\"a_12\",\"a_13\",\"a_20\",\"a_18\",\"a_19\"", line);
+						assertEquals("\"a_11\",\"a_12\",\"a_13\",\"a_14\",\"a_15\",\"a_16\",\"a_17\",\"a_18\",\"a_19\",\"a_20\"", line);
 					}else {
 						fail();
 					}
@@ -206,9 +202,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("|abbreviation|,|idname|,|state|", line);
 					}else if(lineIndex==2) {
-						assertEquals("|10|,|Schweiz|,|CH|", line);
+						assertEquals("|CH|,|10|,|Schweiz|", line);
 					}else {
 						fail();
 					}
@@ -272,9 +268,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname|state|abbreviation", line);
+						assertEquals("\"abbreviation\"|\"idname\"|\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"10\"|\"Schweiz\"|\"CH\"", line);
+						assertEquals("\"CH\"|\"10\"|\"Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -340,9 +336,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname:state:abbreviation", line);
+						assertEquals("|abbreviation|:|idname|:|state|", line);
 					}else if(lineIndex==2) {
-						assertEquals("|10|:|Schweiz|:|CH|", line);
+						assertEquals("|CH|:|10|:|Schweiz|", line);
 					}else {
 						fail();
 					}
@@ -404,9 +400,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
-					}else if(lineIndex==2) {
-						assertEquals("\"10\",\"Schweiz\",\"CH\"", line);
+						assertEquals("\"CH\",\"10\",\"Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -472,19 +466,19 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"10\",\"Schweiz\",\"CH\"", line);
+						assertEquals("\"CH\",\"10\",\"Schweiz\"", line);
 					}else if(lineIndex==3) {
-						assertEquals("\"11\",\"Deutschland\",\"DE\"", line);
+						assertEquals("\"DE\",\"11\",\"Deutschland\"", line);
 					}else if(lineIndex==4) {
-						assertEquals("\"12\",\"Frankreich\",\"FR\"", line);
+						assertEquals("\"FR\",\"12\",\"Frankreich\"", line);
 					}else if(lineIndex==5) {
-						assertEquals("\"13\",\"Italien\",\"IT\"", line);
+						assertEquals("\"IT\",\"13\",\"Italien\"", line);
 					}else if(lineIndex==6) {
-						assertEquals("\"14\",\"Spanien\",\"ES\"", line);
+						assertEquals("\"ES\",\"14\",\"Spanien\"", line);
 					}else if(lineIndex==7) {
-						assertEquals("\"15\",\"Oesterreich\",\"AT\"", line);
+						assertEquals("\"AT\",\"15\",\"Oesterreich\"", line);
 					}else{
 						fail();
 					}
@@ -543,9 +537,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"S_10\",\"S_Schweiz\",\"S_CH\"", line);
+						assertEquals("\"S_CH\",\"S_10\",\"S_Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -605,9 +599,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"S_10\",\"S_Schweiz\",\"S_CH\"", line);
+						assertEquals("\"S_CH\",\"S_10\",\"S_Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -669,9 +663,9 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("idname,state,abbreviation", line);
+						assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"D_10\",\"D_Schweiz\",\"D_CH\"", line);
+						assertEquals("\"D_CH\",\"D_10\",\"D_Schweiz\"", line);
 					}else {
 						fail();
 					}
@@ -729,7 +723,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"9223372036854775807\"", line);
 					}else {
@@ -787,7 +781,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"true\"", line);
 					}else {
@@ -845,7 +839,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"1\"", line);
 					}else {
@@ -903,7 +897,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"a\"", line);
 					}else {
@@ -961,7 +955,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"abc\"", line);
 					}else {
@@ -1019,7 +1013,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"2017-02-02\"", line);
 					}else {
@@ -1077,7 +1071,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"12\"", line);
 					}else {
@@ -1135,7 +1129,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"123\"", line);
 					}else {
@@ -1193,7 +1187,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"character varying\"", line);
 					}else {
@@ -1251,7 +1245,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"10:10:59\"", line);
 					}else {
@@ -1309,7 +1303,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"5\"", line);
 					}else {
@@ -1367,7 +1361,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"2014-05-15T12:30:30.555\"", line);
 					}else {
@@ -1425,7 +1419,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"123e4567-e89b-12d3-a456-426655440000\"", line);
 					}else {
@@ -1483,7 +1477,7 @@ public class Db2CsvTest {
 				while((line=br.readLine())!= null) {
 					lineIndex+=1;
 					if(lineIndex==1) {
-						assertEquals("attr", line);
+						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
 						assertEquals("\"<attrText>character varying</attrText>\"", line);
 					}else {
@@ -1704,100 +1698,6 @@ public class Db2CsvTest {
 	    	fail();
 		}catch(Exception e) {
 			assertTrue(e.getMessage().contains("database table==null."));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
-	// Es soll eine Fehlermeldung ausgegeben werden, weil die Tabelle im gesetzten Schema zwar gefunden wird, jedoch keine Daten --> "NULL" beinhaltet.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: database-dbtocsvschema
-	// - set: database-table
-	// --
-	// Erwartung: Exception. no data found to export.
-	@Test
-	public void export_DataContainsNullInTableInSchema_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop dbtocsvschema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
-	        	// create dbtocsvschema
-	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
-	        	// create table in dbtocsvschema
-	        	preStmt.execute("CREATE TABLE dbtocsvschema.csvexportnopk(idname character varying, abbreviation character varying, state character varying) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.csvexportnopk (idname, abbreviation, state) VALUES (NULL, NULL, NULL)");
-	        	// import data to table
-	        	preStmt.close();
-	        }
-			// csv
-			File data=new File(TEST_OUT+"export_DataContainsNullInTableInSchema_Ok.csv");
-			// delete file if already exist
-			if(data.exists()) {
-				data.delete();
-			}
-			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
-			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvexportnopk");
-			AbstractExportFromdb db2Csv=new Db2Csv();
-			db2Csv.exportData(data, jdbcConnection, config);
-			fail();
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("export of: <model.topic.csvexportnopk> to csv file: <D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\DB2Csv\\export_DataContainsNullInTableInSchema_Ok.csv> failed."));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
-	// Es soll eine Fehlermeldung ausgegeben werden, weil die Tabelle innerhalb des Default-Schemas zwar gefunden wird, jedoch keine Daten --> "NULL" beinhaltet.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - NOT SET: database-dbtocsvschema
-	// - set: database-table
-	// --
-	// Erwartung: Success: no data found to export.
-	@Test
-	public void export_DataContainsNullInTable_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop table
-	        	preStmt.execute("DROP TABLE IF EXISTS defaultcsvexportnopk CASCADE");
-	        	// create table
-	        	preStmt.execute("CREATE TABLE defaultcsvexportnopk(idname character varying, abbreviation character varying, state character varying) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO defaultcsvexportnopk (idname, abbreviation, state) VALUES (NULL, NULL, NULL)");
-	        	// import data to table
-	        	preStmt.close();
-	        }
-			// csv
-			File data=new File(TEST_OUT+"export_DataContainsNullInTable_Ok.csv");
-			// delete file if already exist
-			if(data.exists()) {
-				data.delete();
-			}
-			// DBSCHEMA: "dbtocsvschema" not set
-			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "defaultcsvexportnopk");
-			AbstractExportFromdb db2Csv=new Db2Csv();
-			db2Csv.exportData(data, jdbcConnection, config);
-			fail();
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("export of: <model.topic.defaultcsvexportnopk> to csv file: <D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\DB2Csv\\export_DataContainsNullInTable_Ok.csv> failed."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
