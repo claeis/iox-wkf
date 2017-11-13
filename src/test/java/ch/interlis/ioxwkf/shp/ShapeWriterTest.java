@@ -3,8 +3,18 @@ package ch.interlis.ioxwkf.shp;
 import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
+
+import org.geotools.data.FileDataStore;
+import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.Before;
 import org.junit.Test;
+import org.opengis.feature.simple.SimpleFeature;
+
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.MultiLineString;
+
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -519,7 +529,7 @@ public class ShapeWriterTest {
 	@Test
 	public void lineString_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.LineString", "o1");
-		IomObject polylineValue=objStraightsSuccess.addattrobj("attrLineString", "POLYLINE");
+		IomObject polylineValue=objStraightsSuccess.addattrobj("the_geom", "POLYLINE");
 		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
 		IomObject coordStart=segments.addattrobj("segment", "COORD");
 		IomObject coordEnd=segments.addattrobj("segment", "COORD");
@@ -530,7 +540,6 @@ public class ShapeWriterTest {
 		ShapeWriter writer = null;
 		try {
 			writer = new ShapeWriter(new File(TEST_OUT,"LineString/LineString.shp"));
-			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objStraightsSuccess));
@@ -546,42 +555,19 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
-		// compile model
-		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
-		ili2cConfig.addFileEntry(fileEntry);
-		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
-		ShapeReader reader=null;
-		try {
-			reader=new ShapeReader(new File(TEST_OUT,"LineString/LineString.shp"));
-			reader.setModel(td2);
-			assertTrue(reader.read() instanceof StartTransferEvent);
-			assertTrue(reader.read() instanceof StartBasketEvent);
-			IoxEvent event=reader.read();
-			assertTrue(event instanceof ObjectEvent);
-			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
-			IomObject coord=sequence.getattrobj("segment", 0);
-			assertTrue(coord.getattrvalue("C1").equals("-0.22857142857142854"));
-			assertTrue(coord.getattrvalue("C2").equals("0.5688311688311687"));
-			IomObject coord2=sequence.getattrobj("segment", 1);
-			assertTrue(coord2.getattrvalue("C1").equals("-0.22557142857142853"));
-			assertTrue(coord2.getattrvalue("C2").equals("0.5658311688311687"));
-			
-			assertTrue(reader.read() instanceof EndBasketEvent);
-			assertTrue(reader.read() instanceof EndTransferEvent);
-		}finally {
-			if(reader!=null) {
-	    		try {
-	    			reader.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		reader=null;
-	    	}
-    	}
+		{
+			//Open the file for reading
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"LineString/LineString.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		if(featureCollectionIter.hasNext()) {
+				// feature object
+				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+				Object attr2=shapeObj.getAttribute("the_geom");
+				MultiLineString multiline=(MultiLineString)attr2;
+				assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
+    		}
+		}
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Polygon in einen LineString konvertiert wird.
@@ -618,44 +604,19 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
-		// compile model
-		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
-		ili2cConfig.addFileEntry(fileEntry);
-		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
-		ShapeReader reader=null;
-		try {
-			reader=new ShapeReader(new File(TEST_OUT,"LineStringAttributes/LineString2.shp"));
-			reader.setModel(td2);
-			assertTrue(reader.read() instanceof StartTransferEvent);
-			assertTrue(reader.read() instanceof StartBasketEvent);
-			IoxEvent event=reader.read();
-			assertTrue(event instanceof ObjectEvent);
-			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			assertTrue(iomObj.getattrvalue("attr1LS").equals("text1"));
-			assertTrue(iomObj.getattrvalue("attr2LS").equals("5"));
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
-			IomObject coord=sequence.getattrobj("segment", 0);
-			assertTrue(coord.getattrvalue("C1").equals("-0.22857142857142854"));
-			assertTrue(coord.getattrvalue("C2").equals("0.5688311688311687"));
-			IomObject coord2=sequence.getattrobj("segment", 1);
-			assertTrue(coord2.getattrvalue("C1").equals("-0.22557142857142853"));
-			assertTrue(coord2.getattrvalue("C2").equals("0.5658311688311687"));
-			
-			assertTrue(reader.read() instanceof EndBasketEvent);
-			assertTrue(reader.read() instanceof EndTransferEvent);
-		}finally {
-			if(reader!=null) {
-	    		try {
-	    			reader.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		reader=null;
-	    	}
-    	}
+		{
+			//Open the file for reading
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"LineString/LineString.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		if(featureCollectionIter.hasNext()) {
+				// feature object
+				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+				Object attr2=shapeObj.getAttribute("the_geom");
+				MultiLineString multiline=(MultiLineString)attr2;
+				assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
+    		}
+		}
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn mehrere Polylines in einen MultiLineString konvertiert wird.
