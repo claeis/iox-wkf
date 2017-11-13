@@ -25,18 +25,6 @@ public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
 	private Integer srsCode=IoxWkfConfig.SETTING_SRSCODE_DEFAULT;
 	
-	private static final String DATATYPENAME_GEOMETRY="geometry";
-	private static final String DBCOLUMNNAME_SRID="srid";
-	private static final String DBCOLUMNNAME_DIMENSION="coord_dimension";
-	private static final String DBCOLUMNNAME_TYPE="type";
-	
-	private static final String GEOM_DATATYPENAME_POINT="POINT";
-	private static final String GEOM_DATATYPENAME_MULTIPOINT="MULTIPOINT";
-	private static final String GEOM_DATATYPENAME_LINESTRING="LINESTRING";
-	private static final String GEOM_DATATYPENAME_MULTILINESTRING="MULTILINESTRING";
-	private static final String GEOM_DATATYPENAME_POLYGON="POLYGON";
-	private static final String GEOM_DATATYPENAME_MULTIPOLYGON="MULTIPOLYGON";
-	
 	public AbstractImport2db() {};
 	
 	/** import Data to database.
@@ -96,7 +84,7 @@ public abstract class AbstractImport2db {
 			
 			queryBuild.append(comma);
 			if(datatype.equals(Types.OTHER)) {
-				if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(DATATYPENAME_GEOMETRY)) {
+				if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(AttributeDescriptor.SET_GEOMETRY)) {
 					// attribute names of database table
 					try {
 						geomColumnTableInDb=openGeometryColumnTableInDb(schemaName, tableName, attrName, db);
@@ -104,20 +92,20 @@ public abstract class AbstractImport2db {
 						throw new IoxException(e);
 					}
 					while(geomColumnTableInDb.next()) {
-						geoColumnTypeName=geomColumnTableInDb.getString(DBCOLUMNNAME_TYPE);
-						srsCode=geomColumnTableInDb.getInt(DBCOLUMNNAME_SRID);
+						geoColumnTypeName=geomColumnTableInDb.getString(AttributeDescriptor.SET_TYPE);
+						srsCode=geomColumnTableInDb.getInt(AttributeDescriptor.SET_SRID);
 					}
-					if(geoColumnTypeName.equals(GEOM_DATATYPENAME_POINT)) {
+					if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
-					}else if(geoColumnTypeName.equals(GEOM_DATATYPENAME_MULTIPOINT)) {
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
-					}else if(geoColumnTypeName.equals(GEOM_DATATYPENAME_LINESTRING)) {
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperPolyline("?", srsCode));
-					}else if(geoColumnTypeName.equals(GEOM_DATATYPENAME_MULTILINESTRING)) {
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperMultiPolyline("?", srsCode));
-					}else if(geoColumnTypeName.equals(GEOM_DATATYPENAME_POLYGON)) {
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperSurface("?", srsCode));
-					}else if(geoColumnTypeName.equals(GEOM_DATATYPENAME_MULTIPOLYGON)) {
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperMultiSurface("?", srsCode));
 					}
 				}else {
@@ -156,7 +144,7 @@ public abstract class AbstractImport2db {
 			
 			if((attrValue!=null && !attrValue.isEmpty()) || value!=null){
 				if(dataType.equals(Types.OTHER)) {
-					if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(DATATYPENAME_GEOMETRY)) {
+					if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(AttributeDescriptor.SET_GEOMETRY)) {
 						// attribute names of database table
 						try {
 							geomColumnTableInDb=openGeometryColumnTableInDb(schemaName, tableName, attrName, db);
@@ -164,9 +152,9 @@ public abstract class AbstractImport2db {
 							throw new IoxException(e);
 						}
 						while(geomColumnTableInDb.next()) {
-							geoColumnTypeName=geomColumnTableInDb.getString(DBCOLUMNNAME_TYPE);
-							coordDimension=geomColumnTableInDb.getInt(DBCOLUMNNAME_DIMENSION);
-							srsCode=geomColumnTableInDb.getInt(DBCOLUMNNAME_SRID);
+							geoColumnTypeName=geomColumnTableInDb.getString(AttributeDescriptor.SET_TYPE);
+							coordDimension=geomColumnTableInDb.getInt(AttributeDescriptor.SET_DIMENSION);
+							srsCode=geomColumnTableInDb.getInt(AttributeDescriptor.SET_SRID);
 						}
 						if(coordDimension==3) {
 							is3D=true;

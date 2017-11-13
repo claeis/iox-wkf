@@ -131,15 +131,15 @@ public class Db2Csv extends AbstractExportFromdb {
 			String columnTypeName=metadataDbTable.getColumnTypeName(k);
 			
 			// set PG Attribute Object data.
-			AttributeDescriptor pgAttrObj=createPgAttrObj(columnName);
-			pgAttrObj.setAttributeName(columnName);
-			pgAttrObj.setAttributeType(columnType);
-			pgAttrObj.setAttributeTypeName(columnTypeName);
+			AttributeDescriptor attr=new AttributeDescriptor();
+			attr.setAttributeName(columnName);
+			attr.setAttributeType(columnType);
+			attr.setAttributeTypeName(columnTypeName);
 			
-			// put columnName alias attrName and PG Attribute Object alias PgAttrObj to PG Attribute Object Map.
-			addAttrObjToMap(columnName, pgAttrObj);
+			// put attribute to attribute descriptor list.
+			attrs.add(attr);
 		}
-		if(sizeOfCurrentPgAttrMap()==0) {
+		if(attrs.size()==0) {
 			if(definedSchemaName!=null) {
 				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside db schema: <"+definedSchemaName+">.");
 			}else {
@@ -165,7 +165,7 @@ public class Db2Csv extends AbstractExportFromdb {
 		EhiLogger.logState("start to write records.");
 		
 		IomObject iomObject=null;
-		// add attribute value, converted in appropriate type, to map of PG attribute objects.
+		// add attribute value, converted in appropriate type, list of attribute descriptors.
 		while(pg2IliConvertedTable.next()) {
 			/** Objects within the object list will be written to CSV file as a records.
 			 */
