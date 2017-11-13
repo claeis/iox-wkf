@@ -394,11 +394,13 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-1.0462287104622872"));
 			assertTrue(segment.getattrvalue("C2").equals("0.47688564476885653"));
+			IomObject segment2=sequence.getattrobj("segment", 1);
+			assertTrue(segment2.getattrvalue("C1").equals("0.5547445255474452"));
+			assertTrue(segment2.getattrvalue("C2").equals("0.15328467153284664"));
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
@@ -430,11 +432,13 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-1.0462287104622872"));
 			assertTrue(segment.getattrvalue("C2").equals("0.47688564476885653"));
+			IomObject segment2=sequence.getattrobj("segment", 1);
+			assertTrue(segment2.getattrvalue("C1").equals("0.5547445255474452"));
+			assertTrue(segment2.getattrvalue("C2").equals("0.15328467153284664"));
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
@@ -459,12 +463,10 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-2.2610421208961364"));
 			assertTrue(segment.getattrvalue("C2").equals("1.4415521218440928"));
-			
 			IomObject segment2=sequence.getattrobj("segment", 1);
 			assertTrue(segment2.getattrvalue("C1").equals("0.19112712105412832"));
 			assertTrue(segment2.getattrvalue("C2").equals("0.962795841627959"));
@@ -493,18 +495,23 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
+			IomObject sequence=polyline.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
-			assertTrue(segment.getattrvalue("C1").equals("-1.0"));
-			assertTrue(segment.getattrvalue("C2").equals("0.8321167883211679"));
-			
+			assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));
+			assertTrue(segment.getattrvalue("C2").equals("0.5688311688311687"));
 			IomObject segment2=sequence.getattrobj("segment", 1);
-			assertTrue(segment2.getattrvalue("C1").equals("0.5547445255474452"));
-			assertTrue(segment2.getattrvalue("C2").equals("0.8272506082725061"));
+			assertTrue(segment2.getattrvalue("C1").equals("-0.22557142857142853"));
+			assertTrue(segment2.getattrvalue("C2").equals("0.5658311688311687"));
 			
-			assertTrue(sequence.getattrvaluecount("segment")==6);
+			IomObject polyline2=multiPolylineObj.getattrobj("polyline", 1);
+			IomObject sequence2=polyline2.getattrobj("sequence", 0);
+			IomObject segment3=sequence2.getattrobj("segment", 0);
+			assertTrue(segment3.getattrvalue("C1").equals("-0.22557142857142853"));
+			assertTrue(segment3.getattrvalue("C2").equals("0.5658311688311687"));
+			IomObject segment4=sequence2.getattrobj("segment", 1);
+			assertTrue(segment4.getattrvalue("C1").equals("-0.22755142857142854"));
+			assertTrue(segment4.getattrvalue("C2").equals("0.5558351688311687"));
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
@@ -536,18 +543,14 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			
-			IomObject polylineObj=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polylineObj.getattrobj("sequence", 0);
+			IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
+			IomObject sequence=polyline.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
-			assertTrue(segment.getattrvalue("C1").equals("-1.0"));
-			assertTrue(segment.getattrvalue("C2").equals("0.8321167883211679"));
-			
+			assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));
+			assertTrue(segment.getattrvalue("C2").equals("0.5688311688311687"));
 			IomObject segment2=sequence.getattrobj("segment", 1);
-			assertTrue(segment2.getattrvalue("C1").equals("0.5547445255474452"));
-			assertTrue(segment2.getattrvalue("C2").equals("0.8272506082725061"));
-			
-			assertTrue(sequence.getattrvaluecount("segment")==6);
+			assertTrue(segment2.getattrvalue("C1").equals("-0.22557142857142853"));
+			assertTrue(segment2.getattrvalue("C2").equals("0.5658311688311687"));
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
