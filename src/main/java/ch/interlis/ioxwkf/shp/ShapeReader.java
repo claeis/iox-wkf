@@ -53,7 +53,7 @@ public class ShapeReader implements IoxReader{
 	private List<String> modelAttributes=new ArrayList<String>();
 	
 	// iox
-	private static TransferDescription td;
+	private TransferDescription td;
 	private IoxFactoryCollection factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
 	private java.io.File inputFile=null;
 	private int nextId=1;
@@ -67,7 +67,7 @@ public class ShapeReader implements IoxReader{
 	/** Creates a new reader.
 	 * @param shpFile to read from
 	 */
-	public ShapeReader(java.io.File shpFile) throws IoxException, IOException{
+	public ShapeReader(java.io.File shpFile) throws IoxException{
 		state=START;
 		td=null;
 		inputFile=new java.io.File(shpFile.getPath());
@@ -77,19 +77,19 @@ public class ShapeReader implements IoxReader{
 	/** Initialize file content.
 	 * @param java.io.File shapeFile
 	 * @throws IoxException
+	 * @throws  
 	 */
-	private void init(java.io.File shapeFile) throws IOException, IoxException{
+	private void init(java.io.File shapeFile) throws IoxException{
 		factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
-		// store data of shape file
-		dataStore = FileDataStoreFinder.getDataStore(shapeFile);
-		if(dataStore==null) {
-			throw new IoxException("expected shape file");
-		}
-		featuresSource = dataStore.getFeatureSource();
 		try {
+			dataStore = FileDataStoreFinder.getDataStore(shapeFile);
+			if(dataStore==null) {
+				throw new IoxException("expected shape file");
+			}
+			featuresSource = dataStore.getFeatureSource();
 			featureCollectionIter=featuresSource.getFeatures().features();
-		}catch(Exception e) {
-			throw new IoxException("shapefile: "+shapeFile.getAbsolutePath()+" not found",e);
+		}catch(IOException e) {
+			throw new IoxException(e);
 		}
 	}
 	
@@ -98,7 +98,7 @@ public class ShapeReader implements IoxReader{
 	 * @param td, transfer description.
 	 */
 	public void setModel(TransferDescription td){
-		ShapeReader.td=td;
+		this.td=td;
 	}
 
 	/**

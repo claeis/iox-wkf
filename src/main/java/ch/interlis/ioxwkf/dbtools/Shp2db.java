@@ -43,11 +43,7 @@ public class Shp2db extends AbstractImport2db {
 			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
 		}
 		
-		try {
-			shpReader = new ShapeReader(file);
-		} catch (IOException e) {
-			throw new IoxException(e);
-		}
+		shpReader = new ShapeReader(file);
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
