@@ -898,55 +898,6 @@ public class Csv2dbTest {
 		}
 	}	
 	
-	// Testet ob der richtige Fehler ausgegeben wird, wenn die
-	// Attribute der Tabelle innerhalb der CSV-Datei nicht gefunden werden kann.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: header-->present
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FEHLER: data base attribute names ... not found.
-	@Test
-	public void import_AttrNamesOfDbNotFound_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheader(id character varying NOT NULL,abbreviation character varying,state character varying,CONSTRAINT csvimportwithheader_pkey PRIMARY KEY (id)) WITH (OIDS=FALSE)");
-	        	preStmt.close();
-	        }
-			// csv
-			File data=new File(TEST_IN, "AttributesHeader3.csv");
-			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
-			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
-			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
-			AbstractImport2db csv2db=new Csv2db();
-			csv2db.importData(data, jdbcConnection, config);
-	    	fail();
-		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("data base attribute names:"));
-			assertTrue(e.getMessage().contains("planet"));
-			assertTrue(e.getMessage().contains("name"));
-			assertTrue(e.getMessage().contains("lastname"));
-			assertTrue(e.getMessage().contains("not found in AttributesHeader3.csv"));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
 	// Wenn die Verbindung zu Datenbank: null ist,
 	// muss die Fehlermeldung: connection=null ausgegeben werden.
 	// --
@@ -1098,7 +1049,9 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("file: D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\NotExist\\AttributesHeader.csv not found"));
+			assertTrue(e.getMessage().contains("file"));
+			assertTrue(e.getMessage().contains("AttributesHeader"));
+			assertTrue(e.getMessage().contains("not found."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

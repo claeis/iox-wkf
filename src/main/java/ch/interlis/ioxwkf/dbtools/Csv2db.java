@@ -10,10 +10,14 @@ import ch.interlis.iox.IoxReader;
 public class Csv2db extends AbstractImport2db {
 	@Override
 	protected IoxReader createReader(File file, Settings config) throws IoxException {
-		/** mandatory: file to read has not to be null.
+		/** mandatory: file to reader has not to be null.
 		 */
 		if(file!=null) {
-			EhiLogger.logState("file to write to: <"+file.getAbsolutePath()+">");
+			if(file.exists()) {
+				EhiLogger.logState("file to read to: <"+file.getName()+">");
+			}else {
+				throw new IoxException("file "+file.getName()+" not found.");
+			}
 		}else {
 			throw new IoxException("file==null.");
 		}

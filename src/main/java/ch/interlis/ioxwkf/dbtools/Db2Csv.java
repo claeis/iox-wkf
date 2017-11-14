@@ -10,10 +10,10 @@ import ch.interlis.iox.IoxWriter;
 public class Db2Csv extends AbstractExportFromdb {
 	@Override
 	protected IoxWriter createWriter(File file, Settings config) throws IoxException {
-		/** mandatory: file to write to has not to be null.
+		/** mandatory: file to reader has not to be null.
 		 */
 		if(file!=null) {
-			EhiLogger.logState("file to write to: <"+file.getAbsolutePath()+">");
+				EhiLogger.logState("file to read to: <"+file.getName()+">");
 		}else {
 			throw new IoxException("file==null.");
 		}

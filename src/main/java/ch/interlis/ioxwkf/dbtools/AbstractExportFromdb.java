@@ -135,13 +135,6 @@ public abstract class AbstractExportFromdb {
 		} catch (SQLException e) {
 			throw new IoxException(e);
 		}
-		if(attrs.size()==0) {
-			if(definedSchemaName!=null) {
-				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside db schema: <"+definedSchemaName+">.");
-			}else {
-				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside default db schema.");
-			}
-		}
 		
 		/** create selection for appropriate datatypes.
 		 *  geometry datatypes are wrapped from pg to ili.

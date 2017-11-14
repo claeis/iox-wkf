@@ -13,7 +13,11 @@ public class Shp2db extends AbstractImport2db {
 		/** mandatory: file to reader has not to be null.
 		 */
 		if(file!=null) {
-			EhiLogger.logState("file to read to: <"+file.getAbsolutePath()+">");
+			if(file.exists()) {
+				EhiLogger.logState("file to read to: <"+file.getName()+">");
+			}else {
+				throw new IoxException("file "+file.getName()+" not found.");
+			}
 		}else {
 			throw new IoxException("file==null.");
 		}

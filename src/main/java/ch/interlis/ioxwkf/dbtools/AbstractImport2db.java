@@ -67,16 +67,6 @@ public abstract class AbstractImport2db {
 			EhiLogger.logState("connection to database: <success>.");
 		}
 		
-		/** check file if everything is ok.
-		 */
-		if(!(file.exists())) {
-			throw new IoxException("file: "+file.getAbsolutePath()+" not found");
-		}else if(!(file.canRead())) {
-			throw new IoxException("file: "+file.getAbsolutePath()+" not readable");
-		}else {
-			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
-		}
-		
 		/** optional: set database schema, if table is not in default schema.
 		 */
 		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
@@ -148,10 +138,6 @@ public abstract class AbstractImport2db {
 				} catch (SQLException e1) {
 					throw new IoxException(e1);
 				}
-				if(attrs.size()==0) {
-					throw new IoxException("data base attribute names: "+attrsNotFound.toString()+" not found in "+file.getName());
-				}
-
 				// insert attributes to database
 				try {
 					try {
@@ -270,8 +256,6 @@ public abstract class AbstractImport2db {
 			
 		position=1;
 		for(AttributeDescriptor attribute:attrs) {
-			
-			
 			String dataTypeName=attribute.getAttributeTypeName();
 			Integer dataType=attribute.getAttributeType();
 			String attrName=attribute.getAttributeName();

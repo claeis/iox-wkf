@@ -1148,53 +1148,6 @@ public class Shp2dbTest {
 		}
 	}	
 	
-	// Testet ob der richtige Fehler ausgegeben wird, wenn die
-	// Attribute der Tabelle innerhalb der Shp-Datei nicht gefunden werden kann.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - set: database-schema
-	// - set: database-table
-	// --
-	// Erwartung: FEHLER: data base attribute names ... not found.
-	@Test
-	public void import_AttrNamesOfDbNotFound_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
-	        	// create schema
-	        	preStmt.execute("CREATE SCHEMA shptodbschema");
-	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr2 xml, the_geom2 geometry(POINT,2056))WITH (OIDS=FALSE)");
-	        	preStmt.close();
-	        }
-			// csv
-			File data=new File(TEST_IN, "Attributes/Xml/DataTypeXml.shp");
-			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
-			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
-			AbstractImport2db shp2db=new Shp2db();
-			shp2db.importData(data, jdbcConnection, config);
-	    	fail();
-		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("data base attribute names:"));
-			assertTrue(e.getMessage().contains("the_geom"));
-			assertTrue(e.getMessage().contains("attr"));
-			assertTrue(e.getMessage().contains("not found in"));
-			assertTrue(e.getMessage().contains("DataTypeXml.shp"));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
 	// Wenn die Verbindung zu Datenbank: null ist,
 	// muss die Fehlermeldung: connection=null ausgegeben werden.
 	// --
@@ -1301,21 +1254,22 @@ public class Shp2dbTest {
 	@Test
 	public void import_ShpFileNotFound_Fail() throws Exception
 	{
-		Settings config=null;
-		config=new Settings();
+		Settings config=new Settings();
+		config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+		config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 		Connection jdbcConnection=null;
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File(TEST_IN, "NotExist/testPointAttrs.shp");
-			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
-			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+			File data=new File(TEST_IN, "NOTFOUND/testPointAttrs.shp");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("file: D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\Shp2DB\\NotExist\\testPointAttrs.shp not found"));
+			assertTrue(e.getMessage().contains("file"));
+			assertTrue(e.getMessage().contains("testPointAttrs"));
+			assertTrue(e.getMessage().contains("not found."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
