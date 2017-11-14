@@ -7,34 +7,177 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Map;
-import java.util.Map.Entry;
+import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2db.converter.ConverterException;
 import ch.ehi.ili2pg.converter.PostgisColumnConverter;
 import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
+import ch.interlis.iox.IoxReader;
+import ch.interlis.iox.ObjectEvent;
 
 public abstract class AbstractImport2db {
+	
+	/** list of attribute descriptors.
+	 */
+	private ArrayList<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
+	
+	/** list of attribute which not were found.
+	 */
+	private ArrayList<String> attrsNotFound=new ArrayList<String>();
+	
+	/** postgis column converter to convert to db and back.
+	 */
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
+	
+	/** srsCode: set default value.
+	 */
 	private Integer srsCode=IoxWkfConfig.SETTING_SRSCODE_DEFAULT;
 	
-	public AbstractImport2db() {};
-	
-	/** import Data to database.
+	/** create a reader in the appropriate format.
 	 * @param file
-	 * @param db
 	 * @param config
-	 * @throws IoxException 
-	 * @throws SQLException 
+	 * @return reader
+	 * @throws IoxException
 	 */
-	public abstract void importData(File file,Connection db,Settings config) throws SQLException, IoxException;
+	protected abstract IoxReader createReader(File file, Settings config) throws IoxException;
+	
+	/** import from file to data base.
+	 * @param file to write to.
+	 * @param connection to db.
+	 * @param config to set by user.
+	 * @throws IoxException
+	 */
+	public void importData(File file,Connection db,Settings config) throws IoxException {
+		
+		/** validity of connection
+		 */
+		if(db==null) {
+			throw new IoxException("connection==null.");
+		}else {
+			EhiLogger.logState("connection to database: <success>.");
+		}
+		
+		/** check file if everything is ok.
+		 */
+		if(!(file.exists())) {
+			throw new IoxException("file: "+file.getAbsolutePath()+" not found");
+		}else if(!(file.canRead())) {
+			throw new IoxException("file: "+file.getAbsolutePath()+" not readable");
+		}else {
+			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
+		}
+		
+		/** optional: set database schema, if table is not in default schema.
+		 */
+		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
+		if(definedSchemaName==null) {
+			EhiLogger.logState("no db schema name defined, get default schema.");
+		}else {
+			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+		}
+		/** mandatory: set database table to insert data into.
+		 */
+		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+		if(definedTableName==null) {
+			throw new IoxException("database table==null.");
+		}else {
+			EhiLogger.logState("db table name: <"+definedTableName+">.");
+		}
+				
+		/** create appropriate IoxReader.
+		 */
+		IoxReader reader=createReader(file, config);
+		
+		/** read IoxEvents
+		 */
+		IoxEvent event=reader.read();
+		EhiLogger.logState("start import");
+		while(event instanceof IoxEvent){
+			if(event instanceof ObjectEvent) {
+				IomObject iomObj=((ObjectEvent)event).getIomObject();
+				
+				// table validity
+				ResultSet tableInDb=null;
+				if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
+					// attribute names of database table
+					try {
+						tableInDb=openTableInDb(definedSchemaName, definedTableName, db);
+					}catch(Exception e) {
+						throw new IoxException("table "+definedTableName+" not found");
+					}
+				}else {
+					throw new IoxException("expected tablename");
+				}
+				
+				ResultSetMetaData rsmd;
+				try {
+					rsmd = tableInDb.getMetaData();
+					for(int k=1;k<rsmd.getColumnCount()+1;k++) {
+						String columnName=rsmd.getColumnName(k);
+						int columnType=rsmd.getColumnType(k);
+						String columnTypeName=rsmd.getColumnTypeName(k);
+						
+						for(int i=0;i<iomObj.getattrcount();i++) {
+							if(columnName.equals(iomObj.getattrname(i))){
+								String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
+								if(attrValue==null) {
+									attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
+								}
+								if(attrValue!=null) {
+									AttributeDescriptor attrData=new AttributeDescriptor();
+									attrData.setAttributeName(iomObj.getattrname(i));
+									attrData.setAttributeType(columnType);
+									attrData.setAttributeTypeName(columnTypeName);
+									attrs.add(attrData);
+								}
+							}else {
+								attrsNotFound.add(iomObj.getattrname(i));
+							}
+						}
+					}
+				} catch (SQLException e1) {
+					throw new IoxException(e1);
+				}
+				if(attrs.size()==0) {
+					throw new IoxException("data base attribute names: "+attrsNotFound.toString()+" not found in "+file.getName());
+				}
+
+				// insert attributes to database
+				try {
+					try {
+						insertIntoTable(definedSchemaName, definedTableName, db,iomObj);
+					} catch (SQLException e) {
+						throw new IoxException(e);
+					}
+				} catch (ConverterException e) {
+					throw new IoxException("import failed"+e);
+				}
+				event=reader.read();
+			}else {
+				// next IoxEvent
+				event=reader.read();
+			}
+		}
+		EhiLogger.logState("end of import");
+		EhiLogger.logState("import successful");
+		
+		// close reader
+		if(reader!=null) {
+			reader.close();
+			reader=null;
+		}
+		event=null;
+	}
 
 	/** insert attribute-values of IomObject from attribute-names of data base table,
 	 * to data base (existing schema, else default schema) in contained table (if exists),
@@ -48,7 +191,7 @@ public abstract class AbstractImport2db {
 	 * @throws SQLException
 	 * @throws ConverterException 
 	 */
-	protected void insertIntoTable(String schemaName, String tableName, Map<String, AttributeDescriptor> attrsPool, Connection db, IomObject iomObj) throws IoxException, SQLException, ConverterException {
+	protected void insertIntoTable(String schemaName, String tableName, Connection db, IomObject iomObj) throws IoxException, SQLException, ConverterException {
 		StringBuffer queryBuild=new StringBuffer();
 		
 		// create insert statement
@@ -61,9 +204,8 @@ public abstract class AbstractImport2db {
 		queryBuild.append("(");
 		String comma="";
 		StringBuilder attrsNotInserted=new StringBuilder();
-		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
-			AttributeDescriptor attrObject=attribute.getValue();
-			String attrName=attrObject.getAttributeName();
+		for(AttributeDescriptor attribute:attrs) {
+			String attrName=attribute.getAttributeName();
 			attrsNotInserted.append(comma);
 			queryBuild.append(comma);
 			comma=", ";
@@ -75,12 +217,11 @@ public abstract class AbstractImport2db {
 		String geoColumnTypeName=null;
 		int position=1;
 		ResultSet geomColumnTableInDb=null;
-		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
-			AttributeDescriptor attrObject=attribute.getValue();
-			String attrName=attrObject.getAttributeName();
-			Integer datatype=attrObject.getAttributeType();
+		for(AttributeDescriptor attribute:attrs) {
+			String attrName=attribute.getAttributeName();
+			Integer datatype=attribute.getAttributeType();
 			// dataTypeName
-			String geoColumnTypeGeom=attrObject.getAttributeTypeName();
+			String geoColumnTypeGeom=attribute.getAttributeTypeName();
 			
 			queryBuild.append(comma);
 			if(datatype.equals(Types.OTHER)) {
@@ -120,21 +261,24 @@ public abstract class AbstractImport2db {
 		PreparedStatement ps=null;
 		try {
 			ps = db.prepareStatement(queryBuild.toString());
-			ps.clearParameters();
 		}catch(Exception e) {
 			throw new IoxException(e);
 		}
 		
+		// clear parameters
+		ps.clearParameters();
+			
 		position=1;
-		for(Entry<String, AttributeDescriptor> attribute:attrsPool.entrySet()) {
-			AttributeDescriptor attrObject=attribute.getValue();
-			String dataTypeName=attrObject.getAttributeTypeName();
-			Integer dataType=attrObject.getAttributeType();
-			String attrName=attrObject.getAttributeName();
+		for(AttributeDescriptor attribute:attrs) {
+			
+			
+			String dataTypeName=attribute.getAttributeTypeName();
+			Integer dataType=attribute.getAttributeType();
+			String attrName=attribute.getAttributeName();
 			String attrValue=iomObj.getattrvalue(attrName);
 			IomObject value=null;
 			// dataTypeName
-			String geoColumnTypeGeom=attrObject.getAttributeTypeName();
+			String geoColumnTypeGeom=attribute.getAttributeTypeName();
 			Integer coordDimension=0;
 			boolean is3D=false;
 			

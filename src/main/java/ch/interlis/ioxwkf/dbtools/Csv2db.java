@@ -1,158 +1,52 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.ehi.ili2db.converter.ConverterException;
-import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.csv.CsvReader;
-import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
-import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox.IoxReader;
 
 public class Csv2db extends AbstractImport2db {
-	
-	/** import csvData to database.
-	 * @param file
-	 * @param db
-	 * @param config
-	 * @throws SQLException
-	 * @throws IoxException
-	 */
 	@Override
-	public void importData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		Map<String, AttributeDescriptor> attrsPool=new HashMap<String, AttributeDescriptor>();
-		Set notFoundAttrs=new HashSet();
-		
-		if(!(file.exists())) {
-			throw new IoxException("csv file: "+file.getAbsolutePath()+" not found");
-		}else if(!(file.canRead())) {
-			throw new IoxException("csv file: "+file.getAbsolutePath()+" not readable");
+	protected IoxReader createReader(File file, Settings config) throws IoxException {
+		/** mandatory: file to read has not to be null.
+		 */
+		if(file!=null) {
+			EhiLogger.logState("file to write to: <"+file.getAbsolutePath()+">");
 		}else {
-			EhiLogger.logState("dataFile <"+file.getAbsolutePath()+">");
+			throw new IoxException("file==null.");
 		}
 		
-		/** mandatory: set csv file, which contains data to import.
+		/** create csv reader.
 		 */
-		CsvReader csvReader=new CsvReader(file);
+		CsvReader reader=new CsvReader(file);
+		
+		/** optional char: value delimiter.
+		 */
+		String valueDelimiter=config.getValue(IoxWkfConfig.SETTING_VALUEDELIMITER);
+		if(valueDelimiter!=null) {
+			reader.setValueDelimiter(valueDelimiter.charAt(0));
+			EhiLogger.traceState("valueDelimiter <"+valueDelimiter+">.");
+		}
+		
+		/** optional char: value separator.
+		 */
+		String valueSeparator=config.getValue(IoxWkfConfig.SETTING_VALUESEPARATOR);
+		if(valueSeparator!=null) {
+			reader.setValueSeparator(valueSeparator.charAt(0));
+			EhiLogger.traceState("valueSeparator <"+valueSeparator+">.");
+		}
+		
+		/** optional boolean: first line is set as header or as data.
+		 */
 		boolean firstLineIsHeader=false;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE);
-			if(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
-				firstLineIsHeader=true;
-			}
+		if(config.getValue(IoxWkfConfig.SETTING_FIRSTLINE)!=null) {
+			firstLineIsHeader=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE).equals(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 		}
-		char valueDelimiter=IoxWkfConfig.SETTING_VALUEDELIMITER_DEFAULT;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_VALUEDELIMITER);
-			if(val!=null) {
-				valueDelimiter=val.charAt(0);
-			}
-		}
-		char valueSeparator=IoxWkfConfig.SETTING_VALUESEPARATOR_DEFAULT;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_VALUESEPARATOR);
-			if(val!=null) {
-				valueSeparator=val.charAt(0);
-			}
-		}
-		/** optional: set database schema, if table is not in default schema.
-		 */
-		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
-		/** mandatory: set database table to insert data into.
-		 */
-		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+		reader.setFirstLineIsHeader(firstLineIsHeader);
+		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
 		
-		// validity of connection
-		if(db==null) {
-			throw new IoxException("connection==null");
-		}else if(!(db.isValid(0))) {
-			throw new IoxException("connection to: "+db+" failed");
-		}
-				
-		// build csvReader
-		csvReader.setFirstLineIsHeader(firstLineIsHeader);
-		csvReader.setValueDelimiter(valueDelimiter);
-		csvReader.setValueSeparator(valueSeparator);
-		
-		// read IoxEvents
-		IoxEvent event=csvReader.read();
-		while(event instanceof IoxEvent){
-			if(event instanceof ObjectEvent) {
-				IomObject iomObj=((ObjectEvent)event).getIomObject();
-				
-				// table validity
-				ResultSet tableInDb=null;
-				if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
-					// attribute names of database table
-					try {
-						tableInDb=openTableInDb(definedSchemaName, definedTableName, db);
-					}catch(Exception e) {
-						throw new IoxException("table "+definedTableName+" not found");
-					}
-				}else {
-					throw new IoxException("expected tablename");
-				}
-				
-				attrsPool.clear();
-				notFoundAttrs.clear();
-				// build attributes
-				attrsPool.clear();
-				ResultSetMetaData rsmd=tableInDb.getMetaData();
-				for(int k=1;k<rsmd.getColumnCount()+1;k++) {
-					String columnName=rsmd.getColumnName(k);
-					int columnType=rsmd.getColumnType(k);
-					String columnTypeName=rsmd.getColumnTypeName(k);
-					
-					for(int i=0;i<iomObj.getattrcount();i++) {
-						if(columnName.equals(iomObj.getattrname(i))){
-							String attrValue=iomObj.getattrvalue(iomObj.getattrname(i));
-							if(attrValue==null) {
-								attrValue=iomObj.getattrobj(iomObj.getattrname(i), 0).toString();
-							}
-							if(attrValue!=null) {
-								AttributeDescriptor attrData=new AttributeDescriptor();
-								attrData.setAttributeName(iomObj.getattrname(i));
-								attrData.setAttributeType(columnType);
-								attrData.setAttributeTypeName(columnTypeName);
-								attrsPool.put(iomObj.getattrname(i), attrData);
-							}
-						}else {
-							notFoundAttrs.add(iomObj.getattrname(i));
-						}
-					}
-				}
-				if(attrsPool.size()==0) {
-					throw new IoxException("data base attribute names: "+notFoundAttrs.toString()+" not found in "+file.getName());
-				}
-
-				// insert attributes to database
-				try {
-					insertIntoTable(definedSchemaName, definedTableName, attrsPool, db,iomObj);
-				} catch (ConverterException e) {
-					throw new IoxException("import failed"+e);
-				}
-				event=csvReader.read();
-			}else {
-				// next IoxEvent
-				event=csvReader.read();
-			}
-		}
-		
-		// close csvReader
-		if(csvReader!=null) {
-			csvReader.close();
-			csvReader=null;
-		}
-		event=null;
+		return reader;
 	}
 }

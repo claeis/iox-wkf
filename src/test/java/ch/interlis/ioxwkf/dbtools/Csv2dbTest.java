@@ -25,6 +25,7 @@ public class Csv2dbTest {
 	private String dbpwd=System.getProperty("dbpwd");
 	private Statement stmt=null;
 	private Map<String, List<String>> rows=null;
+	private static final String TEST_IN="src/test/data/Csv2DB/";
 	
 	// Bei diesem Test darf keine Fehlermeldung ausgegeben werden.
 	// Hier werden alle moeglichen Parameter gesetzt.
@@ -54,7 +55,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
+				File data=new File(TEST_IN, "AttributesHeader.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheadernopk");
@@ -111,7 +112,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
+				File data=new File(TEST_IN, "AttributesHeaderAbsent.csv");
 				// HEADER: HEADERPRESENT, HEADERABSENT not set
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportnopkcolumn");
@@ -168,7 +169,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
+				File data=new File(TEST_IN, "AttributesHeader.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				// DBSCHEMA: not set "csvtodbschema"
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
@@ -223,7 +224,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeBigint.csv");
+				File data=new File(TEST_IN, "DataTypeBigint.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -273,7 +274,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeBoolean.csv");
+				File data=new File(TEST_IN, "DataTypeBoolean.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -323,7 +324,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeBit.csv");
+				File data=new File(TEST_IN, "DataTypeBit.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -373,7 +374,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeChar.csv");
+				File data=new File(TEST_IN, "DataTypeChar.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -423,7 +424,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeVarchar.csv");
+				File data=new File(TEST_IN, "DataTypeVarchar.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -473,7 +474,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeDate.csv");
+				File data=new File(TEST_IN, "DataTypeDate.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -523,7 +524,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeInteger.csv");
+				File data=new File(TEST_IN, "DataTypeInteger.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -573,7 +574,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeNumeric.csv");
+				File data=new File(TEST_IN, "DataTypeNumeric.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -623,7 +624,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeText.csv");
+				File data=new File(TEST_IN, "DataTypeText.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -673,7 +674,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeTime.csv");
+				File data=new File(TEST_IN, "DataTypeTime.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -723,7 +724,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeSmallint.csv");
+				File data=new File(TEST_IN, "DataTypeSmallint.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -773,7 +774,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeTimestamp.csv");
+				File data=new File(TEST_IN, "DataTypeTimestamp.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -823,7 +824,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeUuid.csv");
+				File data=new File(TEST_IN, "DataTypeUuid.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -873,7 +874,7 @@ public class Csv2dbTest {
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/DataTypeXml.csv");
+				File data=new File(TEST_IN, "DataTypeXml.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
@@ -926,7 +927,7 @@ public class Csv2dbTest {
 	        	preStmt.close();
 	        }
 			// csv
-			File data=new File("src/test/data/Csv2DB/AttributesHeader3.csv");
+			File data=new File(TEST_IN, "AttributesHeader3.csv");
 			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheader");
@@ -963,12 +964,12 @@ public class Csv2dbTest {
 		try{
 	        jdbcConnection = null;
 			// csv
-			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
+			File data=new File(TEST_IN, "AttributesHeader.csv");
 			Csv2db csv2db=new Csv2db();
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertEquals("connection==null",e.getMessage());
+			assertEquals("connection==null.",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1001,7 +1002,7 @@ public class Csv2dbTest {
 	        	preStmt.close();
 	        }
 	        // csv
-			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
+			File data=new File(TEST_IN, "AttributesHeader.csv");
 			// HEADER: HEADERPRESENT, HEADERABSENT not set
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
@@ -1009,7 +1010,7 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 			fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("expected tablename"));
+			assertTrue(e.getMessage().contains("database table==null."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1044,7 +1045,7 @@ public class Csv2dbTest {
 	        	preStmt.close();
 	        }
 			// csv
-			File data=new File("src/test/data/Csv2DB/AttributesHeader.csv");
+			File data=new File(TEST_IN, "AttributesHeader.csv");
 			config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
 			// TABLE: "csvimportwithheader" not set
@@ -1052,7 +1053,7 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("expected tablename"));
+			assertTrue(e.getMessage().contains("database table==null."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1097,8 +1098,7 @@ public class Csv2dbTest {
 			csv2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("csv file"));
-			assertTrue(e.getMessage().contains("not found"));
+			assertTrue(e.getMessage().contains("file: D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\NotExist\\AttributesHeader.csv not found"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1130,26 +1130,23 @@ public class Csv2dbTest {
 	        	preStmt.execute("DROP TABLE IF EXISTS csvimport CASCADE");
 	        	// create table in schema
 	        	preStmt.execute("CREATE TABLE csvimport(attr1 character varying NOT NULL, CONSTRAINT csvimport_pkey PRIMARY KEY (attr1))WITH (OIDS=FALSE)");
+	        	preStmt.executeUpdate("INSERT INTO csvimport(attr1)VALUES('Holland')");
 	        	preStmt.close();
 	        }
 	        {
 				// csv
-				File data=new File("src/test/data/Csv2DB/AttributesHeaderAbsent.csv");
+				File data=new File(TEST_IN, "AttributesHeaderAbsent.csv");
 				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_VALUE);
-				// HEADER: HEADERPRESENT, HEADERABSENT not set
 				// DBSCHEMA: "csvtodbschema" not set
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimport");
 				AbstractImport2db csv2db=new Csv2db();
 				csv2db.importData(data, jdbcConnection, config);
-				csv2db.importData(data, jdbcConnection, config);
 				fail();
 			}
 		}catch(IoxException e) {
-			System.out.println(e.getMessage());
 			assertTrue(e.getCause() instanceof SQLException);
+			// unique violation.
 			assertEquals("23505",((SQLException) e.getCause()).getSQLState());
-		}catch(SQLException e) {
-			fail();
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();

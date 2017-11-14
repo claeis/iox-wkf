@@ -33,6 +33,8 @@ public class Shp2dbTest {
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
 	private Statement stmt=null;
+	private static final String CREATEFILE_CLASSPATH="Test1.Topic1.Class1";
+	private static final String TEST_IN="src/test/data/Shp2DB/";
 	
 	// Testet ob der Import eines Point's in die Datenbank funktioniert,
 	// wenn die Test-Konfiguration wie folgt gesetzt wird:
@@ -60,7 +62,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
+				File data=new File(TEST_IN, "Point/Point.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -113,7 +115,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/MultiPoint/MultiPoint.shp");
+				File data=new File(TEST_IN, "MultiPoint/MultiPoint.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -166,7 +168,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/LineString/LineString.shp");
+				File data=new File(TEST_IN, "LineString/LineString.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -219,7 +221,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/MultiLineString/MultiLineString.shp");
+				File data=new File(TEST_IN, "MultiLineString/MultiLineString.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -272,7 +274,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Polygon/Polygon.shp");
+				File data=new File(TEST_IN, "Polygon/Polygon.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -306,6 +308,7 @@ public class Shp2dbTest {
 	// --
 	// Erwartung: SUCCESS.
 	@Test
+	@Ignore("remove ch.interlis.ioxwkf.converter #10")
 	public void import_MultiPolygon_Ok() throws Exception
 	{
 		Settings config=new Settings();
@@ -325,7 +328,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/MultiPolygon/MultiPolygon.shp");
+				File data=new File(TEST_IN, "MultiPolygon/MultiPolygon.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -377,7 +380,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Point/Point.shp");
+				File data=new File(TEST_IN, "Point/Point.shp");
 				//config.setValue(Config.DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimportnoschematable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -429,7 +432,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Bigint/DataTypeBigInt.shp");
+				File data=new File(TEST_IN, "Attributes/Bigint/DataTypeBigInt.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -482,7 +485,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Bit/DataTypeBit.shp");
+				File data=new File(TEST_IN, "Attributes/Bit/DataTypeBit.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -535,7 +538,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+				File data=new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -588,7 +591,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Char/DataTypeChar.shp");
+				File data=new File(TEST_IN, "Attributes/Char/DataTypeChar.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -641,7 +644,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Varchar/DataTypeVarChar.shp");
+				File data=new File(TEST_IN, "Attributes/Varchar/DataTypeVarChar.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -694,7 +697,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Date/DataTypeDate.shp");
+				File data=new File(TEST_IN, "Attributes/Date/DataTypeDate.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -747,7 +750,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Integer/DataTypeInteger.shp");
+				File data=new File(TEST_IN, "Attributes/Integer/DataTypeInteger.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -800,7 +803,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Numeric/DataTypeNumeric.shp");
+				File data=new File(TEST_IN, "Attributes/Numeric/DataTypeNumeric.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -853,7 +856,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Text/DataTypeText.shp");
+				File data=new File(TEST_IN, "Attributes/Text/DataTypeText.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -906,7 +909,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Time/DataTypeTime.shp");
+				File data=new File(TEST_IN, "Attributes/Time/DataTypeTime.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -959,7 +962,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Smallint/DataTypeSmallint.shp");
+				File data=new File(TEST_IN, "Attributes/Smallint/DataTypeSmallint.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -1012,7 +1015,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Timestamp/DataTypeTimestamp.shp");
+				File data=new File(TEST_IN, "Attributes/Timestamp/DataTypeTimestamp.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -1065,7 +1068,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Uuid/DataTypeUuid.shp");
+				File data=new File(TEST_IN, "Attributes/Uuid/DataTypeUuid.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -1118,7 +1121,7 @@ public class Shp2dbTest {
 	        }
 	        {
 				// shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
+				File data=new File(TEST_IN, "Attributes/Xml/DataTypeXml.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 				AbstractImport2db shp2db=new Shp2db();
@@ -1173,7 +1176,7 @@ public class Shp2dbTest {
 	        	preStmt.close();
 	        }
 			// csv
-			File data=new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp");
+			File data=new File(TEST_IN, "Attributes/Xml/DataTypeXml.shp");
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
@@ -1210,13 +1213,13 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = null;
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+			File data=new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp");
 			Shp2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
 			assertEquals(IoxException.class,e.getClass());
-			assertEquals("connection==null",e.getMessage());
+			assertEquals("connection==null.",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1241,14 +1244,14 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+			File data=new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp");
 			// DBSCHEMA: "csvtodbschema" not set
 			// TABLE: "csvimportwithheader" not set
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 			fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("expected tablename"));
+			assertTrue(e.getMessage().contains("database table==null."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1273,14 +1276,14 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+			File data=new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp");
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 			// TABLE: "shpimporttable"
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
 		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("expected tablename"));
+			assertTrue(e.getMessage().contains("database table==null."));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1305,15 +1308,14 @@ public class Shp2dbTest {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
 	        // shp
-			File data=new File("src/test/data/Shp2DB/NotExist/testPointAttrs.shp");
+			File data=new File(TEST_IN, "NotExist/testPointAttrs.shp");
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
 			AbstractImport2db shp2db=new Shp2db();
 			shp2db.importData(data, jdbcConnection, config);
 	    	fail();
-		}catch(Exception e) {
-			assertTrue(e.getMessage().contains("shp file"));
-			assertTrue(e.getMessage().contains("not found"));
+		}catch(IoxException e) {
+			assertTrue(e.getMessage().contains("file: D:\\GIT\\iox-wkf\\iox-wkf\\src\\test\\data\\Shp2DB\\NotExist\\testPointAttrs.shp not found"));
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
@@ -1330,7 +1332,6 @@ public class Shp2dbTest {
 	// --
 	// Erwartung: FEHLER: import failed.
 	@Test
-	@Ignore("fix after refactoring csv/shp export code to a common base")
 	public void import_UniqueConstraint_Fail() throws Exception
 	{
 		Settings config=null;
@@ -1342,24 +1343,25 @@ public class Shp2dbTest {
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop table
-	        	preStmt.execute("DROP TABLE IF EXISTS shpimportnoschematable CASCADE");
+	        	preStmt.execute("DROP TABLE IF EXISTS shpimportunique CASCADE");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shpimportnoschematable(attr boolean NOT NULL,the_geom geometry(POINT,2056),CONSTRAINT shpimporttable_pkey PRIMARY KEY (attr)) WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shpimportunique(attr boolean NOT NULL,the_geom geometry(POINT,2056),CONSTRAINT shpimportunique_pkey PRIMARY KEY (attr)) WITH (OIDS=FALSE)");
+	        	preStmt.executeUpdate("INSERT INTO shpimportunique(attr,the_geom) VALUES ('TRUE','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
 	        }
 	        {
 		        // shp
-				File data=new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp");
+				File data=new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp");
 				// DBSCHEMA: "shptodbschema"
-				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimportnoschematable");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimportunique");
 				AbstractImport2db shp2db=new Shp2db();
-				shp2db.importData(data, jdbcConnection, config);
 				shp2db.importData(data, jdbcConnection, config);
 				fail();
 			}
 		}catch(IoxException e) {
 			System.out.println(e.getMessage());
 			assertTrue(e.getCause() instanceof SQLException);
+			// unique violation.
 			assertEquals("23505",((SQLException) e.getCause()).getSQLState());
 		}finally{
 			if(jdbcConnection!=null){
@@ -1371,14 +1373,14 @@ public class Shp2dbTest {
 	// create shp file to test attribute-types.
 	//@Test
 	public void datatype_bigint_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "123");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Bigint/DataTypeBigInt.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Bigint/DataTypeBigInt.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1398,14 +1400,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_boolean_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "true");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Boolean/DataTypeBoolean.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Boolean/DataTypeBoolean.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1425,14 +1427,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_bit_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "1");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Bit/DataTypeBit.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Bit/DataTypeBit.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1452,14 +1454,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_char_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "a");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Char/DataTypeChar.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Char/DataTypeChar.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1479,14 +1481,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_varchar_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "12345");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Varchar/DataTypeVarChar.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Varchar/DataTypeVarChar.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1506,14 +1508,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_date_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "2017-10-20");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Date/DataTypeDate.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Date/DataTypeDate.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1533,14 +1535,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_integer_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "12");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Integer/DataTypeInteger.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Integer/DataTypeInteger.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1560,14 +1562,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_numeric_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "12");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Numeric/DataTypeNumeric.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Numeric/DataTypeNumeric.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1587,14 +1589,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_text_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "testtext");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Text/DataTypeText.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Text/DataTypeText.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1614,14 +1616,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_time_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "10:10:11");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Time/DataTypeTime.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Time/DataTypeTime.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1641,14 +1643,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_smallint_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "1");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Smallint/DataTypeSmallint.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Smallint/DataTypeSmallint.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1668,14 +1670,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_timestamp_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "2014-05-15T12:30:30.555000000");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Timestamp/DataTypeTimestamp.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Timestamp/DataTypeTimestamp.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1695,14 +1697,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_uuid_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "123e4567-e89b-12d3-a456-426655440000");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Uuid/DataTypeUuid.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Uuid/DataTypeUuid.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1722,14 +1724,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_xml_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject inputObj=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		inputObj.setattrvalue("attr", "<attrText>text</attrText>");
 		IomObject coordValue=inputObj.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Attributes/Xml/DataTypeXml.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Attributes/Xml/DataTypeXml.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(inputObj));
@@ -1749,14 +1751,14 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_point_Ok() throws IoxException, IOException{
-		Iom_jObject objPointSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objPointSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objPointSuccess.setattrvalue("idname", "12");
 		IomObject coordValue=objPointSuccess.addattrobj("the_geom", "COORD");
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
 		coordValue.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Point/Point.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Point/Point.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objPointSuccess));
@@ -1776,7 +1778,7 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject objMultiPointSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objMultiPointSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objMultiPointSuccess.setattrvalue("idname", "12");
 		@SuppressWarnings("deprecation")
 		IomObject multiCoordValue=objMultiPointSuccess.addattrobj("attrMPoint", "MULTICOORD");
@@ -1797,7 +1799,7 @@ public class Shp2dbTest {
 		
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiPoint/MultiPoint.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "MultiPoint/MultiPoint.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objMultiPointSuccess));
@@ -1817,7 +1819,7 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_lineString_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject objPolylineSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objPolylineSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objPolylineSuccess.setattrvalue("idname", "12");
 		IomObject polylineValue=objPolylineSuccess.addattrobj("attrLineString", "POLYLINE");
 		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
@@ -1829,7 +1831,7 @@ public class Shp2dbTest {
 		coordEnd.setattrvalue("C2", "0.5658311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/LineString/LineString.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "LineString/LineString.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objPolylineSuccess));
@@ -1849,7 +1851,7 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_multiLineString_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject objMultiPolylineSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objMultiPolylineSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objMultiPolylineSuccess.setattrvalue("idname", "12");
 		IomObject multiPolylineValue=objMultiPolylineSuccess.addattrobj("attrMLineString", "MULTIPOLYLINE");
 		
@@ -1873,7 +1875,7 @@ public class Shp2dbTest {
 		
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiLineString/MultiLineString.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "MultiLineString/MultiLineString.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objMultiPolylineSuccess));
@@ -1893,7 +1895,7 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_polygon_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objSurfaceSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objSurfaceSuccess.setattrvalue("idname", "12");
 		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrPolygon", "MULTISURFACE");
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
@@ -1927,7 +1929,7 @@ public class Shp2dbTest {
 		endSegment3.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/Polygon/Polygon.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "Polygon/Polygon.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSurfaceSuccess));
@@ -1947,75 +1949,75 @@ public class Shp2dbTest {
 	
 	//@Test
 	public void datatype_multiPolygon_Ok() throws IoxException, IOException, Ili2cFailure{
-		Iom_jObject objMultiSurfaceSuccess=new Iom_jObject("Test1.Topic1.Class1", "o1");
+		Iom_jObject objMultiSurfaceSuccess=new Iom_jObject(CREATEFILE_CLASSPATH, "o1");
 		objMultiSurfaceSuccess.setattrvalue("idname", "12");
 		IomObject multisurfaceValue=objMultiSurfaceSuccess.addattrobj("attrMultiPolygon", "MULTISURFACE");
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
 		{
-		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
-		// polyline
-		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment=segments.addattrobj("segment", "COORD");
-		startSegment.setattrvalue("C1", "-0.228");
-		startSegment.setattrvalue("C2", "0.568");
-		IomObject endSegment=segments.addattrobj("segment", "COORD");
-		endSegment.setattrvalue("C1", "-0.158");
-		endSegment.setattrvalue("C2", "0.568");
-		// polyline 2
-		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
-		startSegment2.setattrvalue("C1", "-0.158");
-		startSegment2.setattrvalue("C2", "0.568");
-		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
-		endSegment2.setattrvalue("C1", "-0.158");
-		endSegment2.setattrvalue("C2", "0.588");
-		// polyline 3
-		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
-		startSegment3.setattrvalue("C1", "-0.158");
-		startSegment3.setattrvalue("C2", "0.588");
-		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
-		endSegment3.setattrvalue("C1", "-0.228");
-		endSegment3.setattrvalue("C2", "0.568");
+			IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "-0.228");
+			startSegment.setattrvalue("C2", "0.568");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "-0.158");
+			endSegment.setattrvalue("C2", "0.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "-0.158");
+			startSegment2.setattrvalue("C2", "0.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "-0.158");
+			endSegment2.setattrvalue("C2", "0.588");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "-0.158");
+			startSegment3.setattrvalue("C2", "0.588");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "-0.228");
+			endSegment3.setattrvalue("C2", "0.568");
 		}
 		
 		IomObject surfaceValue2 = multisurfaceValue.addattrobj("surface", "SURFACE");
 		{
-		IomObject outerBoundary = surfaceValue2.addattrobj("boundary", "BOUNDARY");
-		// polyline
-		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment=segments.addattrobj("segment", "COORD");
-		startSegment.setattrvalue("C1", "0.228");
-		startSegment.setattrvalue("C2", "1.300");
-		IomObject endSegment=segments.addattrobj("segment", "COORD");
-		endSegment.setattrvalue("C1", "0.158");
-		endSegment.setattrvalue("C2", "1.568");
-		// polyline 2
-		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
-		startSegment2.setattrvalue("C1", "0.158");
-		startSegment2.setattrvalue("C2", "1.568");
-		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
-		endSegment2.setattrvalue("C1", "0.158");
-		endSegment2.setattrvalue("C2", "0.500");
-		// polyline 3
-		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
-		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
-		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
-		startSegment3.setattrvalue("C1", "0.158");
-		startSegment3.setattrvalue("C2", "0.500");
-		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
-		endSegment3.setattrvalue("C1", "0.228");
-		endSegment3.setattrvalue("C2", "1.300");
+			IomObject outerBoundary = surfaceValue2.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "0.228");
+			startSegment.setattrvalue("C2", "1.300");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "0.158");
+			endSegment.setattrvalue("C2", "1.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "0.158");
+			startSegment2.setattrvalue("C2", "1.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "0.158");
+			endSegment2.setattrvalue("C2", "0.500");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "0.158");
+			startSegment3.setattrvalue("C2", "0.500");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "0.228");
+			endSegment3.setattrvalue("C2", "1.300");
 		}
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File("src/test/data/Shp2DB/MultiPolygon/MultiPolygon.shp"));
+			writer = new ShapeWriter(new File(TEST_IN, "MultiPolygon/MultiPolygon.shp"));
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objMultiSurfaceSuccess));
