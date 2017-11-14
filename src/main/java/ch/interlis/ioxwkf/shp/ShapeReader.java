@@ -214,12 +214,19 @@ public class ShapeReader implements IoxReader{
 		        			attrType=geoTypeImpl.getName().toString();
 			        		// attribute value of feature object
 			        		Object attrValue=shapeObj.getAttribute(attrName);
-		    				
+			        		
 			        		if(attrValue instanceof MultiLineString) {
 		    					// multiLineString
 		        				MultiLineString multiLineString=(MultiLineString)attrValue;
-		        				subIomObj=WkfJts2iox.JTS2multipolyline(multiLineString);
-		        				iomObj.addattrobj(attrName, subIomObj);	            				
+		        				// lineString contains startpoint and endpoint
+		        				if(multiLineString.getNumPoints()==2) {
+		        					LineString line=new LineString(multiLineString.getCoordinates(), multiLineString.getPrecisionModel(), multiLineString.getSRID());
+				        			// lineString
+									subIomObj=Jts2iox.JTS2polyline(line);
+		        				}else {
+		        					subIomObj=WkfJts2iox.JTS2multipolyline(multiLineString);
+		        				}
+		        				iomObj.addattrobj(attrName, subIomObj);
 		    				
 		    				}else if(attrValue instanceof MultiPoint) {
 		    					// multiPoint
@@ -231,12 +238,6 @@ public class ShapeReader implements IoxReader{
 		        				// multiPolygon
 		        				MultiPolygon multiPolygonObj=(MultiPolygon)attrValue;
 								subIomObj=WkfJts2iox.JTS2multisurface(multiPolygonObj);
-		        				iomObj.addattrobj(attrName, subIomObj);
-		
-		        			}else if(attrValue instanceof LineString) {
-		        				// lineString
-		        				LineString lineStringObj=(LineString)attrValue;
-								subIomObj=Jts2iox.JTS2polyline(lineStringObj);
 		        				iomObj.addattrobj(attrName, subIomObj);
 		        				
 		        			}else if(attrValue instanceof Point) {

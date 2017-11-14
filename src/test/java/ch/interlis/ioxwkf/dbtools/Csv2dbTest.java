@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +24,6 @@ public class Csv2dbTest {
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
 	private Statement stmt=null;
-	private static final String ROW="row";
 	private Map<String, List<String>> rows=null;
 	
 	// Bei diesem Test darf keine Fehlermeldung ausgegeben werden.
@@ -154,9 +152,6 @@ public class Csv2dbTest {
 	@Test
 	public void import_SchemaNotSet_Ok() throws Exception
 	{
-		String id=null;
-		String abbreviation=null;
-		String state=null;
 		Settings config=null;
 		config=new Settings();
 		Connection jdbcConnection=null;

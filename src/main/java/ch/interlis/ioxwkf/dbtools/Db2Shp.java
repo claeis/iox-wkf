@@ -8,14 +8,14 @@ import java.sql.SQLException;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iom_j.csv.CsvWriter;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
+import ch.interlis.ioxwkf.shp.ShapeWriter;
 
-public class Db2Csv extends AbstractExportFromdb {
+public class Db2Shp extends AbstractExportFromdb {
 	
 	/** default model content.
 	 */
@@ -25,7 +25,7 @@ public class Db2Csv extends AbstractExportFromdb {
 	 */
 	private static final String TOPICNAME="topic";
 	
-	/** export from data base table to csv file.
+	/** export from data base table to shp file.
 	 * @param file
 	 * @param db
 	 * @param config
@@ -34,38 +34,13 @@ public class Db2Csv extends AbstractExportFromdb {
 	 */
 	@Override
 	public void exportData(File file,Connection db,Settings config) throws SQLException, IoxException {
-		/** mandatory: set target csv file to write to.
+		/** mandatory: set target shp file to write to.
 		 */
 		if(file!=null) {
-			EhiLogger.logState("CSV file to write to: <"+file.getAbsolutePath()+">");
+			EhiLogger.logState("shp file to write to: <"+file.getAbsolutePath()+">");
 		}else {
-			throw new IoxException("CSV-file==null.");
+			throw new IoxException("shp-file==null.");
 		}
-		
-		boolean firstLineIsHeader=false;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE);
-			if(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER.equals(val)) {
-				firstLineIsHeader=true;
-			}
-		}
-		char valueDelimiter=IoxWkfConfig.SETTING_VALUEDELIMITER_DEFAULT;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_VALUEDELIMITER);
-			if(val!=null) {
-				valueDelimiter=val.charAt(0);
-			}
-		}
-		char valueSeparator=IoxWkfConfig.SETTING_VALUESEPARATOR_DEFAULT;
-		{
-			String val=config.getValue(IoxWkfConfig.SETTING_VALUESEPARATOR);
-			if(val!=null) {
-				valueSeparator=val.charAt(0);
-			}
-		}
-		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
-		EhiLogger.traceState("valueSeparator <"+valueSeparator+">.");
-		EhiLogger.traceState("valueDelimiter <"+valueDelimiter+">.");
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
@@ -94,12 +69,9 @@ public class Db2Csv extends AbstractExportFromdb {
 		}
 		EhiLogger.logState("connection to database: <success>.");
 		
-		/** create and set settings to csvWriter.
+		/** create and set settings to shpWriter.
 		 */
-		CsvWriter csvWriter=new CsvWriter(file);
-		csvWriter.setWriteHeader(firstLineIsHeader);
-		csvWriter.setValueDelimiter(valueDelimiter);
-		csvWriter.setValueSeparator(valueSeparator);
+		ShapeWriter shpWriter=new ShapeWriter(file);
 
 		/** create selection to get information about attributes of target data base table.
 		 */
@@ -157,17 +129,17 @@ public class Db2Csv extends AbstractExportFromdb {
 			throw new IoxException(e);
 		}
 		
-		/** The final IomObjects will be send in ioxObjectEvents and written as individual records to the given CSV file.
+		/** The final IomObjects will be send in ioxObjectEvents and written as individual records to the given shp file.
 		 */
-		EhiLogger.logState("start transfer to csv file.");
-		csvWriter.write(new StartTransferEvent());
-		csvWriter.write(new StartBasketEvent(MODELNAME+"."+TOPICNAME,"b1"));
+		EhiLogger.logState("start transfer to shp file.");
+		shpWriter.write(new StartTransferEvent());
+		shpWriter.write(new StartBasketEvent(MODELNAME+"."+TOPICNAME,"b1"));
 		EhiLogger.logState("start to write records.");
 		
 		IomObject iomObject=null;
-		// add attribute value, converted in appropriate type, list of attribute descriptors.
+		// add attribute value, converted in appropriate type, to map of PG attribute objects.
 		while(pg2IliConvertedTable.next()) {
-			/** Objects within the object list will be written to CSV file as a records.
+			/** Objects within the object list will be written to shp file as a records.
 			 */
 			// create iomObjects
 			try {
@@ -176,27 +148,27 @@ public class Db2Csv extends AbstractExportFromdb {
 				throw new IoxException(e);
 			}
 			if(iomObject.getattrcount()==0) {
-				throw new IoxException("no data found to export to CSV file.");
+				throw new IoxException("no data found to export to shp file.");
 			}
 			try {
-				csvWriter.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
+				shpWriter.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
 			}catch(Exception e) {
-				throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to csv file: <"+file.getAbsolutePath()+"> failed.",e);
+				throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to shp file: <"+file.getAbsolutePath()+"> failed.",e);
 			}
 		}
 		EhiLogger.logState("conversion of attributes: <successful>.");
 		
 		EhiLogger.logState("all records are written.");
-		csvWriter.write(new EndBasketEvent());
-		csvWriter.write(new EndTransferEvent());
-		EhiLogger.logState("end transfer to csv file.");
+		shpWriter.write(new EndBasketEvent());
+		shpWriter.write(new EndTransferEvent());
+		EhiLogger.logState("end transfer to shp file.");
 		EhiLogger.logState("export: <successful>.");
 		
 		/** close, clear and delete all dependencies to used elements.
 		 */
-		if(csvWriter!=null) {
-			csvWriter.close();
-			csvWriter=null;
+		if(shpWriter!=null) {
+			shpWriter.close();
+			shpWriter=null;
 		}
 	}
 }
