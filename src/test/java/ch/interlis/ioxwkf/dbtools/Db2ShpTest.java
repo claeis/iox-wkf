@@ -23,11 +23,6 @@ public class Db2ShpTest {
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
 	private static final String TEST_OUT="build/test/data/DB2Shp/";
-	@BeforeClass
-	public static void setup() throws Ili2cFailure
-	{
-		new File(TEST_OUT).mkdirs();
-	}
 	
 	@BeforeClass
 	public static void setup() throws Ili2cFailure
