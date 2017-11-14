@@ -9,6 +9,7 @@ import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 
@@ -35,15 +36,21 @@ import ch.interlis.ioxwkf.shp.ShapeWriter;
 
 public class ShapeWriterTest {
 	
-	private final static String TEST_OUT="src/test/data/ShapeWriter";
+	private final static String TEST_IN="src/test/data/ShapeWriter";
+	private final static String TEST_OUT="build/test/data/ShapeWriter";
 	private TransferDescription td=null;
 	
+	@BeforeClass
+	public static void setupFolder() throws Ili2cFailure
+	{
+		new File(TEST_OUT).mkdirs();
+	}
 	@Before
 	public void setup() throws Ili2cFailure
 	{
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		assertNotNull(td);
@@ -53,7 +60,8 @@ public class ShapeWriterTest {
 	public void emptyTransfer_Ok() throws Iox2jtsException, IoxException {
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"testEmptyTransfer.shp"));
+			File file = new File(TEST_OUT,"testEmptyTransfer.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new EndTransferEvent());
@@ -69,7 +77,8 @@ public class ShapeWriterTest {
 	public void emptyBasket_Ok() throws Iox2jtsException, IoxException {
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"testEmptyBakset.shp"));
+			File file = new File(TEST_OUT,"testEmptyBakset.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -127,16 +136,17 @@ public class ShapeWriterTest {
 		ShapeReader reader=null;
 		TransferDescription tdM=null;
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntryConditionClass=new FileEntry(TEST_OUT+"/Polygon/StadtModel.ili", FileEntryKind.ILIMODELFILE); // first input model
+		FileEntry fileEntryConditionClass=new FileEntry(TEST_IN+"/Polygon/StadtModel.ili", FileEntryKind.ILIMODELFILE); // first input model
 		ili2cConfig.addFileEntry(fileEntryConditionClass);
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Polygon/KantonModel.ili", FileEntryKind.ILIMODELFILE); // second input model
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Polygon/KantonModel.ili", FileEntryKind.ILIMODELFILE); // second input model
 		ili2cConfig.addFileEntry(fileEntry);
-		FileEntry fileEntry2=new FileEntry(TEST_OUT+"/Polygon/BundesModel.ili", FileEntryKind.ILIMODELFILE); // third input model
+		FileEntry fileEntry2=new FileEntry(TEST_IN+"/Polygon/BundesModel.ili", FileEntryKind.ILIMODELFILE); // third input model
 		ili2cConfig.addFileEntry(fileEntry2);
 		tdM=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		assertNotNull(tdM);
+		File file = new File(TEST_OUT,"Polygon.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(tdM);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("BundesModel.Topic1","bid1"));
@@ -154,7 +164,7 @@ public class ShapeWriterTest {
 	    	}
 		}
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			reader=new ShapeReader(file);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
@@ -201,8 +211,9 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
 		coordValue.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"Point.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Point/Point.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -221,7 +232,7 @@ public class ShapeWriterTest {
 		}
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"Point/Point.shp"));
+			reader=new ShapeReader(file);
 			IoxEvent event2=reader.read();
 			assertTrue(event2 instanceof StartTransferEvent);
 			event2=reader.read();
@@ -259,8 +270,9 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"Point2.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"PointAttributes/Point2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -279,12 +291,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"PointAttributes/Point2.shp"));
+			reader=new ShapeReader(file);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -323,8 +335,9 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
 		coordValue.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"NoModelSetPointOk.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Point/NoModelSetPointOk.shp"));
+			writer = new ShapeWriter(file);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSuccess));
@@ -344,7 +357,7 @@ public class ShapeWriterTest {
 		}
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"Point/NoModelSetPointOk.shp"));
+			reader=new ShapeReader(file);
 			IoxEvent event2=reader.read();
 			assertTrue(event2 instanceof StartTransferEvent);
 			event2=reader.read();
@@ -389,8 +402,9 @@ public class ShapeWriterTest {
 		coordValue3.setattrvalue("C2", "0.32727272727272716");
 		
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPoint.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPoint/MultiPoint.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -409,12 +423,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPoint/MultiPoint.shp"));
+			reader=new ShapeReader(file);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -465,8 +479,9 @@ public class ShapeWriterTest {
 		coordValue3.setattrvalue("C2", "0.32727272727272716");
 		
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPoint2.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPointAttributes/MultiPoint2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -485,13 +500,13 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPointAttributes/MultiPoint2.shp"));
+			reader=new ShapeReader(file);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -538,8 +553,9 @@ public class ShapeWriterTest {
 		coordEnd.setattrvalue("C1", "-0.22557142857142853");
 		coordEnd.setattrvalue("C2", "0.5658311688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"LineString.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"LineString/LineString.shp"));
+			writer = new ShapeWriter(file);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objStraightsSuccess));
@@ -557,7 +573,7 @@ public class ShapeWriterTest {
 		}
 		{
 			//Open the file for reading
-        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"LineString/LineString.shp"));
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(file);
         	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
     		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
     		if(featureCollectionIter.hasNext()) {
@@ -585,9 +601,10 @@ public class ShapeWriterTest {
 		coordStart.setattrvalue("C2", "0.5688311688311687");
 		coordEnd.setattrvalue("C1", "-0.22557142857142853");
 		coordEnd.setattrvalue("C2", "0.5658311688311687");
+		File file = new File(TEST_OUT,"LineString2.shp");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"LineStringAttributes/LineString2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -606,7 +623,7 @@ public class ShapeWriterTest {
 		}
 		{
 			//Open the file for reading
-        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"LineString/LineString.shp"));
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(file);
         	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
     		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
     		if(featureCollectionIter.hasNext()) {
@@ -644,8 +661,9 @@ public class ShapeWriterTest {
 		coordEnd2.setattrvalue("C2", "0.5558351688311687");
 		
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiLineString.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiLineString/MultiLineString.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -664,12 +682,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiLineString/MultiLineString.shp"));
+			reader=new ShapeReader(file);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -741,8 +759,9 @@ public class ShapeWriterTest {
 		coordEnd2.setattrvalue("C1", "-0.22755142857142853");
 		coordEnd2.setattrvalue("C2", "0.5558351688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiLineString2.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineString2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -761,12 +780,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiLineStringAttributes/MultiLineString2.shp"));
+			reader=new ShapeReader(file);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -849,8 +868,9 @@ public class ShapeWriterTest {
 		endSegment3.setattrvalue("C1", "-0.22857142857142854");
 		endSegment3.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"Polygon.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -869,12 +889,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"Polygon/Polygon.shp"));
+			reader=new ShapeReader(file);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
@@ -950,8 +970,9 @@ public class ShapeWriterTest {
 		endSegment3.setattrvalue("C1", "-0.22857142857142854");
 		endSegment3.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"Polygon2.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"PolygonAttributes/Polygon2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -970,12 +991,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"PolygonAttributes/Polygon2.shp"));
+			reader=new ShapeReader(file);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
@@ -1084,8 +1105,9 @@ public class ShapeWriterTest {
 		endSegment3.setattrvalue("C2", "1.300");
 		}
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPolygon.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPolygon/MultiPolygon.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1104,12 +1126,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPolygon/MultiPolygon.shp"));
+			reader=new ShapeReader(file);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -1217,8 +1239,9 @@ public class ShapeWriterTest {
 		endSegment3.setattrvalue("C2", "1.300");
 		}
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPolygon2.shp");
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygon2.shp"));
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1237,12 +1260,12 @@ public class ShapeWriterTest {
 		}
 		// compile model
 		Configuration ili2cConfig=new Configuration();
-		FileEntry fileEntry=new FileEntry(TEST_OUT+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
+		FileEntry fileEntry=new FileEntry(TEST_IN+"/Test1Read.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
 		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		ShapeReader reader=null;
 		try {
-			reader=new ShapeReader(new File(TEST_OUT,"MultiPolygonAttributes/MultiPolygon2.shp"));
+			reader=new ShapeReader(file);
 			reader.setModel(td2);
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
@@ -1286,7 +1309,8 @@ public class ShapeWriterTest {
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Fails/emptyObject_Fail.shp"));
+			File file = new File(TEST_OUT,"emptyObject_Fail.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1315,7 +1339,7 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Fails/sridWrong_Fail.shp"));
+			writer = new ShapeWriter(new File(TEST_OUT,"sridWrong_Fail.shp"));
 			writer.setModel(td);
 			writer.setSridCode("99999999");
 			writer.write(new StartTransferEvent());
@@ -1346,7 +1370,8 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Fails/ClassOfModelNotFound_Fail.shp"));
+			File file = new File(TEST_OUT,"ClassOfModelNotFound_Fail.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1377,7 +1402,8 @@ public class ShapeWriterTest {
 		coordValue.setattrvalue("C3", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Fails/failedToConvertToJts_Fail.shp"));
+			File file = new File(TEST_OUT,"failedToConvertToJts_Fail.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
@@ -1409,7 +1435,8 @@ public class ShapeWriterTest {
 		coordValue2.setattrvalue("C2", "0.5688311688311687");
 		ShapeWriter writer = null;
 		try {
-			writer = new ShapeWriter(new File(TEST_OUT,"Fails/maxCountOfObjectWrong_Fail.shp"));
+			File file = new File(TEST_OUT,"maxCountOfObjectWrong_Fail.shp");
+			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
