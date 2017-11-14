@@ -3,34 +3,203 @@ package ch.interlis.ioxwkf.dbtools;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2db.converter.ConverterException;
 import ch.ehi.ili2pg.converter.PostgisColumnConverter;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
+import ch.interlis.iox.IoxWriter;
+import ch.interlis.iox_j.EndBasketEvent;
+import ch.interlis.iox_j.EndTransferEvent;
 
 public abstract class AbstractExportFromdb {
-	protected ArrayList<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
+	
+	/** list of attribute descriptors.
+	 */
+	private ArrayList<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
+	
+	/** number of iomObjects which were created.
+	 */
 	private int objectCount=0;
+	
 	private IoxFactoryCollection factory;
+	
+	/** postgis column converter to convert to db and back.
+	 */
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
+	
+	/** srsCode: set default value.
+	 */
 	private Integer srsCode=IoxWkfConfig.SETTING_SRSCODE_DEFAULT;
 	
-	public AbstractExportFromdb(){};
-	
-	/** export Data from database.
-	 * @param file
-	 * @param db
-	 * @param config
-	 * @throws IoxException 
-	 * @throws SQLException 
+	/** default model content.
 	 */
-	public abstract void exportData(File file,Connection db,Settings config) throws SQLException, IoxException;
+	private static final String MODELNAME="model";
+	
+	/** default topic content.
+	 */
+	private static final String TOPICNAME="topic";
+	
+	/** create a writer in the appropriate format.
+	 * @param file to write to.
+	 * @param config to set by user.
+	 * @return writer object.
+	 * @throws IoxException
+	 */
+	protected abstract IoxWriter createWriter(File file, Settings config) throws IoxException;
+	
+	/** export from data base table to file.
+	 * @param file to write to.
+	 * @param connection to db.
+	 * @param config to set by user.
+	 * @throws IoxException
+	 */
+	public void exportData(File file,Connection db,Settings config) throws IoxException {
+		/** data base connection has not to be null.
+		 */
+		if(db==null) {
+			throw new IoxException("connection==null");
+		}else {
+			EhiLogger.logState("connection to database: <success>.");
+		}
+		
+		/** optional: set database schema, if table is not in default schema.
+		 */
+		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
+		if(definedSchemaName==null) {
+			EhiLogger.logState("no db schema name defined, get default schema.");
+		}else {
+			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+		}
+		
+		/** mandatory: set database table to insert data into.
+		 */
+		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+		if(definedTableName==null) {
+			throw new IoxException("database table==null.");
+		}else {
+			EhiLogger.logState("db table name: <"+definedTableName+">.");
+		}
+
+		/** create selection to get information about attributes of target data base table.
+		 */
+		ResultSet dbTable=null;
+		try {
+			dbTable=openTableInDb(definedSchemaName, definedTableName, db);
+			if(definedSchemaName!=null) {
+				EhiLogger.logState("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: exist.");
+			}else {
+				EhiLogger.logState("db table <"+definedTableName+"> inside default db schema: exist.");
+			}
+		}catch(Exception e) {
+			if(definedSchemaName!=null) {
+				throw new IoxException("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: not found.",e);
+			}else{
+				throw new IoxException("db table "+definedTableName+" inside default db schema: not found.",e);
+			}
+		}
+		
+		/** set attribute data to target attribute, to create wrapper selection.
+		 */
+		ResultSetMetaData metadataDbTable;
+		try {
+			metadataDbTable = dbTable.getMetaData();
+		} catch (SQLException e1) {
+			throw new IoxException(e1);
+		}
+		try {
+			for(int k=1;k<metadataDbTable.getColumnCount()+1;k++) {
+				// columnName
+				String columnName=metadataDbTable.getColumnName(k);
+				// columnType
+				int columnType=metadataDbTable.getColumnType(k);
+				// columnTypeName
+				String columnTypeName=metadataDbTable.getColumnTypeName(k);
+				
+				// set PG Attribute Object data.
+				AttributeDescriptor attr=new AttributeDescriptor();
+				attr.setAttributeName(columnName);
+				attr.setAttributeType(columnType);
+				attr.setAttributeTypeName(columnTypeName);
+				
+				// put attribute to attribute descriptor list.
+				attrs.add(attr);
+			}
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		if(attrs.size()==0) {
+			if(definedSchemaName!=null) {
+				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside db schema: <"+definedSchemaName+">.");
+			}else {
+				throw new IoxException("no attributes found in db table: <"+definedTableName+"> inside default db schema.");
+			}
+		}
+		
+		/** create selection for appropriate datatypes.
+		 *  geometry datatypes are wrapped from pg to ili.
+		 */
+		ResultSet pg2IliConvertedTable=null;
+		try {
+			pg2IliConvertedTable=openPgToIliConvertedTableInDb(definedSchemaName, definedTableName, db);
+		}catch(IoxException e) {
+			throw new IoxException(e);
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		
+		/** The final IomObjects will be send in ioxObjectEvents and written as individual records to the given file.
+		 */
+		EhiLogger.logState("start transfer to file.");
+		EhiLogger.logState("start to write records.");
+		
+		IomObject iomObject=null;
+		
+		/** create appropriate IoxWriter.
+		 */
+		IoxWriter writer=createWriter(file, config);
+		
+		// add attribute value, converted in appropriate type, list of attribute descriptors.
+		try {
+			while(pg2IliConvertedTable.next()) {
+				// create iomObjects
+				try {
+					iomObject=getRecordsAsIomObjects(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, pg2IliConvertedTable, db);
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+				if(iomObject.getattrcount()==0) {
+					throw new IoxException("no data found to export to file.");
+				}
+				try {
+					writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
+				}catch(Exception e) {
+					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to file: <"+file.getAbsolutePath()+"> failed.",e);
+				}
+			}
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		EhiLogger.logState("conversion of attributes: <successful>.");
+		writer.write(new EndBasketEvent());
+		writer.write(new EndTransferEvent());
+		
+		/** close writer if open.
+		 */
+		if(writer!=null) {
+			writer.close();
+			writer=null;
+		}
+		EhiLogger.logState("end transfer to file.");
+		EhiLogger.logState("export: <successful>.");
+	}
 	
 	/** select table in database and get attribute data.
 	 * @param schemaName
@@ -40,7 +209,7 @@ public abstract class AbstractExportFromdb {
 	 * @throws IoxException
 	 * @throws SQLException 
 	 */
-	public ResultSet openTableInDb(String schemaName, String tableName, Connection db) throws IoxException, SQLException {
+	private ResultSet openTableInDb(String schemaName, String tableName, Connection db) throws IoxException, SQLException {
 		StringBuffer queryBuild=new StringBuffer();
 		queryBuild.append("SELECT * FROM ");
 		if(schemaName!=null) {
@@ -59,7 +228,7 @@ public abstract class AbstractExportFromdb {
 	 * @return resultset of geometry columns.
 	 * @throws IoxException
 	 */
-	public ResultSet openGeometryColumnTableInDb(String schemaName, String tableName, String attrName, Connection db) throws IoxException {
+	private ResultSet openGeometryColumnTableInDb(String schemaName, String tableName, String attrName, Connection db) throws IoxException {
 		ResultSet rs =null;
 		StringBuffer queryBuild=new StringBuffer();
 		queryBuild.append("SELECT * FROM geometry_columns WHERE ");
@@ -87,7 +256,7 @@ public abstract class AbstractExportFromdb {
 	 * @throws SQLException
 	 * @throws ConverterException
 	 */
-	public ResultSet openPgToIliConvertedTableInDb(String schemaName, String tableName, Connection db) throws IoxException, SQLException {
+	private ResultSet openPgToIliConvertedTableInDb(String schemaName, String tableName, Connection db) throws IoxException, SQLException {
 		// create selection.
 		StringBuilder selectionQueryBuild=new StringBuilder();
 		String comma="";
@@ -159,7 +328,7 @@ public abstract class AbstractExportFromdb {
 	 * @throws SQLException
 	 * @throws ConverterException
 	 */
-	public IomObject getRecordsAsIomObjects(String definedSchemaName,String definedTableName, String modelName, String topicName, ResultSet pg2IliConvertedTable, Connection db) throws IoxException, SQLException {
+	private IomObject getRecordsAsIomObjects(String definedSchemaName,String definedTableName, String modelName, String topicName, ResultSet pg2IliConvertedTable, Connection db) throws IoxException, SQLException {
 		IomObject geoIomObj=null;
 		// create iomObject to add attributes or objects in.
 		IomObject iomObj=createIomObject(modelName+"."+topicName+"."+definedTableName);
@@ -303,7 +472,6 @@ public abstract class AbstractExportFromdb {
 					notConvertedAttr.append(dataTypeName);
 				}
 				notConvertedAttr.append(" failed by converting.");
-				// throw exception
 				throw new IoxException(notConvertedAttr.toString(),e);
 			}
 			
@@ -311,7 +479,12 @@ public abstract class AbstractExportFromdb {
 		return iomObj;
 	}
 	
-	public IomObject createIomObject(String type)throws IoxException{
+	/** create an iomObject.
+	 * @param type
+	 * @return iomObject.
+	 * @throws IoxException
+	 */
+	private IomObject createIomObject(String type)throws IoxException{
     	factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
     	objectCount+=1;
 		String oid="o"+objectCount;

@@ -9,13 +9,12 @@ import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
-
-import com.vividsolutions.jts.geom.Point;
-
 import ch.ehi.basics.settings.Settings;
+import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iox.IoxException;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
@@ -23,7 +22,13 @@ public class Db2ShpTest {
 	private String dburl=System.getProperty("dburl");
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
-	private static final String TEST_OUT="src/test/data/DB2Shp/";
+	private static final String TEST_OUT="build/test/data/DB2Shp/";
+	
+	@BeforeClass
+	public static void setup() throws Ili2cFailure
+	{
+		new File(TEST_OUT).mkdirs();
+	}
 	
 	// Es soll keine Fehlermeldung ausgegeben werden, 1 Reihe der Tabelle in eine Shp-Datei geschrieben wird.
 	// - set: database-dbtoshpschema
