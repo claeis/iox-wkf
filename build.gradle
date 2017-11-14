@@ -80,6 +80,11 @@ sourceSets {
     output.dir(generatedResources, builtBy: 'generateMyResources')
     //it is now a part of the 'main' classpath and will be a part of the jar
   }
+    test {
+        resources {
+            srcDirs = ['test/data']
+        }
+    }
 }
 
 task generateMyResources {
