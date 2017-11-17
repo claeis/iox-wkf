@@ -72,8 +72,8 @@ import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.jts.Iox2jts;
 import ch.interlis.iox_j.jts.Iox2jtsException;
-import ch.interlis.ioxwkf.converter.Iox2multijts;
 import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
@@ -99,13 +99,19 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     private ViewableProperties mapping =null; // --> model data
     private List<AttributeDescriptor> attrDesc=null; // --> attribute type data
     private List<Object> attributes=null; // --> attribute name and value
-	// geometry types
+	// geometry type properties
 	private static final String POINT="pointProperty";
 	private static final String MULTIPOINT="multipointProperty";
 	private static final String LINESTRING="lineProperty";
 	private static final String MULTILINESTRING="multilineProperty";
 	private static final String POLYGON="polygonProperty";
 	private static final String MULTIPOLYGON="multipolygonProperty";
+	// ili types
+	private static final String COORD="COORD";
+	private static final String MULTICOORD="MULTICOORD";
+	private static final String POLYLINE="POLYLINE";
+	private static final String MULTIPOLYLINE="MULTIPOLYLINE";
+	private static final String MULTISURFACE="MULTISURFACE";
 	// geom type name
 	private static final String GEOM="the_geom";
 	// srid
@@ -325,7 +331,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				if(val==null){
 					IomObject child=obj.getattrobj(attrName,0);
 					if (child != null){
-						if (child.getobjecttag().equals("COORD")){
+						if (child.getobjecttag().equals(COORD)){
 							// COORD
 							Coordinate jtsCoord=null;
 							try {
@@ -349,37 +355,26 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							}
 							feature = featureBuilder.buildFeature(null);
 							simpleFeatureList.add(feature);
-						}else if (child.getobjecttag().equals("MULTICOORD")){
-							// MULTICOORD
-							CoordinateList jtsCoords=null;
-							// convert ili to jts
+						}else if (child.getobjecttag().equals(MULTICOORD)){
+							type=getFeatureType(MULTIPOINT);
 							try {
-								jtsCoords=Iox2multijts.multiCoord2JTS(child);
-							} catch (Iox2jtsException e) {
+								Geometry geometry = Iox2jts.multicoord2JTS(child);
+								featureBuilder = new SimpleFeatureBuilder(type);
+								featureBuilder.set(0, geometry);
+								// add attribute-values
+								if(attributes.size()>0) {
+									writeAttrValuesToGeom(featureBuilder);
+								}
+								feature = featureBuilder.buildFeature(null);
+								simpleFeatureList.add(feature);
+							}catch(Exception e) {
 								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
-							if(valueCount > 1){
-								throw new IoxException("max one MULTICOORD value allowed ("+attrName+")");
-							}
-							// write jtsCoord to shapefile
-							Coordinate[] coords=jtsCoords.toCoordinateArray();
-							Geometry geometry=(geometryFactory.createMultiPoint(coords));
-							type=getFeatureType(MULTIPOINT);
-							geometry.setSRID(Integer.parseInt(getSridCode()));
-							
-							featureBuilder = new SimpleFeatureBuilder(type);
-							featureBuilder.set(0, geometry);
-							// add attribute-values
-							if(attributes.size()>0) {
-								writeAttrValuesToGeom(featureBuilder);
-							}
-							feature = featureBuilder.buildFeature(null);
-							simpleFeatureList.add(feature);
-						}else if(child.getobjecttag().equals("POLYLINE")){
+						}else if(child.getobjecttag().equals(POLYLINE)){
 							// POLYLINE
 							CoordinateList jtsLineString=null;
 							try{
-								jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(child, true, 0.00);
+								jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(child, true, 0.0);
 							}catch (Iox2jtsException e){
 								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
@@ -402,45 +397,33 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							}
 							feature = featureBuilder.buildFeature(null);
 							simpleFeatureList.add(feature);
-						}else if (child.getobjecttag().equals("MULTIPOLYLINE")){
+						}else if (child.getobjecttag().equals(MULTIPOLYLINE)){
 							// MULTIPOLYLINE
-							LineString[] lineStrings=null;
-							// convert ili to jts
+							type=getFeatureType(MULTILINESTRING);
 							try {
-								lineStrings=Iox2multijts.multiLineString2JTS(child);
-							} catch (Iox2jtsException e) {
+								Geometry geometry = Iox2jts.multipolyline2JTS(child, 0.0);
+								featureBuilder = new SimpleFeatureBuilder(type);
+								featureBuilder.set(0, geometry);
+								// add attribute-values
+								if(attributes.size()>0) {
+									writeAttrValuesToGeom(featureBuilder);
+								}
+								feature = featureBuilder.buildFeature(null);
+								simpleFeatureList.add(feature);
+							}catch(Exception e) {
 								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 							}
-							if(valueCount > 1){
-								throw new IoxException("max one MULTIPOLYLINE value allowed ("+attrName+")");
-							}
-							// write jtsMultiLineString to shapefile
-							Geometry geometry=(geometryFactory.createMultiLineString(lineStrings));
-							type=getFeatureType(MULTILINESTRING);
-							geometry.setSRID(Integer.parseInt(getSridCode()));
-							
-							featureBuilder = new SimpleFeatureBuilder(type);
-							featureBuilder.set(0, geometry);
-							// add attribute-values
-							if(attributes.size()>0) {
-								writeAttrValuesToGeom(featureBuilder);
-							}
-							feature = featureBuilder.buildFeature(null);
-							simpleFeatureList.add(feature);
-						}else if (child.getobjecttag().equals("MULTISURFACE")){
+						}else if (child.getobjecttag().equals(MULTISURFACE)){
 							if(valueCount > 1){
 								throw new IoxException("max one MULTISURFACE value allowed ("+attrName+")");
 							}
 							int surfaceCount=child.getattrvaluecount("surface");
-							type=getFeatureType(POLYGON);
-							
-							featureBuilder = new SimpleFeatureBuilder(type);
-							try{
-								// convert ili to jts
-								for(int m=0;m<surfaceCount;m++) {
-									IomObject iomObj=child.getattrobj("surface", m);
-									Polygon jtsSurface=Iox2multijts.surface2JTS(iomObj, 0.00);
+							if(surfaceCount==1) {
+								type=getFeatureType(POLYGON);
+								try {
+									Polygon jtsSurface=Iox2jts.surface2JTS(child, 0.00);
 									jtsSurface.setSRID(Integer.parseInt(getSridCode()));
+									featureBuilder = new SimpleFeatureBuilder(type);
 									featureBuilder.set(0, jtsSurface);
 									// add attribute-values
 									if(attributes.size()>0) {
@@ -448,9 +431,25 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 									}
 									feature = featureBuilder.buildFeature(null);
 									simpleFeatureList.add(feature);
+								}catch (Iox2jtsException e) {
+									throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
 								}
-							}catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
+							}else if(surfaceCount>1){
+								// MULTIPOLYGON
+								type=getFeatureType(MULTIPOLYGON);
+								try {
+									Geometry geometry = Iox2jts.multisurface2JTS(child, 0, Integer.valueOf(getSridCode())); 
+									featureBuilder = new SimpleFeatureBuilder(type);
+									featureBuilder.set(0, geometry);
+									// add attribute-values
+									if(attributes.size()>0) {
+										writeAttrValuesToGeom(featureBuilder);
+									}
+									feature = featureBuilder.buildFeature(null);
+									simpleFeatureList.add(feature);
+								}catch(Exception e) {
+									throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
+								}
 							}
 						}
 					}else {
@@ -467,7 +466,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     	return features;
 	}
 
-    /** write attributes to feature builder if available
+	/** write attributes to feature builder if available
      * @param featureBuilder
      */
 	private void writeAttrValuesToGeom(SimpleFeatureBuilder featureBuilder) {
@@ -573,7 +572,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     		td=null;
     	}
     }
-	
+    
 	@Override
 	public void flush() throws IoxException {}
 	@Override
