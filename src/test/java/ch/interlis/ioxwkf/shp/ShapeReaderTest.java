@@ -16,7 +16,6 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.shp.ShapeReader;
-
 import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
@@ -543,15 +542,26 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
-			IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
-			IomObject sequence=polyline.getattrobj("sequence", 0);
-			IomObject segment=sequence.getattrobj("segment", 0);
-			assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));
-			assertTrue(segment.getattrvalue("C2").equals("0.5688311688311687"));
-			IomObject segment2=sequence.getattrobj("segment", 1);
-			assertTrue(segment2.getattrvalue("C1").equals("-0.22557142857142853"));
-			assertTrue(segment2.getattrvalue("C2").equals("0.5658311688311687"));
-			
+			{
+				IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
+				IomObject sequence=polyline.getattrobj("sequence", 0);
+				IomObject segment=sequence.getattrobj("segment", 0);
+				assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));
+				assertTrue(segment.getattrvalue("C2").equals("0.5688311688311687"));
+				IomObject segment2=sequence.getattrobj("segment", 1);
+				assertTrue(segment2.getattrvalue("C1").equals("-0.22557142857142853"));
+				assertTrue(segment2.getattrvalue("C2").equals("0.5658311688311687"));
+			}
+			{
+				IomObject polyline=multiPolylineObj.getattrobj("polyline", 1);
+				IomObject sequence=polyline.getattrobj("sequence", 0);
+				IomObject segment=sequence.getattrobj("segment", 0);
+				assertTrue(segment.getattrvalue("C1").equals("-0.22557142857142853"));
+				assertTrue(segment.getattrvalue("C2").equals("0.5658311688311687"));
+				IomObject segment2=sequence.getattrobj("segment", 1);
+				assertTrue(segment2.getattrvalue("C1").equals("-0.22755142857142854"));
+				assertTrue(segment2.getattrvalue("C2").equals("0.5558351688311687"));
+			}
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
 		}finally {

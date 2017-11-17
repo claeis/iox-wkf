@@ -22,6 +22,7 @@ import com.vividsolutions.jts.geom.MultiPoint;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import ch.interlis.ili2c.metamodel.DataModel;
 import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.Topic;
@@ -29,7 +30,6 @@ import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox_j.jts.Jts2iox;
-import ch.interlis.ioxwkf.converter.WkfJts2iox;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
@@ -218,28 +218,62 @@ public class ShapeReader implements IoxReader{
 			        		if(attrValue instanceof MultiLineString) {
 		    					// multiLineString
 		        				MultiLineString multiLineString=(MultiLineString)attrValue;
-		        				// lineString contains startpoint and endpoint
-		        				if(multiLineString.getNumPoints()==2) {
-		        					LineString line=new LineString(multiLineString.getCoordinates(), multiLineString.getPrecisionModel(), multiLineString.getSRID());
+		        				// contains number of linestrings.
+		        				Coordinate[] coords=multiLineString.getCoordinates();
+		        				PrecisionModel precisionModel=multiLineString.getPrecisionModel();
+		        				Integer srid=multiLineString.getSRID();
+		        				if(multiLineString.getNumGeometries()==1) {
 				        			// lineString
-									subIomObj=Jts2iox.JTS2polyline(line);
-		        				}else {
-		        					subIomObj=WkfJts2iox.JTS2multipolyline(multiLineString);
+		        					try {
+		        						if(coords!=null && precisionModel!=null && srid!=null) {
+		        							// create lineString
+		        							LineString lineString=new LineString(coords, precisionModel, srid);
+		        							if(lineString!=null) {
+		        								// convert to iox polyline
+		        								subIomObj=Jts2iox.JTS2polyline(lineString);
+		        							}
+		        						}
+		        					} catch (Exception e) {
+										throw new IoxException(e);
+									}
+	        					}else {
+	        						// multiLineString
+			        				try {
+	        							subIomObj=Jts2iox.JTS2multipolyline(multiLineString);
+									} catch (Exception e){
+										throw new IoxException(e);
+									}
 		        				}
 		        				iomObj.addattrobj(attrName, subIomObj);
-		    				
 		    				}else if(attrValue instanceof MultiPoint) {
 		    					// multiPoint
-		        				MultiPoint multiPointObj=(MultiPoint)attrValue;
-		        				subIomObj=WkfJts2iox.JTS2multicoord(multiPointObj);
-		        				iomObj.addattrobj(attrName, subIomObj);
-		        			
+		        				MultiPoint multiPoint=(MultiPoint)attrValue;
+		        				try {
+		        					Coordinate[] coords=multiPoint.getCoordinates();
+        							subIomObj=Jts2iox.JTS2multicoord(coords);
+        							iomObj.addattrobj(attrName, subIomObj);
+								} catch (Exception e){
+									throw new IoxException(e);
+								}
 		    				}else if(attrValue instanceof MultiPolygon) {
 		        				// multiPolygon
-		        				MultiPolygon multiPolygonObj=(MultiPolygon)attrValue;
-								subIomObj=WkfJts2iox.JTS2multisurface(multiPolygonObj);
-		        				iomObj.addattrobj(attrName, subIomObj);
-		        				
+		        				MultiPolygon multiPolygon=(MultiPolygon)attrValue;
+		        				if(multiPolygon.getNumGeometries()==1) {
+		        					try {
+			        					Polygon polygonObj=(Polygon)multiPolygon.getGeometryN(0);
+										subIomObj=Jts2iox.JTS2surface(polygonObj);
+				        				iomObj.addattrobj(attrName, subIomObj);
+		        					} catch (Exception e){
+										throw new IoxException(e);
+									}
+		        				}else {
+			        				try {
+	        							subIomObj=Jts2iox.JTS2multisurface(multiPolygon);
+	        							iomObj.addattrobj(attrName, subIomObj);
+									} catch (Exception e){
+										throw new IoxException(e);
+									}
+		        				}
 		        			}else if(attrValue instanceof Point) {
 		        				// point
 		        				Point pointObj=(Point)attrValue;
@@ -394,7 +428,7 @@ public class ShapeReader implements IoxReader{
 		//dataStore.dispose();
 		dataStore=null;
 	}
-	
+
 	/** get set factory.
 	 */
 	@Override
