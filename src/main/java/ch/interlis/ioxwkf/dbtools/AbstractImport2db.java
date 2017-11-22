@@ -225,7 +225,7 @@ public abstract class AbstractImport2db {
 					if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-						queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
+						queryBuild.append(pgConverter.getInsertValueWrapperMultiCoord("?", srsCode));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 						queryBuild.append(pgConverter.getInsertValueWrapperPolyline("?", srsCode));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
@@ -294,7 +294,7 @@ public abstract class AbstractImport2db {
 							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
 						// multipoint
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-							ps.setObject(position, pgConverter.fromIomCoord(value, srsCode, is3D));
+							ps.setObject(position, pgConverter.fromIomMultiCoord(value, srsCode, is3D));
 						// line
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 							ps.setObject(position, pgConverter.fromIomPolyline(value, srsCode, is3D, 0));
