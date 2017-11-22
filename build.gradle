@@ -24,7 +24,7 @@ dependencies {
     compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.+' // use SNAPSHOT
 	testCompile group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	compile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
-	compile('ch.interlis:ili2pg:3.10.+'){
+	compile('ch.interlis:ili2pg:3.+'){
         exclude group: 'ch.interlis', module: 'iox-ili'
     }
 	deployerJars "org.apache.maven.wagon:wagon-ftp:3.0.0"
