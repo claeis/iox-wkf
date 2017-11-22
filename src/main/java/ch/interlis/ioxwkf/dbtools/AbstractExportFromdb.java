@@ -279,7 +279,7 @@ public abstract class AbstractExportFromdb {
 					if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
 						selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(attrName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiCoord(attrName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 						selectionQueryBuild.append(pgConverter.getSelectValueWrapperPolyline(attrName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
@@ -365,7 +365,7 @@ public abstract class AbstractExportFromdb {
 							iomObj.addattrobj(attrName, geoIomObj);
 						// multipoint
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-							geoIomObj=pgConverter.toIomCoord(attrObj, srsCode.toString(), is3D);
+							geoIomObj=pgConverter.toIomMultiCoord(attrObj, srsCode.toString(), is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// line
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {

@@ -74,6 +74,7 @@ import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.jts.Iox2jts;
 import ch.interlis.iox_j.jts.Iox2jtsException;
+import ch.interlis.iox_j.wkb.Wkb2iox;
 import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
@@ -356,9 +357,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							feature = featureBuilder.buildFeature(null);
 							simpleFeatureList.add(feature);
 						}else if (child.getobjecttag().equals(MULTICOORD)){
-							type=getFeatureType(MULTIPOINT);
+							child=obj.getattrobj(attrName,0);
 							try {
 								Geometry geometry = Iox2jts.multicoord2JTS(child);
+								type=getFeatureType(MULTIPOINT);
 								featureBuilder = new SimpleFeatureBuilder(type);
 								featureBuilder.set(0, geometry);
 								// add attribute-values

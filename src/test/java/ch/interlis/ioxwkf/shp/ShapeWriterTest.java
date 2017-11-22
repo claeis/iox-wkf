@@ -19,7 +19,6 @@ import ch.interlis.ili2c.config.FileEntryKind;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iom_j.Iom_jObject;
-import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
@@ -198,33 +197,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
-		ShapeReader reader=null;
-		try {
-			reader=new ShapeReader(file);
-			IoxEvent event2=reader.read();
-			assertTrue(event2 instanceof StartTransferEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof StartBasketEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof ObjectEvent);
-			IomObject iomObj=((ObjectEvent)event2).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
-			assertTrue(attrObj.getattrvalue("C1").equals("-0.22857142857142854"));
-			assertTrue(attrObj.getattrvalue("C2").equals("0.5688311688311687"));
-			event2=reader.read();
-			assertTrue(event2 instanceof EndBasketEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof EndTransferEvent);
-		}finally {
-			if(reader!=null) {
-	    		try {
-	    			reader.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		reader=null;
-	    	}
-		}
+		{
+			//Open the file for reading
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"Point.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		if(featureCollectionIter.hasNext()) {
+				// feature object
+				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+				Object attr1=shapeObj.getAttribute("the_geom");
+				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+    		}
+    	}
 	}
 		
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn 3 Attribute in Fields konvertiert werden
@@ -306,33 +290,18 @@ public class ShapeWriterTest {
 	    		writer=null;
 	    	}
 		}
-		ShapeReader reader=null;
-		try {
-			reader=new ShapeReader(file);
-			IoxEvent event2=reader.read();
-			assertTrue(event2 instanceof StartTransferEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof StartBasketEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof ObjectEvent);
-			IomObject iomObj=((ObjectEvent)event2).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
-			assertTrue(attrObj.getattrvalue("C1").equals("-0.22857142857142854"));
-			assertTrue(attrObj.getattrvalue("C2").equals("0.5688311688311687"));
-			event2=reader.read();
-			assertTrue(event2 instanceof EndBasketEvent);
-			event2=reader.read();
-			assertTrue(event2 instanceof EndTransferEvent);
-		}finally {
-			if(reader!=null) {
-	    		try {
-	    			reader.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		reader=null;
-	    	}
-		}
+		{
+			//Open the file for reading
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"NoModelSetPointOk.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		if(featureCollectionIter.hasNext()) {
+				// feature object
+				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+				Object attr1=shapeObj.getAttribute("the_geom");
+				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+    		}
+    	}
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein mehrere Coords in einen MultiPoint konvertiert wird.
@@ -340,15 +309,15 @@ public class ShapeWriterTest {
 	public void multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint", "o1");
 		IomObject multiCoordValue=objSuccessFormat.addattrobj("attrMPoint", "MULTICOORD");
-		IomObject coordValue1=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue1.setattrvalue("C1", "-0.22857142857142854");
 		coordValue1.setattrvalue("C2", "0.5688311688311687");
 		
-		IomObject coordValue2=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue2=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue2.setattrvalue("C1", "-0.19220779220779216");
 		coordValue2.setattrvalue("C2", "0.6935064935064934");
 		
-		IomObject coordValue3=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue3=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue3.setattrvalue("C1", "-0.48831168831168836");
 		coordValue3.setattrvalue("C2", "0.32727272727272716");
 		
@@ -391,15 +360,15 @@ public class ShapeWriterTest {
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint2", "o1");
 		objSuccessFormat.setattrvalue("textattr2", "text1");
 		IomObject multiCoordValue=objSuccessFormat.addattrobj("multipoint2", "MULTICOORD");
-		IomObject coordValue1=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue1.setattrvalue("C1", "-0.22857142857142854");
 		coordValue1.setattrvalue("C2", "0.5688311688311687");
 		
-		IomObject coordValue2=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue2=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue2.setattrvalue("C1", "-0.19220779220779216");
 		coordValue2.setattrvalue("C2", "0.6935064935064934");
 		
-		IomObject coordValue3=multiCoordValue.addattrobj("segment", "COORD");
+		IomObject coordValue3=multiCoordValue.addattrobj("coord", "COORD");
 		coordValue3.setattrvalue("C1", "-0.48831168831168836");
 		coordValue3.setattrvalue("C2", "0.32727272727272716");
 		

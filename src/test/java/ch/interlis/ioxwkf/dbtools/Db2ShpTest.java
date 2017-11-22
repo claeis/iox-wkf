@@ -10,7 +10,6 @@ import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import ch.ehi.basics.settings.Settings;
@@ -1207,7 +1206,7 @@ public class Db2ShpTest {
 	// - set: database-table
 	// --
 	// Erwartung: SUCCESS: datatype=multipoint
-	@Ignore("does not work at yet!")//TODO
+	@Test
 	public void export_Datatype_MultiPoint_Ok() throws Exception
 	{
 		Settings config=new Settings();
@@ -1223,7 +1222,7 @@ public class Db2ShpTest {
 	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
 	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
 	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr character varying,the_geom geometry(MULTIPOINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('multicoord','')");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('multicoord','0104000020080800000300000001010000001CD4411DD441CDBF0E69626CDD33E23F010100000074CFC8D2439AC8BF9E91A5873431E63F01010000006668E3AA7F40DFBFF094204F09F2D43F')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1246,7 +1245,7 @@ public class Db2ShpTest {
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "multicoord");
 					Object attr2=shapeObj.getAttribute("the_geom");
-					assertEquals(attr2.toString(), "");
+					assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
 	    		}
 			}
 		}finally{
