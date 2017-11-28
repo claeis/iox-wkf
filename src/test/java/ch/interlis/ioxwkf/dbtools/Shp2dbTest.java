@@ -8,8 +8,6 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.junit.Ignore;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxException;
@@ -297,7 +295,6 @@ public class Shp2dbTest {
 	// --
 	// Erwartung: SUCCESS.
 	@Test
-	@Ignore("remove ch.interlis.ioxwkf.converter #10")
 	public void import_MultiPolygon_Ok() throws Exception
 	{
 		Settings config=new Settings();
