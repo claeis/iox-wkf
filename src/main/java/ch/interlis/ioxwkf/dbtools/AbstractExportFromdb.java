@@ -45,7 +45,7 @@ public abstract class AbstractExportFromdb {
 	 * @param config to set by user.
 	 * @throws IoxException 
 	 */
-	protected void exportData(File file,Connection db,Settings config) throws IoxException {
+	public void exportData(File file,Connection db,Settings config) throws IoxException {
 		/** data base connection has not to be null.
 		 */
 		if(db==null) {

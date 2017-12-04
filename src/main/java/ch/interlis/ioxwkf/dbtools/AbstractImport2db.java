@@ -39,7 +39,7 @@ public abstract class AbstractImport2db {
 	 * @param config to set by user.
 	 * @throws IoxException
 	 */
-	protected void importData(File file,Connection db,Settings config) throws IoxException {
+	public void importData(File file,Connection db,Settings config) throws IoxException {
 		/** validity of connection
 		 */
 		if(db==null) {
