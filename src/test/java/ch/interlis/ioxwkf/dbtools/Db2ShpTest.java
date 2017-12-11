@@ -588,6 +588,54 @@ public class Db2ShpTest {
 			}
 		}
 	}
+	@Test
+	public void export_Datatype_Date_Null_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr date,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES (NULL,'0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeDate.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeDate.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1, null);
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
 	
 	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die SHP Datei exportiert wurde.
 	// - set: header-present
