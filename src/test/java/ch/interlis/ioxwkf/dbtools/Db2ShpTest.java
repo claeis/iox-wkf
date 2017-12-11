@@ -1166,8 +1166,8 @@ public class Db2ShpTest {
 	        	// create dbtoshpschema
 	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
 	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
-	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr character varying,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('coord2d','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr character varying,attr2 character varying,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,attr2,the_geom) VALUES ('coord2d','attr2','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
 	        }
 	        {
