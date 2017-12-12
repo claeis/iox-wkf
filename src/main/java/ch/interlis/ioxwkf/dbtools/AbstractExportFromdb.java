@@ -256,27 +256,27 @@ public abstract class AbstractExportFromdb {
 						}
 						// point
 						if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
-							geoIomObj=pgConverter.toIomCoord(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomCoord(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// multipoint
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-							geoIomObj=pgConverter.toIomMultiCoord(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomMultiCoord(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// line
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
-							geoIomObj=pgConverter.toIomPolyline(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomPolyline(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// multiline
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
-							geoIomObj=pgConverter.toIomMultiPolyline(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomMultiPolyline(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// polygon
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
-							geoIomObj=pgConverter.toIomSurface(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomSurface(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						// multipolygon
 						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
-							geoIomObj=pgConverter.toIomMultiSurface(rs.getObject(2), srsCode, is3D);
+							geoIomObj=pgConverter.toIomMultiSurface(rs.getObject(position), srsCode, is3D);
 							iomObj.addattrobj(attrName, geoIomObj);
 						}
 					}else {
@@ -285,7 +285,7 @@ public abstract class AbstractExportFromdb {
 							iomObj.setattrvalue(attrName, attrValue);
 						// xml	
 						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
-							iomObj.setattrvalue(attrName, pgConverter.toIomXml(rs.getObject(2)));
+							iomObj.setattrvalue(attrName, pgConverter.toIomXml(rs.getObject(position)));
 						}
 					}
 				}else {
