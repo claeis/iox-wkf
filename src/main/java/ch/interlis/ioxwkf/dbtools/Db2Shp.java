@@ -20,6 +20,6 @@ public class Db2Shp extends AbstractExportFromdb {
 		
 		/** create and return a shape writer.
 		 */
-		return new ShapeWriter(file);
+		return new ShapeWriter(file,config);
 	}
 }

@@ -24,6 +24,6 @@ public class Shp2db extends AbstractImport2db {
 		
 		/** create and return a shape reader.
 		 */
-		return new ShapeReader(file);
+		return new ShapeReader(file,config);
 	}
 }
