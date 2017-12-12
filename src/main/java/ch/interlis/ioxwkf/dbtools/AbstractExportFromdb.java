@@ -234,12 +234,6 @@ public abstract class AbstractExportFromdb {
 			String attrName=attr.getAttributeName();
 			String dataTypeName=attr.getAttributeTypeName();
 			Integer dataType=attr.getAttributeType();
-			String attrValue;
-			try {
-				attrValue = rs.getString(position);
-			} catch (SQLException e1) {
-				throw new IoxException(e1);
-			}
 			boolean is3D=false;
 			try {
 				/** get attribute value in appropriate data type.
@@ -254,96 +248,105 @@ public abstract class AbstractExportFromdb {
 						}else {
 							is3D=false;
 						}
-						// point
-						if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
-							geoIomObj=pgConverter.toIomCoord(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
-						// multipoint
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-							geoIomObj=pgConverter.toIomMultiCoord(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
-						// line
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
-							geoIomObj=pgConverter.toIomPolyline(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
-						// multiline
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
-							geoIomObj=pgConverter.toIomMultiPolyline(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
-						// polygon
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
-							geoIomObj=pgConverter.toIomSurface(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
-						// multipolygon
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
-							geoIomObj=pgConverter.toIomMultiSurface(rs.getObject(position), srsCode, is3D);
-							iomObj.addattrobj(attrName, geoIomObj);
+						Object objValue=rs.getObject(position);
+						if(!rs.wasNull()) {
+							// point
+							if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
+								geoIomObj=pgConverter.toIomCoord(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							// multipoint
+							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
+								geoIomObj=pgConverter.toIomMultiCoord(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							// line
+							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
+								geoIomObj=pgConverter.toIomPolyline(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							// multiline
+							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
+								geoIomObj=pgConverter.toIomMultiPolyline(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							// polygon
+							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
+								geoIomObj=pgConverter.toIomSurface(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							// multipolygon
+							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
+								geoIomObj=pgConverter.toIomMultiSurface(objValue, srsCode, is3D);
+								iomObj.addattrobj(attrName, geoIomObj);
+							}
 						}
 					}else {
-						// uuid
-						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
-							iomObj.setattrvalue(attrName, attrValue);
-						// xml	
-						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
-							iomObj.setattrvalue(attrName, pgConverter.toIomXml(rs.getObject(position)));
+						String value=rs.getString(position);
+						if(!rs.wasNull()) {
+							// uuid
+							if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
+								iomObj.setattrvalue(attrName, value);
+							// xml	
+							}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
+								iomObj.setattrvalue(attrName, pgConverter.toIomXml(value));
+							}
 						}
 					}
 				}else {
-					if(dataType.equals(Types.BOOLEAN) || dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
-						if(attrValue.equals("true")||attrValue.equals("t")||attrValue.equals("y")||attrValue.equals("yes")||attrValue.equals("on")){
-							if(dataTypeName.equals("bool")) {
-								iomObj.setattrvalue(attrName, "true");
-							}else {
-								iomObj.setattrvalue(attrName, "1");
-							}									
-						}else if(attrValue.equals("false")||attrValue.equals("f")||attrValue.equals("n")||attrValue.equals("no")||attrValue.equals("off")){
-							if(dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
-								iomObj.setattrvalue(attrName, "false");
-							}else {
-								iomObj.setattrvalue(attrName, "0");
-							}	
+					String value=rs.getString(position);
+					if(!rs.wasNull()) {
+						if(dataType.equals(Types.BOOLEAN) || dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
+							if(value.equals("true")||value.equals("t")||value.equals("y")||value.equals("yes")||value.equals("on")){
+								if(dataTypeName.equals("bool")) {
+									iomObj.setattrvalue(attrName, "true");
+								}else {
+									iomObj.setattrvalue(attrName, "1");
+								}									
+							}else if(value.equals("false")||value.equals("f")||value.equals("n")||value.equals("no")||value.equals("off")){
+								if(dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
+									iomObj.setattrvalue(attrName, "false");
+								}else {
+									iomObj.setattrvalue(attrName, "0");
+								}	
+							}
+						}else if(dataType.equals(Types.BIT)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.BLOB)) {
+						    iomObj.setattrvalue(attrName,pgConverter.toIomBlob(value));
+						}else if(dataType.equals(Types.BINARY)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.NUMERIC)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.SMALLINT)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.TINYINT)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.INTEGER)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.BIGINT)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.FLOAT)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.DOUBLE)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.LONGNVARCHAR)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.DECIMAL)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.CHAR)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.VARCHAR)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.LONGVARCHAR)) {
+							iomObj.setattrvalue(attrName,value);
+						}else if(dataType.equals(Types.DATE)) {
+							String dateWithT=value.replace(" ", "T");
+							iomObj.setattrvalue(attrName,dateWithT);
+						}else if(dataType.equals(Types.TIME)) {
+							String timeWithT=value.replace(" ", "T");
+							iomObj.setattrvalue(attrName,timeWithT);
+						}else if(dataType.equals(Types.TIMESTAMP)) {
+							String datetimeWithT=value.replace(" ", "T");
+							iomObj.setattrvalue(attrName,datetimeWithT);
+						}else {
+							iomObj.setattrvalue(attrName,value);
 						}
-					}else if(dataType.equals(Types.BIT)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.BLOB)) {
-					    iomObj.setattrvalue(attrName,pgConverter.toIomBlob(attrValue));
-					}else if(dataType.equals(Types.BINARY)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.NUMERIC)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.SMALLINT)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.TINYINT)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.INTEGER)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.BIGINT)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.FLOAT)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.DOUBLE)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.LONGNVARCHAR)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.DECIMAL)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.CHAR)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.VARCHAR)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.LONGVARCHAR)) {
-						iomObj.setattrvalue(attrName,attrValue);
-					}else if(dataType.equals(Types.DATE)) {
-						String dateWithT=attrValue.replace(" ", "T");
-						iomObj.setattrvalue(attrName,dateWithT);
-					}else if(dataType.equals(Types.TIME)) {
-						String timeWithT=attrValue.replace(" ", "T");
-						iomObj.setattrvalue(attrName,timeWithT);
-					}else if(dataType.equals(Types.TIMESTAMP)) {
-						String datetimeWithT=attrValue.replace(" ", "T");
-						iomObj.setattrvalue(attrName,datetimeWithT);
-					}else {
-						iomObj.setattrvalue(attrName,attrValue);
 					}
 				}
 			}catch(ConverterException e) {
