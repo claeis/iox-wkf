@@ -1,12 +1,19 @@
 package ch.interlis.ioxwkf.shp;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import org.geotools.data.DataStore;
+import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
+import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.type.AttributeTypeImpl;
@@ -23,6 +30,8 @@ import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.geom.PrecisionModel;
+
+import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.metamodel.DataModel;
 import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.Topic;
@@ -36,6 +45,7 @@ import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 	
 public class ShapeReader implements IoxReader{
+	public static final String ENCODING = "ch.interlis.ioxwkf.shp.encoding";
 	// state
 	private int state;
 	private static final int START=0;
@@ -48,7 +58,7 @@ public class ShapeReader implements IoxReader{
 	
 	// shape reader
 	private SimpleFeatureIterator featureCollectionIter=null;
-	private FileDataStore dataStore=null;
+	private ShapefileDataStore dataStore=null;
 	private SimpleFeatureSource featuresSource=null;
 	private List<String> modelAttributes=new ArrayList<String>();
 	
@@ -68,10 +78,13 @@ public class ShapeReader implements IoxReader{
 	 * @param shpFile to read from
 	 */
 	public ShapeReader(java.io.File shpFile) throws IoxException{
+		this(shpFile,null);
+	}
+	public ShapeReader(java.io.File shpFile,Settings settings) throws IoxException{
 		state=START;
 		td=null;
-		inputFile=new java.io.File(shpFile.getPath());
-		init(inputFile);
+		inputFile=shpFile;
+		init(inputFile,settings);
 	}
 	
 	/** Initialize file content.
@@ -79,10 +92,22 @@ public class ShapeReader implements IoxReader{
 	 * @throws IoxException
 	 * @throws  
 	 */
-	private void init(java.io.File shapeFile) throws IoxException{
+	private void init(java.io.File shapeFile,Settings settings) throws IoxException{
 		factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
 		try {
-			dataStore = FileDataStoreFinder.getDataStore(shapeFile);
+	        Map<String, Serializable> map = new HashMap<String, Serializable>();
+	        // get file path
+	        try {
+				map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.URLP.key, shapeFile.toURL());
+				String encoding=settings!=null?settings.getValue(ShapeReader.ENCODING):null;
+				if(encoding!=null) {
+					map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.DBFCHARSET.key, encoding);
+				}
+			} catch (MalformedURLException e2) {
+				throw new IoxException(e2);
+			}
+			
+			dataStore = (ShapefileDataStore) DataStoreFinder.getDataStore(map);
 			if(dataStore==null) {
 				throw new IoxException("expected shape file");
 			}

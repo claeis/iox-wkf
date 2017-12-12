@@ -78,6 +78,7 @@ import ch.interlis.iox_j.wkb.Wkb2iox;
 import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
+import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.generator.Iligml20Generator;
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.Element;
@@ -86,6 +87,7 @@ import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.ili2c.metamodel.ViewableTransferElement;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -118,21 +120,28 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	// srid
 	private String sridCode="2056"; // --> coordinate reference code. if null, default code will be set
 	// model
-	private static TransferDescription td=null;
+	private TransferDescription td=null;
 	
 	/** initialize file and model
 	 * @param file
 	 * @throws IoxException
 	 */
     public ShapeWriter(java.io.File file) throws IoxException { 
-		init(file);
+    	this(file,null);
+    }
+    public ShapeWriter(java.io.File file,Settings settings) throws IoxException { 
+		init(file,settings);
     }
     
-	private void init(File file) throws IoxException{
-        Map<String, URL> map = new HashMap<String, URL>();
+	private void init(File file,Settings settings) throws IoxException{
+        Map<String, Serializable> map = new HashMap<String, Serializable>();
         // get file path
         try {
-			map.put("url", file.toURL());
+			map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.URLP.key, file.toURL());
+			String encoding=settings!=null?settings.getValue(ShapeReader.ENCODING):null;
+			if(encoding!=null) {
+				map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.DBFCHARSET.key, encoding);
+			}
 		} catch (MalformedURLException e2) {
 			throw new IoxException(e2);
 		}
@@ -559,20 +568,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 
 	@Override
     public void close() throws IoxException{
+		if(dataStore!=null) {
+			dataStore.dispose();
 			dataStore=null;
-    	if(mapping!=null){
-    		mapping=null;
-    	}
-    	if(attrDesc!=null){
-    		attrDesc=null;
-    	}
-    	if(attributes!=null){
-    		attributes=null;
-    	}
-    	if(td!=null) {
-    		td.clear();
-    		td=null;
-    	}
+		}
     }
     
 	@Override

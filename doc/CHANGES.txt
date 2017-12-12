@@ -4,13 +4,10 @@ ideas/open issues
 LATEST
 -----------------------------
 
-iox-wkf 1.1.0 (2017-??-??)
+iox-wkf 0.9.0 (2017-??-??)
 -----------------------------
 - add shp2db
 - add csv2db
 - add shapefileReader
 - add shapefileWriter
-
-iox-wkf 1.0.0 (2017-??-??)
------------------------------
-- initial public version
+- ShpReader/ShpWriter: added dbf encoding support
