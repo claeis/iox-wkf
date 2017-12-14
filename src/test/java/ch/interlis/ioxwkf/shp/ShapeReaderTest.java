@@ -813,13 +813,9 @@ public class ShapeReaderTest {
     	}
 	}
 	
-	// Der Benutzer gibt 3 models an.
-	// Es wird getestet ob der Name des Models (Name des Models: StadtModel.ili) stimmt.
-	// Es wird getestet ob der Name des Topics (Topic: Topic1) stimmt.
-	// Es wird getestet ob der Name der Klasse (Class: Polygon) stimmt.
-	// Das Model welches als letztes angegeben wird, wird zuerst auf die Zielklasse kontrolliert.
+	// Es wird getestet, ob mehrere Klassen mit zutreffenen Attributen zu einer Exception fuehren 
 	@Test
-    public void setMultipleModels_ClassFoundInLastInputModel_Ok() throws IoxException, Ili2cFailure, IOException{
+    public void multipleClassFoundInModel_Fail() throws IoxException, Ili2cFailure, IOException{
 		// ili-datei lesen
 		ShapeReader reader=null;
 		TransferDescription tdM=null;
@@ -838,14 +834,9 @@ public class ShapeReaderTest {
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			if(event instanceof ObjectEvent){
-	        	IomObject iomObj=((ObjectEvent)event).getIomObject();
-	        	assertTrue(iomObj.getobjecttag().contains("BundesModel"));
-	        	assertTrue(iomObj.getobjecttag().contains("Topic1"));
-	        	assertTrue(iomObj.getobjecttag().contains("Polygon"));
-			}
-			assertTrue(reader.read() instanceof EndBasketEvent);
-			assertTrue(reader.read() instanceof EndTransferEvent);
+			fail();
+		}catch(IoxException ex) {
+    		assertTrue(ex.getMessage().contains("several possible classes were found"));
 		}finally {
 			if(reader!=null) {
 		    	reader.close();
@@ -854,11 +845,15 @@ public class ShapeReaderTest {
 		}
 	}
 	
-	// Es wird getestet ob der ShapeFile Name, als Klassenname innerhalb der Modelle gefunden werden kann.
-	// Model wurde gesetzt.
-	// Erwartung: FEHLER: class not found in ... .model
+	// Es wird getestet, dass wenn die Anzahl Attribute nicht stimmt, das zu einer Exception fuehrt
 	@Test
-	public void classNotFoundInModel_False() throws IoxException, IOException{
+	public void setModel_attributeCountDifferent_Fail() throws IoxException, IOException, Ili2cFailure{
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry(TEST_IN+"LineString/ShapeModelDiffAttrCount.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		assertNotNull(td);
 		ShapeReader reader=null;
 		try {
 			reader=new ShapeReader(new File(TEST_IN+"LineString/LineString.shp"));
