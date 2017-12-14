@@ -686,6 +686,7 @@ public class Shp2dbTest {
 				File data=new File(TEST_IN, "Attributes/Date/DataTypeDate.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				// default: yyyy.MM.dd
 				AbstractImport2db shp2db=new Shp2db();
 				shp2db.importData(data, jdbcConnection, config);
 			}
@@ -700,6 +701,116 @@ public class Shp2dbTest {
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){
 					assertEquals("2017-10-20", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob das Date auf das definierte Format geprueft wird und das Date im richtigen Format in die Datenbank schreibt.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void import_Datatype_Date_DefinedFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr1 date, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_IN, "Attributes/Date/DataTypeDate2.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "yyyy-MM-dd");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr1,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("2017-10-20", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Wenn das Datum: 2017-Dez-20 erstellt wird, so muss innerhalb der DB, 2017-12-20 importiert sein.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void import_Datatype_Date_DefinedFormatTextToNum_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr1 date, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_IN, "Attributes/Date/DataTypeDate3.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "yyyy-MMM-dd");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr1,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("2017-12-20", rs.getString(1));
 				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
@@ -911,7 +1022,62 @@ public class Shp2dbTest {
 				ResultSetMetaData rsmd=rs.getMetaData();
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){
-					assertEquals(new java.sql.Time(10, 10, 11), rs.getObject(1));
+					assertEquals(java.sql.Time.valueOf("20:30:59"), rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob die Time auf das definierte Format geprueft wird und die Time im richtigen Format in die Datenbank geschrieben wird.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=time
+	@Test
+	public void import_Datatype_Time_DefinedFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr1 time without time zone, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_IN, "Attributes/Time/DataTypeTime2.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "HH:mm:ss.SSS");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr1,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("12:08:56.235", rs.getString(1));
 				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
@@ -996,7 +1162,7 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr timestamp, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr1 timestamp, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
@@ -1013,11 +1179,66 @@ public class Shp2dbTest {
 				while(rowCount.next()) {
 					assertEquals(1, rowCount.getInt(1));
 				}
-				ResultSet rs = stmt.executeQuery("SELECT attr,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSet rs = stmt.executeQuery("SELECT attr1,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
 				ResultSetMetaData rsmd=rs.getMetaData();
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){
-					assertEquals("2014-05-15 12:30:30.555", rs.getString(1));
+					assertEquals("2001-07-04 12:08:56.235", rs.getString(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der TimeStamp auf das definierte Format geprueft wird und den TimeStamp im richtigen Format in die Datenbank schreibt.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=timestamp
+	@Test
+	public void import_Datatype_Timestamp_DefinedFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr1 timestamp, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_IN, "Attributes/Timestamp/DataTypeTimestamp2.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT attr1,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("2001-07-04 12:08:56.235", rs.getString(1));
 				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
 				}
 			}
@@ -1133,6 +1354,49 @@ public class Shp2dbTest {
 			}
 		}
 	}	
+	
+	// Das Dateformat in den Settings ist ungueltig, es muss die folgende Fehlermeldung ausgegeben werden:
+	// --
+	// Erwartung: FAIL: 2017-10-20 does not match format: HH:mm:ss.
+	@Test
+	public void import_Datatype_Date_WrongDateFormatSet_Fail() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(attr date, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+	        	try {
+					// shp
+					File data=new File(TEST_IN, "Attributes/Date/DataTypeDate.shp");
+					config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+					config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+					config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "HH:mm:ss");
+					AbstractImport2db shp2db=new Shp2db();
+					shp2db.importData(data, jdbcConnection, config);
+					fail();
+				}catch(Exception e) {
+					assertEquals(IoxException.class,e.getClass());
+					assertEquals("2017-10-20 does not match format: HH:mm:ss.",e.getMessage());
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
 	
 	// Wenn die Verbindung zu Datenbank: null ist,
 	// muss die Fehlermeldung: connection=null ausgegeben werden.

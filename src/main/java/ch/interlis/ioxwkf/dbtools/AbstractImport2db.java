@@ -4,13 +4,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.Calendar;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
@@ -24,7 +23,9 @@ import ch.interlis.iox.ObjectEvent;
 
 public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
-	
+	private SimpleDateFormat dateFormat;
+	private SimpleDateFormat timeFormat;
+	private SimpleDateFormat timeStampFormat;
 	/** create a reader in the appropriate format.
 	 * @param file
 	 * @param config
@@ -66,6 +67,30 @@ public abstract class AbstractImport2db {
 			EhiLogger.logState("db table name: <"+definedTableName+">.");
 		}
 		
+		/** optional: set the dateFormat.
+		 */
+		String dateFormatPattern=config.getValue(IoxWkfConfig.SETTING_DATEFORMAT);
+		if(dateFormatPattern==null) {
+			dateFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE;
+		}
+		dateFormat = new SimpleDateFormat(dateFormatPattern);
+		
+		/** optional: set the timeFormat.
+		 */
+		String timeFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMEFORMAT);
+		if(timeFormatPattern==null) {
+			timeFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME;
+		}
+		timeFormat = new SimpleDateFormat(timeFormatPattern);
+		
+		/** optional: set the timeStampFormat.
+		 */
+		String timeStampFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT);
+		if(timeStampFormatPattern==null) {
+			timeStampFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP;
+		}
+		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
+		
 		/** create appropriate IoxReader.
 		 */
 		IoxReader reader=createReader(file, config);
@@ -105,7 +130,7 @@ public abstract class AbstractImport2db {
 					ps.clearParameters();
 					/** convert data to import data type.
 					 */
-					convertObject(attrDescriptors, iomObj, ps, db);
+					convertObject(attrDescriptors, iomObj, ps, db, config, dateFormatPattern);
 					rs = ps.executeUpdate();
 				} catch (SQLException e) {
 					throw new IoxException(e);
@@ -144,8 +169,9 @@ public abstract class AbstractImport2db {
 	 * @return preparedstatement of converted objects.
 	 * @throws SQLException 
 	 * @throws ConverterException 
+	 * @throws IoxException 
 	 */
-	private void convertObject(List<AttributeDescriptor> attrDescriptors, IomObject iomObj, PreparedStatement ps, Connection db) throws SQLException, ConverterException {
+	private void convertObject(List<AttributeDescriptor> attrDescriptors, IomObject iomObj, PreparedStatement ps, Connection db, Settings config, String definedFormat) throws SQLException, ConverterException, IoxException {
 		int position=1;
 		// add attribute information to attribute descriptors
 		for(AttributeDescriptor attribute:attrDescriptors) {
@@ -275,19 +301,40 @@ public abstract class AbstractImport2db {
 						ps.setBigDecimal(position, java.math.BigDecimal.valueOf(decLong));
 						position+=1;
 					}else if(dataType.equals(Types.DATE)) {
-						// year format: year-1900, month-1 (0-11)
-						String[] date=attrValue.split("T|\\-|\\.|\\,|\\:");
-						ps.setDate(position, new Date(Integer.valueOf(date[0])-1900, Integer.valueOf(date[1])-1, Integer.valueOf(date[2])));
+						java.sql.Date sqlDate=null;
+						try {
+							// match attrValue to format.
+							java.util.Date utilDate=dateFormat.parse(attrValue);
+							sqlDate = new java.sql.Date(utilDate.getTime());
+						} catch (ParseException e) {
+							// attrValue not match format.
+							throw new IoxException(attrValue+" does not match format: "+dateFormat.toPattern()+".");
+						}
+						ps.setDate(position, sqlDate);
 						position+=1;
 					}else if(dataType.equals(Types.TIME)) {
-						String[] time=attrValue.split("T|\\-|\\.|\\,|\\:");
-						ps.setTime(position, new Time(Integer.valueOf(time[0]), Integer.valueOf(time[1]), Integer.valueOf(time[2])));
+						java.sql.Time sqlTime=null;
+						try {
+							// match attrValue to format.
+							java.util.Date utilDate=timeFormat.parse(attrValue);
+							sqlTime = new java.sql.Time(utilDate.getTime());
+						} catch (ParseException e) {
+							// attrValue not match format.
+							throw new IoxException(attrValue+" does not match format: "+timeFormat.toPattern()+".");
+						}
+						ps.setTime(position, sqlTime);
 						position+=1;
 					}else if(dataType.equals(Types.TIMESTAMP)) {
-						Calendar cal=null;
-						String[] dateTime=attrValue.split("T|\\-|\\.|\\,|\\:");
-						// year format: year-1900, month-1 (0-11)
-						ps.setTimestamp(position, new Timestamp(Integer.valueOf(dateTime[0])-1900, Integer.valueOf(dateTime[1])-1, Integer.valueOf(dateTime[2]), Integer.valueOf(dateTime[3]), Integer.valueOf(dateTime[4]), Integer.valueOf(dateTime[5]), Integer.valueOf(dateTime[6])), cal);
+						Timestamp sqlTimeStamp=null;
+						try {
+							// match attrValue to format.
+							java.util.Date utilDate=timeStampFormat.parse(attrValue);
+							sqlTimeStamp = new Timestamp(utilDate.getTime());
+						}catch (ParseException e) {
+							// attrValue not match format.
+							throw new IoxException(attrValue+" does not match format: "+timeStampFormat.toPattern()+".");
+						}
+						ps.setTimestamp(position, sqlTimeStamp);
 						position+=1;
 					}else {
 						ps.setObject(position, attrValue, dataType);

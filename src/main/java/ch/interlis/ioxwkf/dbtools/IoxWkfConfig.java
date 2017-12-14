@@ -28,4 +28,11 @@ public class IoxWkfConfig {
 	// epsg/srs code
 	public final static String SETTING_SRSCODE=IMPORT_PREFIX+".settingSrsCode";
 	public final static int SETTING_SRSCODE_DEFAULT=2056;
+	// dateFormat date,time,timeStamp
+	public final static String SETTING_DATEFORMAT=IMPORT_PREFIX+".dateFormat";
+	public final static String SETTING_TIMEFORMAT=IMPORT_PREFIX+".timeFormat";
+	public final static String SETTING_TIMESTAMPFORMAT=IMPORT_PREFIX+".timeStampFormat";
+	public final static String SETTING_DEFAULTFORMAT_DATE="yyyy-MM-dd";
+	public final static String SETTING_DEFAULTFORMAT_TIME="HH:mm:ss";
+	public final static String SETTING_DEFAULTFORMAT_TIMESTAMP="yyyy-MM-dd'T'HH:mm:ss.SSS";
 }
