@@ -498,6 +498,58 @@ public class Csv2dbTest {
 		}
 	}
 	
+	// Es wird getestet, ob das Date auf das definierte Format geprueft wird und das Date im richtigen Format in die Datenbank schreibt.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void import_Datatype_Date_DateFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr date) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_IN, "DataTypeDate2.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "yyyy-MM-dd");
+				AbstractImport2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+			}
+			{
+				String attrValue=null;
+				rows = new HashMap<String, List<String>>();
+				stmt=jdbcConnection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
+				while(rs.next()){
+					attrValue = rs.getString(1);
+					assertTrue(attrValue.equals("2017-12-02"));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
 	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
 	// - set: header-present
 	// - set: database-schema
@@ -698,6 +750,58 @@ public class Csv2dbTest {
 		}
 	}
 	
+	// Es wird getestet, ob die Time auf das definierte Format geprueft wird und die Time im richtigen Format in die Datenbank schreibt.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=time
+	@Test
+	public void import_Datatype_Time_DefinedFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr time without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_IN, "DataTypeTime2.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "HH:mm:ss");
+				AbstractImport2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+			}
+			{
+				String attrValue=null;
+				rows = new HashMap<String, List<String>>();
+				stmt=jdbcConnection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
+				while(rs.next()){
+					attrValue = rs.getString(1);
+					assertTrue(attrValue.equals("10:07:59"));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
 	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
 	// - set: header-present
 	// - set: database-schema
@@ -769,7 +873,7 @@ public class Csv2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr timestamp without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr1 timestamp without time zone) WITH (OIDS=FALSE);");
 	        	preStmt.close();
 	        }
 	        {
@@ -785,10 +889,60 @@ public class Csv2dbTest {
 				String attrValue=null;
 				rows = new HashMap<String, List<String>>();
 				stmt=jdbcConnection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr1 FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
+				while(rs.next()){
+					assertEquals("2001-07-04 12:08:56.235", rs.getString(1));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der TimeStamp auf das definierte Format geprueft wird und den TimeStamp im richtigen Format in die Datenbank schreibt.
+	// - set: header-present
+	// - set: database-schema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=timestamp
+	@Test
+	public void import_Datatype_Timestamp_DefinedDateFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr timestamp without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_IN, "DataTypeTimestamp2.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+				AbstractImport2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+			}
+			{
+				String attrValue=null;
+				rows = new HashMap<String, List<String>>();
+				stmt=jdbcConnection.createStatement();
 				ResultSet rs = stmt.executeQuery("SELECT csvtodbschema.csvimportdatatype.attr FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
 				while(rs.next()){
-					attrValue = rs.getString(1);
-					assertTrue(attrValue.equals("2014-05-15 12:30:30.555"));
+					assertEquals("2001-07-04 12:08:56.235", rs.getString(1));
 				}
 			}
 		}finally{
@@ -1100,6 +1254,48 @@ public class Csv2dbTest {
 			assertTrue(e.getCause() instanceof SQLException);
 			// unique violation.
 			assertEquals("23505",((SQLException) e.getCause()).getSQLState());
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Das Dateformat in den Settings ist ungueltig, es muss die folgende Fehlermeldung ausgegeben werden:
+	// --
+	// Erwartung: FAIL: 10:07:59 does not match format: yyyy.MM.dd.
+	@Test
+	public void import_Datatype_Time_WrongFormatDefined_Fail() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(attr time without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_IN, "DataTypeTime2.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "yyyy.MM.dd");
+				AbstractImport2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+				fail();
+			}
+		}catch(IoxException e) {
+			assertEquals(IoxException.class,e.getClass());
+			assertEquals("10:07:59 does not match format: yyyy.MM.dd.",e.getMessage());
 		}finally{
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
