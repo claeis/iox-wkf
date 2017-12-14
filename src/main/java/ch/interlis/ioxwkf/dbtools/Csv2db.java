@@ -24,7 +24,7 @@ public class Csv2db extends AbstractImport2db {
 		
 		/** create csv reader.
 		 */
-		CsvReader reader=new CsvReader(file);
+		CsvReader reader=new CsvReader(file,config);
 		
 		/** optional char: value delimiter.
 		 */

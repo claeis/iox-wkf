@@ -8,6 +8,8 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxWriter;
 
 public class Db2Csv extends AbstractExportFromdb {
+	private String attributes[]=null;
+	
 	@Override
 	protected IoxWriter createWriter(File file, Settings config) throws IoxException {
 		/** mandatory: file to reader has not to be null.
@@ -20,7 +22,10 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		/** create csv writer.
 		 */
-		CsvWriter writer=new CsvWriter(file);
+		CsvWriter writer=new CsvWriter(file,config);
+		if(attributes!=null) {
+			writer.setAttributes(attributes);
+		}
 		
 		/** optional char: value delimiter.
 		 */
@@ -45,5 +50,13 @@ public class Db2Csv extends AbstractExportFromdb {
 		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
 		
 		return writer;
+	}
+
+	public String[] getAttributes() {
+		return attributes;
+	}
+
+	public void setAttributes(String attributes[]) {
+		this.attributes = attributes;
 	}
 }

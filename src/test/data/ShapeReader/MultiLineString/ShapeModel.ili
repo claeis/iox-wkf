@@ -9,7 +9,6 @@ MODEL ShapeModel (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 
 	TOPIC Topic1 =
 		CLASS MultiLineString =
-			id : 0 .. 150;
 			the_geom : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
 		END MultiLineString;
 	END Topic1;

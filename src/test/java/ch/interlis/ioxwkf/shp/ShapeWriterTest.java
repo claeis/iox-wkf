@@ -168,6 +168,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn eine Coord in einen Point konvertiert wird.
@@ -208,6 +210,8 @@ public class ShapeWriterTest {
 				Object attr1=shapeObj.getAttribute("the_geom");
 				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
     		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
     	}
 	}
 		
@@ -258,6 +262,8 @@ public class ShapeWriterTest {
 				Object attr4=shapeObj.getAttribute("the_geom");
 				assertEquals(attr4.toString(), "POINT (-0.4025974025974026 1.3974025974025972)");
     		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
     	}
 	}
 	
@@ -301,6 +307,8 @@ public class ShapeWriterTest {
 				Object attr1=shapeObj.getAttribute("the_geom");
 				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
     		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
     	}
 	}
 	
@@ -351,6 +359,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein mehrere Coords in einen MultiPoint konvertiert wird.
@@ -404,6 +414,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Polygon in einen LineString konvertiert wird.
@@ -449,6 +461,8 @@ public class ShapeWriterTest {
 				MultiLineString multiline=(MultiLineString)attr2;
 				assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
     		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
 		}
 	}
 	
@@ -502,6 +516,8 @@ public class ShapeWriterTest {
 				Object attr3=shapeObj.getAttribute("the_geom");
 				assertEquals(attr3.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
     		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
 		}
 	}
 	
@@ -559,6 +575,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn mehrere Polylines in einen MultiLineString konvertiert wird.
@@ -620,6 +638,8 @@ public class ShapeWriterTest {
 			Object attr3=shapeObj.getAttribute("the_geom");
 			assertEquals(attr3.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
@@ -686,6 +706,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
@@ -759,6 +781,8 @@ public class ShapeWriterTest {
 			Object attr3=shapeObj.getAttribute("the_geom");
 			assertEquals(attr3.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
@@ -859,6 +883,8 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("the_geom");
 			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein Surface in ein Polygon konvertiert wird.
@@ -966,6 +992,8 @@ public class ShapeWriterTest {
 			Object attr3=shapeObj.getAttribute("the_geom");
 			assertEquals(attr3.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))");
 		}
+		featureCollectionIter.close();
+		dataStore.dispose();
 	}
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn kein Attribute innerhalb des IomObjektes gefunden werden kann.
