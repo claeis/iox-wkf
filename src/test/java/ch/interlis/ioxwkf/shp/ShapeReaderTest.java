@@ -812,6 +812,41 @@ public class ShapeReaderTest {
 	    	}
     	}
 	}
+	// Es wird getestet ob die Attributnamen, bei unterschiedlicher Gross/Kleinschreibung in der Shp Datei, gem. ili Modell gelesen werden
+	@Test
+	public void setModel_similarAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry(TEST_IN+"Attributes/ShapeModelSimilarAttrs.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		ShapeReader reader=null;
+		try {
+			reader=new ShapeReader(new File(TEST_IN+"Attributes/Attributes.shp"));
+			assertTrue(reader.read() instanceof StartTransferEvent);
+			reader.setModel(td2);
+			assertTrue(reader.read() instanceof StartBasketEvent);
+			
+			IoxEvent event=reader.read();
+			assertTrue(event instanceof ObjectEvent);
+			IomObject iomObj=((ObjectEvent)event).getIomObject();
+			String attr1=iomObj.getattrvalue("integer");
+			assertTrue(attr1.equals("8"));
+			String attr2=iomObj.getattrvalue("text");
+			assertTrue(attr2.equals("text1"));
+			String attr3=iomObj.getattrvalue("id");
+			assertTrue(attr3.equals("1"));
+			String attr4=iomObj.getattrvalue("double");
+			assertTrue(attr4.equals("53434"));
+			assertTrue(reader.read() instanceof EndBasketEvent);
+			assertTrue(reader.read() instanceof EndTransferEvent);
+		}finally {
+	    	if(reader!=null) {
+	    		reader.close();
+	    		reader=null;
+	    	}
+    	}
+	}
 	
 	// Es wird getestet, ob mehrere Klassen mit zutreffenen Attributen zu einer Exception fuehren 
 	@Test

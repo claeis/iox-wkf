@@ -1,0 +1,21 @@
+INTERLIS 2.4;
+
+MODEL ShapeModelSimilarAttrs (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -10 .. 20 [INTERLIS.m],
+				  -10 .. 20 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic1 =
+		CLASS Attributes =
+			id : 0 .. 150;
+			text : TEXT*100;
+			double : 0 .. 60000;
+			integer : 0 .. 10;
+			the_geom : Lkoord;
+			date : TEXT*100;
+		END Attributes;
+	END Topic1;
+	
+END ShapeModelSimilarAttrs.
