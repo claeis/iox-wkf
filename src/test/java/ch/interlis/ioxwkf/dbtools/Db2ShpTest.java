@@ -4,14 +4,17 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
+import org.postgresql.util.PSQLException;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iox.IoxException;
@@ -412,7 +415,117 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "1");
+					assertEquals(attr1.toString(), "true");
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob jeder Datentyp: Bit1 innerhalb der Datenbank-Tabelle im richtigen Format in die SHP Datei exportiert wurde.
+	// - set: header-present
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=bit1
+	@Test
+	public void export_Datatype_Bit1_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr bit(1),the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES (B'1','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeBit1.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeBit1.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1.toString(), "true");
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob jeder Datentyp: Bit3 innerhalb der Datenbank-Tabelle im richtigen Format in die SHP Datei exportiert wurde.
+	// - set: header-present
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=bit3
+	@Test
+	public void export_Datatype_Bit3_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr bit(3),the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES (B'101','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeBit3.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeBit3.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1.toString(), "101");
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
@@ -556,7 +669,7 @@ public class Db2ShpTest {
 	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
 	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
 	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr date,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('2017-02-02','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('2017-02-15','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
 	        }
 	        {
@@ -577,7 +690,7 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "2017-02-02");
+					assertEquals(attr1.toString(), "2017-02-15");
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
@@ -588,6 +701,70 @@ public class Db2ShpTest {
 			}
 		}
 	}
+
+	// Es wird getestet, ob das Date auf das definierte Format geprueft wird und das Date im richtigen Format in die Shape-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void export_Datatype_Date_DateFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr date,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('25-11-2020','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeDate_DateFormat.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "dd-MM-yyyy");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeDate_DateFormat.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1.toString(), "25-11-2020");
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Der DatenType: attr wird mit dem Wert: NULL in der Datenbank erstellt.
+	// Das SHP File darf somit keinen Wert mit dem Attribute-Namen: attr enthalten.
+	// - set: database-dbtoshpschema
+	// - set: database-exportdatatype
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void export_Datatype_Date_Null_Ok() throws Exception
 	{
@@ -624,11 +801,57 @@ public class Db2ShpTest {
 	    		if(featureCollectionIter.hasNext()) {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1, null);
+					assertTrue(shapeObj.getAttribute("attr")==null);
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es werden 5 DatenTypen mit jeweils NULL Werte in der Datenbank erstellt.
+	// Das SHP File darf somit keinen Wert enthalten, ist jedoch zulaessig.
+	// - set: database-dbtoshpschema
+	// - set: database-exportdatatype
+	// --
+	// Erwartung: SUCCESS.
+	@Ignore //TODO no feature found in file.
+	public void export_SomeDataTypes_NoValueDefined_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr character varying, attr2 bit, attr3 numeric, attr4 date, the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,attr2,attr3,attr4,the_geom) VALUES (NULL,NULL,NULL,NULL,NULL)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeDateNull.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeDateNull.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		assertTrue(featureCollectionIter.hasNext());
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -858,6 +1081,64 @@ public class Db2ShpTest {
 		}
 	}
 	
+	// Es wird getestet, ob die Time auf das definierte Format geprueft wird und die Time im richtigen Format in die Shape-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// - set: time-format
+	// --
+	// Erwartung: SUCCESS: datatype=time
+	@Test
+	public void export_Datatype_Time_TimeFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr time,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('11:06:30.555','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeTime_TimeFormat.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "HH:mm:ss.SSS");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeTime_TimeFormat.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1.toString(), "11:06:30.555");
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
 	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die SHP Datei exportiert wurde.
 	// - set: header-present
 	// - set: database-dbtoshpschema
@@ -957,6 +1238,63 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "2014-05-15T12:30:30.555");
+					Object attr2=shapeObj.getAttribute("the_geom");
+					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der TimeStamp auf das definierte Format geprueft wird und den TimeStamp im richtigen Format in die Shape-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// - set: dateTime-format
+	// --
+	// Erwartung: SUCCESS: datatype=timestamp
+	@Test
+	public void export_Datatype_Timestamp_TimeStampFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr timestamp,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('25-04-1987 12:30:30','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_DataTypeTimestamp_TimeStampFormat.shp");
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, "dd-MM-yyyy HH:mm:ss");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeTimestamp_TimeStampFormat.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+					// feature object
+					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+					Object attr1=shapeObj.getAttribute("attr");
+					assertEquals(attr1.toString(), "25-04-1987 12:30:30");
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
@@ -1725,5 +2063,36 @@ public class Db2ShpTest {
 				jdbcConnection.close();
 			}
 		}
+	}
+	
+	// Innerhalb der Datenbank wird ein bit3 erstellt. Der Wert der bit3 ist: B'10', was einer bit2 entspricht,
+	// somit muss hier eine Fehlermeldung ausgegeben werden.
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// --
+	// Erwartung: ERROR: datatype=bit3
+	@Test
+	public void export_DatatypeBit3_ValueBit2_Fail() throws Exception {
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+        Class driverClass = Class.forName("org.postgresql.Driver");
+        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+        {
+        	Statement preStmt=jdbcConnection.createStatement();
+        	// drop dbtoshpschema
+        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+        	// create dbtoshpschema
+        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+        	// create table in dbtoshpschema
+        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr bit(3)) WITH (OIDS=FALSE);");
+	        try {
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype (attr) VALUES (B'10')");
+				fail();
+			}catch(SQLException e) {
+				assertEquals(PSQLException.class,e.getClass());
+				assertEquals("22026", e.getSQLState());
+			}
+        	preStmt.close();
+        }
 	}
 }
