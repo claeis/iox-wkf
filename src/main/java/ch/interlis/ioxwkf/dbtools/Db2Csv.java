@@ -45,10 +45,14 @@ public class Db2Csv extends AbstractExportFromdb {
 		
 		/** optional boolean: first line is set as header or as data.
 		 */
-		boolean firstLineIsHeader=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE).equals(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
-		writer.setWriteHeader(firstLineIsHeader);
-		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
-		
+		String firstLine=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE);
+		if(firstLine!=null) {
+			boolean firstLineIsHeader=firstLine.equals(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+			if(!firstLineIsHeader) {
+				writer.setWriteHeader(firstLineIsHeader);
+				EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
+			}
+		}
 		return writer;
 	}
 

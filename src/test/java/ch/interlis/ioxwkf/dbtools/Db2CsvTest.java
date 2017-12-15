@@ -6,9 +6,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.sql.Statement;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.postgresql.util.PSQLException;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iox.IoxException;
@@ -819,7 +821,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr bit) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('1')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES (B'1')");
 	        	preStmt.close();
 	        }
 	        {
@@ -841,7 +843,123 @@ public class Db2CsvTest {
 					if(lineIndex==1) {
 						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"1\"", line);
+						assertEquals("\"true\"", line);
+					}else {
+						fail();
+					}
+				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die CSV Datei exportiert wurde.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=bit(1)
+	@Test
+	public void export_Datatype_Bit1_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// create table in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr bit(1)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES (B'1')");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeBit1.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeBit1.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					if(lineIndex==1) {
+						assertEquals("\"attr\"", line);
+					}else if(lineIndex==2) {
+						assertEquals("\"true\"", line);
+					}else {
+						fail();
+					}
+				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die CSV Datei exportiert wurde.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: database-table
+	// --
+	// Erwartung: SUCCESS: datatype=bit(3)
+	@Test
+	public void export_Datatype_Bit3_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// create table in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr bit(3)) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES (B'101')");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeBit3.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeBit3.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					if(lineIndex==1) {
+						assertEquals("\"attr\"", line);
+					}else if(lineIndex==2) {
+						assertEquals("\"101\"", line);
 					}else {
 						fail();
 					}
@@ -993,7 +1111,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr date) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('2017-02-02')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('2017-02-25')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1015,7 +1133,67 @@ public class Db2CsvTest {
 					if(lineIndex==1) {
 						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"2017-02-02\"", line);
+						assertEquals("\"2017-02-25\"", line);
+					}else {
+						fail();
+					}
+				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob das Date auf das definierte Format geprueft wird und das Date im richtigen Format in die Csv-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: database-table
+	// - set: date-format
+	// --
+	// Erwartung: SUCCESS: datatype=date
+	@Test
+	public void export_Datatype_Date_DateFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// create table in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr date) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('30-09-1988')");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeDate_DateFormat.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "dd-MM-yyyy");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeDate_DateFormat.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					if(lineIndex==1) {
+						assertEquals("\"attr\"", line);
+					}else if(lineIndex==2) {
+						assertEquals("\"30-09-1988\"", line);
 					}else {
 						fail();
 					}
@@ -1225,7 +1403,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr time without time zone) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('10:10:59')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('10:08:59')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1247,7 +1425,66 @@ public class Db2CsvTest {
 					if(lineIndex==1) {
 						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"10:10:59\"", line);
+						assertEquals("\"10:08:59\"", line);
+					}else {
+						fail();
+					}
+				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob die Time auf das definierte Format geprueft wird und die Time im richtigen Format in die Csv-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: time-format
+	// --
+	// Erwartung: SUCCESS: datatype=time
+	@Test
+	public void export_Datatype_Time_TimeFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// create table in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr time without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('05:20:05.666')");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeTime_TimeFormat.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "HH:mm:ss.SSS");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeTime_TimeFormat.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					if(lineIndex==1) {
+						assertEquals("\"attr\"", line);
+					}else if(lineIndex==2) {
+						assertEquals("\"05:20:05.666\"", line);
 					}else {
 						fail();
 					}
@@ -1320,6 +1557,7 @@ public class Db2CsvTest {
 	}	
 	
 	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die CSV Datei exportiert wurde.
+	// das TimeStamp Format muss das T zwischen Datum und Zeit beinhalten.
 	// - set: header-present
 	// - set: database-dbtocsvschema
 	// - set: database-table
@@ -1341,7 +1579,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr timestamp without time zone) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('2014-05-15 12:30:30.555')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('2014-05-15 12:30:40.555')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1363,7 +1601,67 @@ public class Db2CsvTest {
 					if(lineIndex==1) {
 						assertEquals("\"attr\"", line);
 					}else if(lineIndex==2) {
-						assertEquals("\"2014-05-15T12:30:30.555\"", line);
+						assertEquals("\"2014-05-15T12:30:40.555\"", line);
+					}else {
+						fail();
+					}
+				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob der TimeStamp auf das definierte Format geprueft wird und den TimeStamp im richtigen Format in die Csv-Datei geschrieben wird.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: database-table
+	// - set: timeStamp-format
+	// --
+	// Erwartung: SUCCESS: datatype=timestamp
+	@Test
+	public void export_Datatype_Timestamp_TimeStampFormat_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// create table in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr timestamp without time zone) WITH (OIDS=FALSE);");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('12-09-1987 10:11:12')");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeTimestamp_TimeStampFormat.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, "dd-MM-yyyy HH:mm:ss");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeTimestamp_TimeStampFormat.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					if(lineIndex==1) {
+						assertEquals("\"attr\"", line);
+					}else if(lineIndex==2) {
+						assertEquals("\"12-09-1987 10:11:12\"", line);
 					}else {
 						fail();
 					}
@@ -1484,6 +1782,164 @@ public class Db2CsvTest {
 						fail();
 					}
 				}
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es werden 5 DatenTypen mit jeweils NULL Werte in der Datenbank erstellt.
+	// Das CSV File darf somit keinen Wert enthalten, ist jedoch zulaessig.
+	// - set: database-dbtocsvschema
+	// - set: database-exportdatatype
+	// --
+	// Erwartung: SUCCESS.
+	@Test
+	public void export_SomeDataTypes_NoValueDefined_SetFirstLineAsValue_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// CREATE TABLE exportdatatype in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr character varying, attr2 bit, attr3 numeric, attr4 date, attr5 time)");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype(attr,attr2,attr3,attr4,attr5) VALUES (NULL,NULL,NULL,NULL,NULL)");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeDateNull.csv");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_VALUE);
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeDateNull.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					assertEquals(0,line.length());
+				}
+				assertEquals(1, lineIndex);
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es werden 5 DatenTypen mit jeweils NULL Werte in der Datenbank erstellt.
+	// Das CSV File darf somit keinen Wert enthalten, ist jedoch zulaessig.
+	// - set: database-dbtocsvschema
+	// - set: database-exportdatatype
+	// --
+	// Erwartung: SUCCESS.
+	@Test
+	public void export_SomeDataTypes_NoValueDefined_SetFirstLineAsHeader_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// CREATE TABLE exportdatatype in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr character varying, attr2 bit, attr3 numeric, attr4 date, attr5 time)");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype(attr,attr2,attr3,attr4,attr5) VALUES (NULL,NULL,NULL,NULL,NULL)");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeDateNull.csv");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeDateNull.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					assertEquals(0,line.length());
+				}
+				assertEquals(2, lineIndex);
+				br.close();
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
+	
+	// Es werden 5 DatenTypen mit jeweils NULL Werte in der Datenbank erstellt.
+	// Das CSV File darf somit keinen Wert enthalten, ist jedoch zulaessig.
+	// - set: database-dbtocsvschema
+	// - set: database-exportdatatype
+	// --
+	// Erwartung: SUCCESS.
+	@Test
+	public void export_SomeDataTypes_NoValueDefined_NotSetFirstLine_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtocsvschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+	        	// create dbtocsvschema
+	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+	        	// CREATE TABLE exportdatatype in dbtocsvschema
+	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr character varying, attr2 bit, attr3 numeric, attr4 date, attr5 time)");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype(attr,attr2,attr3,attr4,attr5) VALUES (NULL,NULL,NULL,NULL,NULL)");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_OUT,"export_DataTypeDateNull.csv");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtocsvschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
+				AbstractExportFromdb db2Csv=new Db2Csv();
+				db2Csv.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+				BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT+"export_DataTypeDateNull.csv")));
+				String line=null;
+				int lineIndex=0;
+				while((line=br.readLine())!= null) {
+					lineIndex+=1;
+					assertEquals(0,line.length());
+				}
+				assertEquals(2, lineIndex);
 				br.close();
 			}
 		}finally{
@@ -1703,5 +2159,37 @@ public class Db2CsvTest {
 				jdbcConnection.close();
 			}
 		}
+	}
+	
+	// Innerhalb der Datenbank wird ein bit3 erstellt. Der Wert der bit3 ist: B'10', was einer bit2 entspricht,
+	// somit muss hier eine Fehlermeldung ausgegeben werden.
+	// - set: header-present
+	// - set: database-dbtocsvschema
+	// - set: database-table
+	// --
+	// Erwartung: ERROR: datatype=bit3
+	@Test
+	public void export_DatatypeBit3_ValueBit2_Fail() throws Exception {
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+        Class driverClass = Class.forName("org.postgresql.Driver");
+        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+        {
+        	Statement preStmt=jdbcConnection.createStatement();
+        	// drop dbtocsvschema
+        	preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+        	// create dbtocsvschema
+        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
+        	// create table in dbtocsvschema
+        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr bit(3)) WITH (OIDS=FALSE);");
+	        try {
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES (B'10')");
+				fail();
+			}catch(SQLException e) {
+				assertEquals(PSQLException.class,e.getClass());
+				assertEquals("22026", e.getSQLState());
+			}
+        	preStmt.close();
+        }
 	}
 }

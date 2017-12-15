@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.List;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
@@ -22,6 +24,9 @@ public abstract class AbstractExportFromdb {
 	private IoxFactoryCollection factory;
 	private int objectCount=0;
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
+	private SimpleDateFormat dateFormat;
+	private SimpleDateFormat timeFormat;
+	private SimpleDateFormat timeStampFormat;
 	
 	/** default model content.
 	 */
@@ -53,6 +58,30 @@ public abstract class AbstractExportFromdb {
 		}else {
 			EhiLogger.logState("connection to database: <success>.");
 		}
+		
+		/** optional: set the dateFormat.
+		 */
+		String dateFormatPattern=config.getValue(IoxWkfConfig.SETTING_DATEFORMAT);
+		if(dateFormatPattern==null) {
+			dateFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE;
+		}
+		dateFormat = new SimpleDateFormat(dateFormatPattern);
+		
+		/** optional: set the timeFormat.
+		 */
+		String timeFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMEFORMAT);
+		if(timeFormatPattern==null) {
+			timeFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME;
+		}
+		timeFormat = new SimpleDateFormat(timeFormatPattern);
+		
+		/** optional: set the timeStampFormat.
+		 */
+		String timeStampFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT);
+		if(timeStampFormatPattern==null) {
+			timeStampFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP;
+		}
+		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
 		/** optional: set database schema, if table is not in default schema.
 		 */
@@ -214,9 +243,8 @@ public abstract class AbstractExportFromdb {
 	 * @param modelName
 	 * @param topicName
 	 * @return complete iomObject
-	 * @throws SQLException
+	 * @throws SQLException 
 	 * @throws IoxException 
-	 * @throws ConverterException
 	 */
 	private IomObject convertRecordToIomObject(String definedSchemaName,String definedTableName, String modelName, String topicName, List<AttributeDescriptor> attrs, ResultSet rs, Connection db) throws IoxException, SQLException {
 		IomObject geoIomObj=null;
@@ -277,74 +305,136 @@ public abstract class AbstractExportFromdb {
 							}
 						}
 					}else {
-						String value=rs.getString(position);
-						if(!rs.wasNull()) {
-							// uuid
-							if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
+						// uuid in format String
+						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
+							String value=rs.getString(position);
+							if(!rs.wasNull()) {
 								iomObj.setattrvalue(attrName, value);
-							// xml	
-							}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
+							}
+						// xml	
+						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
+							Object value=rs.getObject(position);
+							if(!rs.wasNull()) {
 								iomObj.setattrvalue(attrName, pgConverter.toIomXml(value));
 							}
 						}
 					}
 				}else {
-					String value=rs.getString(position);
-					if(!rs.wasNull()) {
-						if(dataType.equals(Types.BOOLEAN) || dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
-							if(value.equals("true")||value.equals("t")||value.equals("y")||value.equals("yes")||value.equals("on")){
-								if(dataTypeName.equals("bool")) {
-									iomObj.setattrvalue(attrName, "true");
-								}else {
-									iomObj.setattrvalue(attrName, "1");
-								}									
-							}else if(value.equals("false")||value.equals("f")||value.equals("n")||value.equals("no")||value.equals("off")){
-								if(dataTypeName.equals(AttributeDescriptor.SET_BOOL)) {
-									iomObj.setattrvalue(attrName, "false");
-								}else {
-									iomObj.setattrvalue(attrName, "0");
-								}	
+					if(dataType.equals(Types.BOOLEAN) || dataTypeName.equals(AttributeDescriptor.SET_BOOL)){
+						boolean value=rs.getBoolean(position);
+						if(!rs.wasNull()) {
+							if(value==true) {
+								iomObj.setattrvalue(attrName, "true");
+							}else if(value==false) {
+								iomObj.setattrvalue(attrName, "false");
 							}
-						}else if(dataType.equals(Types.BIT)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.BLOB)) {
+						}
+					}else if(dataType.equals(Types.BIT)) {
+						int bytePrecision=attr.getPrecision();
+						if(bytePrecision==0 || bytePrecision==1) {
+							boolean bit=rs.getBoolean(position);
+							if(!rs.wasNull()) {
+								if(bit==true) {
+									iomObj.setattrvalue(attrName,"true");
+								}else if(bit==false) {
+									iomObj.setattrvalue(attrName,"false");
+								}
+							}
+						}else if(bytePrecision>=2){
+							String bit=rs.getString(position);
+							if(!rs.wasNull()) {
+								iomObj.setattrvalue(attrName, bit);
+							}
+						}
+					}else if(dataType.equals(Types.BLOB)) {
+						Object value=rs.getObject(position);
+						if(!rs.wasNull()) {
 						    iomObj.setattrvalue(attrName,pgConverter.toIomBlob(value));
-						}else if(dataType.equals(Types.BINARY)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.NUMERIC)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.SMALLINT)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.TINYINT)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.INTEGER)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.BIGINT)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.FLOAT)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.DOUBLE)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.LONGNVARCHAR)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.DECIMAL)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.CHAR)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.VARCHAR)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.LONGVARCHAR)) {
-							iomObj.setattrvalue(attrName,value);
-						}else if(dataType.equals(Types.DATE)) {
-							String dateWithT=value.replace(" ", "T");
-							iomObj.setattrvalue(attrName,dateWithT);
-						}else if(dataType.equals(Types.TIME)) {
-							String timeWithT=value.replace(" ", "T");
-							iomObj.setattrvalue(attrName,timeWithT);
-						}else if(dataType.equals(Types.TIMESTAMP)) {
-							String datetimeWithT=value.replace(" ", "T");
-							iomObj.setattrvalue(attrName,datetimeWithT);
-						}else {
+						}
+					}else if(dataType.equals(Types.BINARY)) {
+						byte[] binary2ByteArr=rs.getBytes(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,Arrays.toString(binary2ByteArr));
+						}
+					}else if(dataType.equals(Types.NUMERIC)) {
+						java.math.BigDecimal numeric2BigDec=rs.getBigDecimal(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,numeric2BigDec.toPlainString());
+						}
+					}else if(dataType.equals(Types.SMALLINT)) {
+						Short smallInt2Short=rs.getShort(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,smallInt2Short.toString());
+						}
+					}else if(dataType.equals(Types.TINYINT)) {
+						Byte tinyInt2Byte=rs.getByte(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,tinyInt2Byte.toString());
+						}
+					}else if(dataType.equals(Types.INTEGER)) {
+						int integer2Int=rs.getInt(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,String.valueOf(integer2Int));
+						}
+					}else if(dataType.equals(Types.BIGINT)) {
+						long bigInt2Long=rs.getLong(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,String.valueOf(bigInt2Long));
+						}
+					}else if(dataType.equals(Types.FLOAT)) {
+						double float2Double=rs.getDouble(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,String.valueOf(float2Double));
+						}
+					}else if(dataType.equals(Types.DOUBLE)) {
+						double doubleValue=rs.getDouble(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,String.valueOf(doubleValue));
+						}
+					}else if(dataType.equals(Types.LONGNVARCHAR)) {
+						String longVarChar2Long=rs.getString(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,longVarChar2Long);
+						}
+					}else if(dataType.equals(Types.DECIMAL)) {
+						java.math.BigDecimal decimal2BigDec=rs.getBigDecimal(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,decimal2BigDec.toPlainString());
+						}
+					}else if(dataType.equals(Types.CHAR)) {
+						String character2String=rs.getString(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,character2String);
+						}
+					}else if(dataType.equals(Types.VARCHAR)) {
+						String varchar2String=rs.getString(position);
+						if(!rs.wasNull()) {
+							iomObj.setattrvalue(attrName,varchar2String);
+						}
+					}else if(dataType.equals(Types.DATE)) {
+						String dateStr=null;
+						java.sql.Date date=rs.getDate(position);
+						if(!rs.wasNull()) {
+							dateStr=dateFormat.format(date);
+							iomObj.setattrvalue(attrName,dateStr);
+						}
+					}else if(dataType.equals(Types.TIME)) {
+						String timeStr=null;
+						java.sql.Time time=rs.getTime(position);
+						if(!rs.wasNull()) {
+							timeStr=timeFormat.format(time);
+							iomObj.setattrvalue(attrName,timeStr);
+						}
+					}else if(dataType.equals(Types.TIMESTAMP)) {
+						String timestampStr=null;
+						java.sql.Timestamp timestamp=rs.getTimestamp(position);
+						if(!rs.wasNull()) {
+							timestampStr=timeStampFormat.format(timestamp);
+							iomObj.setattrvalue(attrName,timestampStr);
+						}
+					}else {
+						String value=rs.getString(position);
+						if(!rs.wasNull()) {
 							iomObj.setattrvalue(attrName,value);
 						}
 					}

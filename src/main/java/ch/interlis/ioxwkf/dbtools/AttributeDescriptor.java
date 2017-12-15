@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
 import ch.interlis.iox.IoxException;
 
 public class AttributeDescriptor {
@@ -17,6 +16,7 @@ public class AttributeDescriptor {
 	private String geomColumnTypeName=null;
 	private Integer coordDimension=null;
 	private Integer srId=null;
+	private Integer precision=null;
 	
 	// setting possibilities
 	public final static String SET_XML="xml";
@@ -71,6 +71,12 @@ public class AttributeDescriptor {
 	}
 	protected void setSrId(Integer srId) {
 		this.srId = srId;
+	}
+	protected Integer getPrecision() {
+		return precision;
+	}
+	protected void setPrecision(Integer precision) {
+		this.precision = precision;
 	}
 	/** add geometry data to geometry attribute in given attribute descriptors.
 	 * @param schemaName
@@ -137,6 +143,7 @@ public class AttributeDescriptor {
 				tableInDb.next();
 				// create attr descriptor
 				AttributeDescriptor attr=new AttributeDescriptor();
+				attr.setPrecision(rsmd.getPrecision(k));
 				attr.setAttributeName(rsmd.getColumnName(k));
 				attr.setAttributeType(rsmd.getColumnType(k));
 				attr.setAttributeTypeName(rsmd.getColumnTypeName(k));
