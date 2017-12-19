@@ -14,7 +14,9 @@ MODEL ShapeModelAttrs (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 			Double : 0 .. 60000;
 			Integer : 0 .. 10;
 			the_geom : Lkoord;
-			Date : TEXT*100;
+			adate : INTERLIS.XMLDate;
+			atimestamp : INTERLIS.XMLDateTime;
+			aboolean : BOOLEAN;
 		END Attributes;
 	END Topic1;
 	

@@ -10,11 +10,13 @@ MODEL ShapeModelSimilarAttrs (de) AT "mailto:ceis@localhost" VERSION "20170703" 
 	TOPIC Topic1 =
 		CLASS Attributes =
 			id : 0 .. 150;
-			text : TEXT*100;
-			double : 0 .. 60000;
-			integer : 0 .. 10;
+			text : TEXT*100; !! 'Text' in shp file
+			double : 0 .. 60000; !! 'Double' in shp file
+			integer : 0 .. 10; !! 'Integer' in shp file
 			the_geom : Lkoord;
-			date : TEXT*100;
+			adate : INTERLIS.XMLDate;
+			atimestamp : INTERLIS.XMLDateTime;
+			aboolean : BOOLEAN;
 		END Attributes;
 	END Topic1;
 	

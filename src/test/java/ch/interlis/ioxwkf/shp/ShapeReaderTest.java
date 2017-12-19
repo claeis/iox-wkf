@@ -797,15 +797,13 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			String attr1=iomObj.getattrvalue("Integer");
-			assertTrue(attr1.equals("8"));
+			assertEquals("8",attr1);
 			String attr2=iomObj.getattrvalue("Text");
-			assertTrue(attr2.equals("text1"));
+			assertEquals("text1",attr2);
 			String attr3=iomObj.getattrvalue("id");
-			assertTrue(attr3.equals("1"));
+			assertEquals("1",attr3);
 			String attr4=iomObj.getattrvalue("Double");
-			assertTrue(attr4.equals("53434"));
-			String attr5=iomObj.getattrobj("the_geom", 0).toString();
-			assertTrue(attr5.equals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}"));
+			assertEquals("53434.0",attr4);
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
 		}finally {
@@ -834,13 +832,13 @@ public class ShapeReaderTest {
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			String attr1=iomObj.getattrvalue("integer");
-			assertTrue(attr1.equals("8"));
+			assertEquals("8",attr1);
 			String attr2=iomObj.getattrvalue("text");
-			assertTrue(attr2.equals("text1"));
+			assertEquals("text1",attr2);
 			String attr3=iomObj.getattrvalue("id");
-			assertTrue(attr3.equals("1"));
+			assertEquals("1",attr3);
 			String attr4=iomObj.getattrvalue("double");
-			assertTrue(attr4.equals("53434"));
+			assertEquals("53434.0",attr4);
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
 		}finally {
