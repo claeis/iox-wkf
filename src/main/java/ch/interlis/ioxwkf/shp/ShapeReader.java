@@ -185,7 +185,7 @@ public class ShapeReader implements IoxReader{
 				iliAttributes=new ArrayList<String>();
 				Viewable viewable=getViewableByShapeAttributes(shapeAttributes, iliAttributes);
 				if(viewable==null){
-					throw new IoxException("class: '"+featureTypeName.toString()+"' not found in model: '"+td.getLastModel().getName()+"'.");
+					throw new IoxException("attributes '"+getNameList(shapeAttributes)+"' not found in model: '"+td.getLastModel().getName()+"'.");
 				}
 				// get model data
 				topicIliQName=viewable.getContainer().getScopedName();
@@ -330,7 +330,17 @@ public class ShapeReader implements IoxReader{
 		return null;
 	}
 
-    private Viewable getViewableByShapeAttributes(List<AttributeDescriptor> shapeAttrs,List<String> iliAttrs) throws IoxException{
+    private String getNameList(List<AttributeDescriptor> attrs) {
+		StringBuffer ret=new StringBuffer();
+		String sep="";
+		for(AttributeDescriptor attr:attrs) {
+			ret.append(sep);
+			ret.append(attr.getLocalName());
+			sep=",";
+		}
+		return ret.toString();
+	}
+	private Viewable getViewableByShapeAttributes(List<AttributeDescriptor> shapeAttrs,List<String> iliAttrs) throws IoxException{
     	Viewable viewable=null;
     	List<String> foundClasses=new ArrayList<String>();
 		ArrayList<String> newIliAttrs=null;

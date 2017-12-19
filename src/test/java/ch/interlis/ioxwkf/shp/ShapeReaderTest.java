@@ -897,7 +897,7 @@ public class ShapeReaderTest {
 			reader.read();
 			fail();
 		}catch(IoxException ex){
-    		assertTrue(ex.getMessage().contains("class: 'LineString' not found in model: 'ShapeModel'."));
+    		assertEquals("attributes 'the_geom' not found in model: 'ShapeModel'.",ex.getMessage());
     	}finally {
 	    	if(reader!=null) {
 		    	reader.close();
