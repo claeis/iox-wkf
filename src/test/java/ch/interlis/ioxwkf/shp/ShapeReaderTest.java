@@ -811,6 +811,36 @@ public class ShapeReaderTest {
 	    	}
     	}
 	}
+	@Test
+	public void setModel_attributesNull_Ok() throws IoxException, IOException, Ili2cFailure{
+		// compile model
+		Configuration ili2cConfig=new Configuration();
+		FileEntry fileEntry=new FileEntry(TEST_IN+"Attributes/AttributesNull.ili", FileEntryKind.ILIMODELFILE);
+		ili2cConfig.addFileEntry(fileEntry);
+		TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		ShapeReader reader=null;
+		try {
+			reader=new ShapeReader(new File(TEST_IN+"Attributes/AttributesNull.shp"));
+			assertTrue(reader.read() instanceof StartTransferEvent);
+			reader.setModel(td2);
+			assertTrue(reader.read() instanceof StartBasketEvent);
+			
+			IoxEvent event=reader.read();
+			assertTrue(event instanceof ObjectEvent);
+			IomObject iomObj=((ObjectEvent)event).getIomObject();
+			event=reader.read();
+			iomObj=((ObjectEvent)event).getIomObject();
+			assertEquals(null,iomObj.getattrvalue("aenum"));
+			assertTrue(event instanceof ObjectEvent);
+			assertTrue(reader.read() instanceof EndBasketEvent);
+			assertTrue(reader.read() instanceof EndTransferEvent);
+		}finally {
+	    	if(reader!=null) {
+	    		reader.close();
+	    		reader=null;
+	    	}
+    	}
+	}
 	// Es wird getestet ob die Attributnamen, bei unterschiedlicher Gross/Kleinschreibung in der Shp Datei, gem. ili Modell gelesen werden
 	@Test
 	public void setModel_similarAttributes_Ok() throws IoxException, IOException, Ili2cFailure{

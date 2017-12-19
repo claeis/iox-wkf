@@ -307,7 +307,9 @@ public class ShapeReader implements IoxReader{
 			        				iomObj.setattrvalue(iliAttrName,xtfDateTime.format(date));
 		        				}
 		        			}else {
-			        			iomObj.setattrvalue(iliAttrName, shapeAttrValue.toString());
+		        				String valueStr=shapeAttrValue.toString();
+		        				if(valueStr!=null && valueStr.length()>0)
+			        			iomObj.setattrvalue(iliAttrName, valueStr);
 		        			}
 	        			}
 	        		}
