@@ -3,6 +3,7 @@ package ch.interlis.ioxwkf.shp;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,7 +78,9 @@ public class ShapeReader implements IoxReader{
 	
 	private List<AttributeDescriptor> shapeAttributes=null;
 	private List<String> iliAttributes=null;
-		
+
+	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
+	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 	/** Creates a new reader.
 	 * @param shpFile to read from
 	 */
@@ -296,7 +299,16 @@ public class ShapeReader implements IoxReader{
 	        			}else {
 		        			String shapeGeomTypeName=shapeAttrType.getName().toString();
 		        			String shapeTypeName=shapeAttrType.getBinding().getSimpleName();
-		        			iomObj.setattrvalue(iliAttrName, shapeAttrValue.toString());
+		        			if(shapeAttrValue instanceof java.util.Date) {
+		        				java.util.Date date=(java.util.Date)shapeAttrValue;
+		        				if(date.getHours()==0 && date.getMinutes()==0 && date.getSeconds()==0) {
+			        				iomObj.setattrvalue(iliAttrName,xtfDate.format(date));
+		        				}else {
+			        				iomObj.setattrvalue(iliAttrName,xtfDateTime.format(date));
+		        				}
+		        			}else {
+			        			iomObj.setattrvalue(iliAttrName, shapeAttrValue.toString());
+		        			}
 	        			}
 	        		}
 	        	}

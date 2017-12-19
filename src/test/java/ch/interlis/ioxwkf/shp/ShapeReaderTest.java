@@ -760,9 +760,12 @@ public class ShapeReaderTest {
 			String attr3=iomObj.getattrvalue("id");
 			assertTrue(attr3.equals("1"));
 			String attr4=iomObj.getattrvalue("Double");
-			assertTrue(attr4.equals("53434"));
+			assertTrue(attr4.equals("53434.0"));
+			assertEquals("2015-11-03",iomObj.getattrvalue("adate"));
+			// TODO boolean
+			// TODO timestamp
 			String attr5=iomObj.getattrobj("the_geom", 0).toString();
-			assertTrue(attr5.equals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}"));
+			assertEquals("COORD {C1 0.065, C2 0.0030}",attr5);
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);
