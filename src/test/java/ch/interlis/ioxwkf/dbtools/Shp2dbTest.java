@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.junit.Ignore;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxException;
@@ -774,10 +776,13 @@ public class Shp2dbTest {
 	// --
 	// Erwartung: SUCCESS: datatype=date
 	@Test
+	@Ignore("import must respect reader data type (should not try to parse valid xtfDates")
 	public void import_Datatype_Date_DefinedFormatTextToNum_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
+		java.text.DateFormatSymbols symbols=new java.text.DateFormatSymbols();
+		System.out.println(symbols.getShortMonths()[11]);
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
