@@ -725,7 +725,7 @@ public class Db2ShpTest {
 	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
 	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
 	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr date,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('25-11-2020','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('2020-11-25','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1272,7 +1272,7 @@ public class Db2ShpTest {
 	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
 	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
 	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr timestamp,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('25-04-1987 12:30:30','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('1987-04-25T12:30:30','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
 	        }
 	        {

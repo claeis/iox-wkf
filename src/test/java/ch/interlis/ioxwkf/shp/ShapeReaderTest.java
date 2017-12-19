@@ -764,8 +764,6 @@ public class ShapeReaderTest {
 			assertEquals("2015-11-03",iomObj.getattrvalue("adate"));
 			// TODO boolean
 			// TODO timestamp
-			String attr5=iomObj.getattrobj("the_geom", 0).toString();
-			assertEquals("COORD {C1 0.065, C2 0.0030}",attr5);
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
 			assertTrue(reader.read() instanceof EndTransferEvent);

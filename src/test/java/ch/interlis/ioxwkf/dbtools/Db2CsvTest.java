@@ -1170,7 +1170,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr date) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('30-09-1988')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('1988-09-30')");
 	        	preStmt.close();
 	        }
 	        {
@@ -1638,7 +1638,7 @@ public class Db2CsvTest {
 	        	preStmt.execute("CREATE SCHEMA dbtocsvschema");
 	        	// create table in dbtocsvschema
 	        	preStmt.execute("CREATE TABLE dbtocsvschema.exportdatatype(attr timestamp without time zone) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('12-09-1987 10:11:12')");
+	        	preStmt.executeUpdate("INSERT INTO dbtocsvschema.exportdatatype (attr) VALUES ('1987-09-12T10:11:12')");
 	        	preStmt.close();
 	        }
 	        {
