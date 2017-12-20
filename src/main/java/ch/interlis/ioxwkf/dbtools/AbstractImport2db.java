@@ -2,6 +2,7 @@ package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,6 +21,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox_j.IoxInvalidDataException;
 
 public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
@@ -232,73 +234,94 @@ public abstract class AbstractImport2db {
 				}else {
 					if(dataType.equals(Types.BIT)) {
 						if(dataTypeName.equals("bool")) {
-							if(attrValue.equals("t")
-									|| attrValue.equals("true")
-									|| attrValue.equals("y")
-									|| attrValue.equals("yes")
-									|| attrValue.equals("on")
-									|| attrValue.equals("1")) {
-								ps.setObject(position, "t", Types.BOOLEAN);
-								position+=1;
-							}else {
-								ps.setObject(position, "f", Types.BOOLEAN);
-								position+=1;
-							}
+							ps.setBoolean(position, parseBoolean(attrValue));
+							position+=1;
 						}else {
-							ps.setObject(position, attrValue.charAt(0), Types.BIT);
+							// ps.setObject(position, attrValue.charAt(0), Types.BIT);
+							ps.setBoolean(position, parseBoolean(attrValue));
 							position+=1;
 						}
 					}else if(dataType.equals(Types.BLOB)) {
-						Blob b = db.createBlob();
-					    InputStream out = b.getBinaryStream(position, Long.valueOf(attrValue));
-						ps.setBinaryStream(position, out);
-						position+=1;
+						throw new java.lang.UnsupportedOperationException();
 					}else if(dataType.equals(Types.BINARY)) {
-						ps.setByte(position, Byte.valueOf(attrValue));
-						position+=1;
+						throw new java.lang.UnsupportedOperationException();
 					}else if(dataType.equals(Types.NUMERIC)) {
-						ps.setObject(position, attrValue, Types.NUMERIC);
+						try {
+							ps.setBigDecimal(position, new BigDecimal(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.SMALLINT)) {
-						ps.setObject(position, attrValue, Types.SMALLINT);
+						try {
+							ps.setShort(position, Short.parseShort(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.TINYINT)) {
-						ps.setObject(position, attrValue, Types.TINYINT);
+						try {
+							ps.setByte(position, Byte.parseByte(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.INTEGER)) {
-						ps.setObject(position, attrValue, Types.INTEGER);
+						try {
+							ps.setInt(position, Integer.parseInt(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.BIGINT)) {
-						ps.setObject(position, attrValue, Types.BIGINT);
+						try {
+							ps.setLong(position, Long.parseLong(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.FLOAT)) {
-						ps.setFloat(position, Float.valueOf(attrValue));
+						try {
+							ps.setFloat(position, Float.parseFloat(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.DOUBLE)) {
-						ps.setDouble(position, Double.valueOf(attrValue));
+						try {
+							ps.setDouble(position, Double.parseDouble(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.LONGNVARCHAR)) {
-						ps.setLong(position, Long.valueOf(attrValue));
+						ps.setString(position, attrValue);
 						position+=1;
 					}else if(dataType.equals(Types.DECIMAL)) {
-						Long decLong=Long.valueOf(attrValue);
-						ps.setBigDecimal(position, java.math.BigDecimal.valueOf(decLong));
+						try {
+							ps.setBigDecimal(position, new BigDecimal(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.CHAR)) {
-						ps.setObject(position, attrValue, Types.CHAR);
+						ps.setString(position, attrValue.substring(0,1));
 						position+=1;
 					}else if(dataType.equals(Types.VARCHAR)) {
-						ps.setObject(position, attrValue, Types.VARCHAR);
+						ps.setString(position, attrValue);
 						position+=1;
 					}else if(dataType.equals(Types.LONGVARCHAR)) {
-						ps.setObject(position, attrValue, Types.LONGVARCHAR);
+						ps.setString(position, attrValue);
 						position+=1;
 					}else if(dataType.equals(Types.BOOLEAN)) {
-						ps.setObject(position, attrValue, Types.BOOLEAN);
+						ps.setBoolean(position, parseBoolean(attrValue));
 						position+=1;
 					}else if(dataType.equals(Types.DECIMAL)) {
-						Long decLong=Long.valueOf(attrValue);
-						ps.setBigDecimal(position, java.math.BigDecimal.valueOf(decLong));
+						try {
+							ps.setBigDecimal(position, new java.math.BigDecimal(attrValue));
+						} catch (NumberFormatException e) {
+							throw new IoxInvalidDataException(e);
+						}
 						position+=1;
 					}else if(dataType.equals(Types.DATE)) {
 						java.sql.Date sqlDate=null;
@@ -346,6 +369,18 @@ public abstract class AbstractImport2db {
 				position+=1;
 			}
 		}
+	}
+
+	private boolean parseBoolean(String attrValue) {
+		if(attrValue.equalsIgnoreCase("t")
+				|| attrValue.equalsIgnoreCase("true")
+				|| attrValue.equalsIgnoreCase("y")
+				|| attrValue.equalsIgnoreCase("yes")
+				|| attrValue.equalsIgnoreCase("on")
+				|| attrValue.equals("1")) {
+			return true;
+		}
+		return false;
 	}
 
 	/** create insert statement in format of prepared statement
