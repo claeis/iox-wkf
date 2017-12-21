@@ -483,4 +483,7 @@ public class ShapeReader implements IoxReader{
 	public void setFactory(IoxFactoryCollection factory) throws IoxException{
 		this.factory=factory;
 	}
+	public String[] getAttributes() {
+		return iliAttributes.toArray(new String[iliAttributes.size()]);
+	}
 }

@@ -1,6 +1,9 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iom_j.csv.CsvReader;
@@ -52,5 +55,23 @@ public class Csv2db extends AbstractImport2db {
 		EhiLogger.traceState("first line is "+(firstLineIsHeader?"header":"data"));
 		
 		return reader;
+	}
+
+	@Override
+	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+		CsvReader reader=(CsvReader)ioxReader;
+		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
+		for(AttributeDescriptor attrDesc:attrDescriptors) {
+			attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
+		}
+		String [] csvAttrs=reader.getAttributes();
+		for(String  csvAttr:csvAttrs) {
+			AttributeDescriptor attrDesc=attrs.get(csvAttr.toLowerCase());
+			if(attrDesc!=null) {
+				attrDesc.setIomAttributeName(csvAttr);			
+			}else {
+				missingAttributes.add(csvAttr);
+			}
+		}
 	}
 }

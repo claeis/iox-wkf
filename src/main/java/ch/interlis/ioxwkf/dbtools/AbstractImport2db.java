@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
@@ -21,6 +22,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.iox.ObjectEvent;
+import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox_j.IoxInvalidDataException;
 
 public abstract class AbstractImport2db {
@@ -146,11 +148,11 @@ public abstract class AbstractImport2db {
 						throw new IoxException("import of "+iomObj.getobjecttag()+" to "+definedTableName+" failed");
 					}
 				}
-				event=reader.read();
-			}else {
-				// next IoxEvent
-				event=reader.read();
+			}else if(event instanceof StartBasketEvent) {
+				ArrayList<String> missingAttributes=new ArrayList<String>();
+				setIomAttrNames(reader,attrDescriptors,missingAttributes);
 			}
+			event=reader.read();
 		}
 		EhiLogger.logState("end of import");
 		EhiLogger.logState("import successful");
@@ -163,6 +165,8 @@ public abstract class AbstractImport2db {
 		event=null;
 	}
 
+	protected abstract void setIomAttrNames(IoxReader reader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes);
+	
 	/** convert to valid datatypes.
 	 * @param attrDescriptors
 	 * @param iomObj
@@ -177,15 +181,15 @@ public abstract class AbstractImport2db {
 		int position=1;
 		// add attribute information to attribute descriptors
 		for(AttributeDescriptor attribute:attrDescriptors) {
-			String dataTypeName=attribute.getAttributeTypeName();
-			Integer dataType=attribute.getAttributeType();
-			String attrName=attribute.getAttributeName();
-			String attrValue=iomObj.getattrvalue(attrName);
+			String dataTypeName=attribute.getDbColumnTypeName();
+			Integer dataType=attribute.getDbColumnType();
+			String iomAttrName=attribute.getIomAttributeName();
+			String attrValue=iomObj.getattrvalue(iomAttrName);
 			
-			if(attrValue!=null || iomObj.getattrobj(attrName,0)!=null){
+			if(attrValue!=null || iomObj.getattrobj(iomAttrName,0)!=null){
 				if(dataType.equals(Types.OTHER)) {
 					if(dataTypeName!=null && dataTypeName.equals(AttributeDescriptor.SET_GEOMETRY)) {
-						IomObject attrObjValue=iomObj.getattrobj(attrName,0);
+						IomObject attrObjValue=iomObj.getattrobj(iomAttrName,0);
 						int srsCode=attribute.getSrId();
 						int coordDimension=0;
 						boolean is3D=false;
@@ -397,23 +401,29 @@ public abstract class AbstractImport2db {
 		// create insert statement
 		queryBuild.append("INSERT INTO ");
 		if(schemaName!=null) {
+			queryBuild.append("\"");
 			queryBuild.append(schemaName);
+			queryBuild.append("\"");
 			queryBuild.append(".");
 		}
+		queryBuild.append("\"");
 		queryBuild.append(tableName);
+		queryBuild.append("\"");
 		queryBuild.append("(");
 		String comma="";
 		for(AttributeDescriptor attribute:attrDesc) {
-			String attrName=attribute.getAttributeName();
+			String attrName=attribute.getDbColumnName();
 			queryBuild.append(comma);
 			comma=", ";
+			queryBuild.append("\"");
 			queryBuild.append(attrName);
+			queryBuild.append("\"");
 		}
 		queryBuild.append(")VALUES(");
 		comma="";
 		for(AttributeDescriptor attribute:attrDesc) {
 			queryBuild.append(comma);
-			String geoColumnTypeGeom=attribute.getAttributeTypeName();
+			String geoColumnTypeGeom=attribute.getDbColumnTypeName();
 			if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(AttributeDescriptor.SET_GEOMETRY)) {
 				int srsCode=attribute.getSrId();
 				String geoColumnTypeName=attribute.getGeomColumnTypeName();

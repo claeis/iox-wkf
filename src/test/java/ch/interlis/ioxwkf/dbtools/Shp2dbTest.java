@@ -605,6 +605,52 @@ public class Shp2dbTest {
 			}
 		}
 	}
+	@Test
+	public void import_attrName_similar_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS shptodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA shptodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(\"Attr\" character, the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_IN, "Attributes/Char/DataTypeChar.shp");
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "shptodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpimporttable");
+				AbstractImport2db shp2db=new Shp2db();
+				shp2db.importData(data, jdbcConnection, config);
+			}
+	        {
+				stmt=jdbcConnection.createStatement();
+				ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM shptodbschema.shpimporttable;");
+				while(rowCount.next()) {
+					assertEquals(1, rowCount.getInt(1));
+				}
+				ResultSet rs = stmt.executeQuery("SELECT \"Attr\",st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSetMetaData rsmd=rs.getMetaData();
+				assertEquals(2, rsmd.getColumnCount());
+				while(rs.next()){
+					assertEquals("a", rs.getObject(1));
+				  	assertEquals("SRID=2056;POINT(-0.402597402597403 1.3974025974026)", rs.getObject(2));
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
 	
 	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
 	// - set: header-present

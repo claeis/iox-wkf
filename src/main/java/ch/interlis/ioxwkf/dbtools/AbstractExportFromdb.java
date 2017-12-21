@@ -197,9 +197,9 @@ public abstract class AbstractExportFromdb {
 		/** convert each attribute to db valid data type.
 		 */
 		for(AttributeDescriptor attr:attrs) {
-			String attrName=attr.getAttributeName();
-			Integer datatype=attr.getAttributeType();
-			String geoColumnTypeGeom=attr.getAttributeTypeName();
+			String dbColName="\""+attr.getDbColumnName()+"\"";
+			Integer datatype=attr.getDbColumnType();
+			String geoColumnTypeGeom=attr.getDbColumnTypeName();
 			String geoColumnTypeName=attr.getGeomColumnTypeName();
 			selectionQueryBuild.append(comma);
 			if(datatype.equals(Types.OTHER)) {
@@ -207,32 +207,32 @@ public abstract class AbstractExportFromdb {
 				if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(AttributeDescriptor.SET_GEOMETRY)) {
 					// the object is a geometry.
 					if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(dbColName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiCoord(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiCoord(dbColName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperPolyline(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperPolyline(dbColName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiPolyline(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiPolyline(dbColName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperSurface(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperSurface(dbColName));
 					}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
-						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiSurface(attrName));
+						selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiSurface(dbColName));
 					}
 				}else {
 					// the object is not part of geometry.
-					selectionQueryBuild.append(attrName);
+					selectionQueryBuild.append(dbColName);
 				}
 			}else {
-				selectionQueryBuild.append(attrName);
+				selectionQueryBuild.append(dbColName);
 			}
 			comma=",";
 		}
 		selectionQueryBuild.append(" FROM ");
 		if(schemaName!=null) {
-			selectionQueryBuild.append(schemaName+".");
+			selectionQueryBuild.append("\""+schemaName+"\""+".");
 		}
-		selectionQueryBuild.append(tableName+";");
+		selectionQueryBuild.append("\""+tableName+"\""+";");
 		return selectionQueryBuild.toString();
 	}
 	
@@ -259,9 +259,9 @@ public abstract class AbstractExportFromdb {
 		int position=0;
 		for(AttributeDescriptor attr:attrs) {
 			position+=1;
-			String attrName=attr.getAttributeName();
-			String dataTypeName=attr.getAttributeTypeName();
-			Integer dataType=attr.getAttributeType();
+			String iomAttrName=attr.getIomAttributeName();
+			String dataTypeName=attr.getDbColumnTypeName();
+			Integer dataType=attr.getDbColumnType();
 			boolean is3D=false;
 			try {
 				/** get attribute value in appropriate data type.
@@ -281,27 +281,27 @@ public abstract class AbstractExportFromdb {
 							// point
 							if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
 								geoIomObj=pgConverter.toIomCoord(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							// multipoint
 							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
 								geoIomObj=pgConverter.toIomMultiCoord(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							// line
 							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
 								geoIomObj=pgConverter.toIomPolyline(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							// multiline
 							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
 								geoIomObj=pgConverter.toIomMultiPolyline(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							// polygon
 							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
 								geoIomObj=pgConverter.toIomSurface(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							// multipolygon
 							}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
 								geoIomObj=pgConverter.toIomMultiSurface(objValue, srsCode, is3D);
-								iomObj.addattrobj(attrName, geoIomObj);
+								iomObj.addattrobj(iomAttrName, geoIomObj);
 							}
 						}
 					}else {
@@ -309,13 +309,13 @@ public abstract class AbstractExportFromdb {
 						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
 							String value=rs.getString(position);
 							if(!rs.wasNull()) {
-								iomObj.setattrvalue(attrName, value);
+								iomObj.setattrvalue(iomAttrName, value);
 							}
 						// xml	
 						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
 							Object value=rs.getObject(position);
 							if(!rs.wasNull()) {
-								iomObj.setattrvalue(attrName, pgConverter.toIomXml(value));
+								iomObj.setattrvalue(iomAttrName, pgConverter.toIomXml(value));
 							}
 						}
 					}
@@ -324,9 +324,9 @@ public abstract class AbstractExportFromdb {
 						boolean value=rs.getBoolean(position);
 						if(!rs.wasNull()) {
 							if(value==true) {
-								iomObj.setattrvalue(attrName, "true");
+								iomObj.setattrvalue(iomAttrName, "true");
 							}else if(value==false) {
-								iomObj.setattrvalue(attrName, "false");
+								iomObj.setattrvalue(iomAttrName, "false");
 							}
 						}
 					}else if(dataType.equals(Types.BIT)) {
@@ -335,107 +335,107 @@ public abstract class AbstractExportFromdb {
 							boolean bit=rs.getBoolean(position);
 							if(!rs.wasNull()) {
 								if(bit==true) {
-									iomObj.setattrvalue(attrName,"true");
+									iomObj.setattrvalue(iomAttrName,"true");
 								}else if(bit==false) {
-									iomObj.setattrvalue(attrName,"false");
+									iomObj.setattrvalue(iomAttrName,"false");
 								}
 							}
 						}else if(bytePrecision>=2){
 							String bit=rs.getString(position);
 							if(!rs.wasNull()) {
-								iomObj.setattrvalue(attrName, bit);
+								iomObj.setattrvalue(iomAttrName, bit);
 							}
 						}
 					}else if(dataType.equals(Types.BLOB)) {
 						Object value=rs.getObject(position);
 						if(!rs.wasNull()) {
-						    iomObj.setattrvalue(attrName,pgConverter.toIomBlob(value));
+						    iomObj.setattrvalue(iomAttrName,pgConverter.toIomBlob(value));
 						}
 					}else if(dataType.equals(Types.BINARY)) {
 						byte[] binary2ByteArr=rs.getBytes(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,Arrays.toString(binary2ByteArr));
+							iomObj.setattrvalue(iomAttrName,Arrays.toString(binary2ByteArr));
 						}
 					}else if(dataType.equals(Types.NUMERIC)) {
 						java.math.BigDecimal numeric2BigDec=rs.getBigDecimal(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,numeric2BigDec.toPlainString());
+							iomObj.setattrvalue(iomAttrName,numeric2BigDec.toPlainString());
 						}
 					}else if(dataType.equals(Types.SMALLINT)) {
 						Short smallInt2Short=rs.getShort(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,smallInt2Short.toString());
+							iomObj.setattrvalue(iomAttrName,smallInt2Short.toString());
 						}
 					}else if(dataType.equals(Types.TINYINT)) {
 						Byte tinyInt2Byte=rs.getByte(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,tinyInt2Byte.toString());
+							iomObj.setattrvalue(iomAttrName,tinyInt2Byte.toString());
 						}
 					}else if(dataType.equals(Types.INTEGER)) {
 						int integer2Int=rs.getInt(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,String.valueOf(integer2Int));
+							iomObj.setattrvalue(iomAttrName,String.valueOf(integer2Int));
 						}
 					}else if(dataType.equals(Types.BIGINT)) {
 						long bigInt2Long=rs.getLong(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,String.valueOf(bigInt2Long));
+							iomObj.setattrvalue(iomAttrName,String.valueOf(bigInt2Long));
 						}
 					}else if(dataType.equals(Types.FLOAT)) {
 						double float2Double=rs.getDouble(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,String.valueOf(float2Double));
+							iomObj.setattrvalue(iomAttrName,String.valueOf(float2Double));
 						}
 					}else if(dataType.equals(Types.DOUBLE)) {
 						double doubleValue=rs.getDouble(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,String.valueOf(doubleValue));
+							iomObj.setattrvalue(iomAttrName,String.valueOf(doubleValue));
 						}
 					}else if(dataType.equals(Types.LONGNVARCHAR)) {
 						String longVarChar2Long=rs.getString(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,longVarChar2Long);
+							iomObj.setattrvalue(iomAttrName,longVarChar2Long);
 						}
 					}else if(dataType.equals(Types.DECIMAL)) {
 						java.math.BigDecimal decimal2BigDec=rs.getBigDecimal(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,decimal2BigDec.toPlainString());
+							iomObj.setattrvalue(iomAttrName,decimal2BigDec.toPlainString());
 						}
 					}else if(dataType.equals(Types.CHAR)) {
 						String character2String=rs.getString(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,character2String);
+							iomObj.setattrvalue(iomAttrName,character2String);
 						}
 					}else if(dataType.equals(Types.VARCHAR)) {
 						String varchar2String=rs.getString(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,varchar2String);
+							iomObj.setattrvalue(iomAttrName,varchar2String);
 						}
 					}else if(dataType.equals(Types.DATE)) {
 						String dateStr=null;
 						java.sql.Date date=rs.getDate(position);
 						if(!rs.wasNull()) {
 							dateStr=dateFormat.format(date);
-							iomObj.setattrvalue(attrName,dateStr);
+							iomObj.setattrvalue(iomAttrName,dateStr);
 						}
 					}else if(dataType.equals(Types.TIME)) {
 						String timeStr=null;
 						java.sql.Time time=rs.getTime(position);
 						if(!rs.wasNull()) {
 							timeStr=timeFormat.format(time);
-							iomObj.setattrvalue(attrName,timeStr);
+							iomObj.setattrvalue(iomAttrName,timeStr);
 						}
 					}else if(dataType.equals(Types.TIMESTAMP)) {
 						String timestampStr=null;
 						java.sql.Timestamp timestamp=rs.getTimestamp(position);
 						if(!rs.wasNull()) {
 							timestampStr=timeStampFormat.format(timestamp);
-							iomObj.setattrvalue(attrName,timestampStr);
+							iomObj.setattrvalue(iomAttrName,timestampStr);
 						}
 					}else {
 						String value=rs.getString(position);
 						if(!rs.wasNull()) {
-							iomObj.setattrvalue(attrName,value);
+							iomObj.setattrvalue(iomAttrName,value);
 						}
 					}
 				}
@@ -443,7 +443,7 @@ public abstract class AbstractExportFromdb {
 				// create error message.
 				StringBuilder notConvertedAttr= new StringBuilder();
 				notConvertedAttr.append("Attribute ");
-				notConvertedAttr.append(attrName);
+				notConvertedAttr.append(iomAttrName);
 				notConvertedAttr.append(" of type ");
 				if(dataType.equals(Types.OTHER)) {
 					if(dataTypeName.equals(AttributeDescriptor.SET_GEOMETRY)) {

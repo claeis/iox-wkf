@@ -1,8 +1,12 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
+import ch.interlis.iom_j.csv.CsvReader;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.ioxwkf.shp.ShapeReader;
@@ -25,5 +29,22 @@ public class Shp2db extends AbstractImport2db {
 		/** create and return a shape reader.
 		 */
 		return new ShapeReader(file,config);
+	}
+	@Override
+	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+		ShapeReader reader=(ShapeReader)ioxReader;
+		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
+		for(AttributeDescriptor attrDesc:attrDescriptors) {
+			attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
+		}
+		String [] shpAttrs=reader.getAttributes();
+		for(String  shpAttr:shpAttrs) {
+			AttributeDescriptor attrDesc=attrs.get(shpAttr.toLowerCase());
+			if(attrDesc!=null) {
+				attrDesc.setIomAttributeName(shpAttr);			
+			}else {
+				missingAttributes.add(shpAttr);
+			}
+		}
 	}
 }

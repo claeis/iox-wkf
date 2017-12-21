@@ -10,7 +10,8 @@ import java.util.List;
 import ch.interlis.iox.IoxException;
 
 public class AttributeDescriptor {
-	private String attributeName=null;
+	private String dbColumnName=null;
+	private String iomAttributeName=null;
 	private Integer attributeType=null;
 	private String attributeTypeName=null;
 	private String geomColumnTypeName=null;
@@ -36,22 +37,28 @@ public class AttributeDescriptor {
 	public final static String SET_GEOMETRY_MULTIPOINT="MULTIPOINT";
 	public final static String SET_GEOMETRY_POINT="POINT";
 	
-	protected String getAttributeName() {
-		return attributeName;
+	protected String getDbColumnName() {
+		return dbColumnName;
 	}
-	protected void setAttributeName(String attributeName) {
-		this.attributeName = attributeName;
+	protected void setDbColumnName(String attributeName) {
+		this.dbColumnName = attributeName;
 	}
-	protected Integer getAttributeType() {
+	protected String getIomAttributeName() {
+		return iomAttributeName==null? dbColumnName : iomAttributeName;
+	}
+	protected void setIomAttributeName(String attributeName) {
+		this.iomAttributeName = attributeName;
+	}
+	protected Integer getDbColumnType() {
 		return attributeType;
 	}
-	protected void setAttributeType(Integer attributeType) {
+	protected void setDbColumnType(Integer attributeType) {
 		this.attributeType = attributeType;
 	}
-	protected String getAttributeTypeName() {
+	protected String getDbColumnTypeName() {
 		return attributeTypeName;
 	}
-	protected void setAttributeTypeName(String attributeTypeName) {
+	protected void setDbColumnTypeName(String attributeTypeName) {
 		this.attributeTypeName = attributeTypeName;
 	}
 	protected String getGeomColumnTypeName() {
@@ -88,7 +95,7 @@ public class AttributeDescriptor {
 	 */
 	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException {
 		for(AttributeDescriptor attr:attributeDesc) {
-			if(attr.getAttributeTypeName().equals(SET_GEOMETRY)) {
+			if(attr.getDbColumnTypeName().equals(SET_GEOMETRY)) {
 				ResultSet tableInDb =null;
 				StringBuilder queryBuild=new StringBuilder();
 				queryBuild.append("SELECT coord_dimension, srid, type FROM geometry_columns WHERE ");
@@ -96,7 +103,7 @@ public class AttributeDescriptor {
 					queryBuild.append("f_table_schema='"+schemaName+"' AND ");
 				}
 				queryBuild.append("f_table_name='"+tableName+"' "); 
-				queryBuild.append("AND f_geometry_column='"+attr.getAttributeName()+"';");
+				queryBuild.append("AND f_geometry_column='"+attr.getDbColumnName()+"';");
 				try {
 					Statement stmt = db.createStatement();
 					tableInDb=stmt.executeQuery(queryBuild.toString());
@@ -144,9 +151,9 @@ public class AttributeDescriptor {
 				// create attr descriptor
 				AttributeDescriptor attr=new AttributeDescriptor();
 				attr.setPrecision(rsmd.getPrecision(k));
-				attr.setAttributeName(rsmd.getColumnName(k));
-				attr.setAttributeType(rsmd.getColumnType(k));
-				attr.setAttributeTypeName(rsmd.getColumnTypeName(k));
+				attr.setDbColumnName(rsmd.getColumnName(k));
+				attr.setDbColumnType(rsmd.getColumnType(k));
+				attr.setDbColumnTypeName(rsmd.getColumnTypeName(k));
 				attrs.add(attr);
 			}
 		} catch (SQLException e) {

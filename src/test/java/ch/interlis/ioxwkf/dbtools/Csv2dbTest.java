@@ -397,6 +397,50 @@ public class Csv2dbTest {
 			}
 		}
 	}
+
+	@Test
+	public void import_attrName_similar_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop schema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+	        	// create schema
+	        	preStmt.execute("CREATE SCHEMA csvtodbschema");
+	        	// create table in schema
+	        	preStmt.execute("CREATE TABLE csvtodbschema.csvimportdatatype(\"Attr\" character) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// csv
+				File data=new File(TEST_IN, "DataTypeChar.csv");
+				config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportdatatype");
+				AbstractImport2db csv2db=new Csv2db();
+				csv2db.importData(data, jdbcConnection, config);
+			}
+			{
+				String attrValue=null;
+				rows = new HashMap<String, List<String>>();
+				stmt=jdbcConnection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT \"Attr\" FROM "+config.getValue(IoxWkfConfig.SETTING_DBSCHEMA)+".csvimportdatatype");
+				while(rs.next()){
+					attrValue = rs.getString(1);
+					assertEquals("a",attrValue);
+				}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
 	
 	// Es wird getestet, ob der richtige Datentyp innerhalb der Datenbank-Tabelle importiert wurde.
 	// - set: header-present
