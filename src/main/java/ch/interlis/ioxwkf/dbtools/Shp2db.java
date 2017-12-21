@@ -34,12 +34,22 @@ public class Shp2db extends AbstractImport2db {
 	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
 		ShapeReader reader=(ShapeReader)ioxReader;
 		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
+		AttributeDescriptor geomAttr=null;
 		for(AttributeDescriptor attrDesc:attrDescriptors) {
+			if(attrDesc.getGeomColumnTypeName()!=null) {
+				geomAttr=attrDesc;
+			}
 			attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
 		}
 		String [] shpAttrs=reader.getAttributes();
+		String shpGeomAttr=reader.getGeomAttr();
 		for(String  shpAttr:shpAttrs) {
-			AttributeDescriptor attrDesc=attrs.get(shpAttr.toLowerCase());
+			AttributeDescriptor attrDesc=null;
+			if(shpAttr.equals(shpGeomAttr)) {
+				attrDesc=geomAttr;
+			}else {
+				attrDesc=attrs.get(shpAttr.toLowerCase());
+			}
 			if(attrDesc!=null) {
 				attrDesc.setIomAttributeName(shpAttr);			
 			}else {

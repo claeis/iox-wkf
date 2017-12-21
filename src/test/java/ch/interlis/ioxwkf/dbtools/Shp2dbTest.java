@@ -46,7 +46,7 @@ public class Shp2dbTest {
 	        	// create schema
 	        	preStmt.execute("CREATE SCHEMA shptodbschema");
 	        	// create table in schema
-	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,the_geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+	        	preStmt.execute("CREATE TABLE shptodbschema.shpimporttable(idname character varying,geom geometry(POINT,2056))WITH (OIDS=FALSE)");
 	        	preStmt.close();
 	        }
 	        {
@@ -63,7 +63,7 @@ public class Shp2dbTest {
 				while(rowCount.next()) {
 					assertEquals(1, rowCount.getInt(1));
 				}
-				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(the_geom) FROM shptodbschema.shpimporttable;");
+				ResultSet rs = stmt.executeQuery("SELECT idname,st_asewkt(geom) FROM shptodbschema.shpimporttable;");
 				ResultSetMetaData rsmd=rs.getMetaData();
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){

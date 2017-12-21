@@ -50,6 +50,7 @@ import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 	
 public class ShapeReader implements IoxReader{
+	public static final String GEOTOOLS_THE_GEOM = "the_geom";
 	public static final String ENCODING = "ch.interlis.ioxwkf.shp.encoding";
 	// state
 	private int state;
@@ -485,5 +486,8 @@ public class ShapeReader implements IoxReader{
 	}
 	public String[] getAttributes() {
 		return iliAttributes.toArray(new String[iliAttributes.size()]);
+	}
+	public String getGeomAttr() {
+		return GEOTOOLS_THE_GEOM;
 	}
 }
