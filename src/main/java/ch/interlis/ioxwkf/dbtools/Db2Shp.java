@@ -13,7 +13,7 @@ public class Db2Shp extends AbstractExportFromdb {
 		/** mandatory: file to reader has not to be null.
 		 */
 		if(file!=null) {
-			EhiLogger.logState("file to read to: <"+file.getName()+">");
+			EhiLogger.logState("file to write to: <"+file.getName()+">");
 		}else {
 			throw new IoxException("file==null.");
 		}

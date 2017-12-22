@@ -17,7 +17,7 @@ public class Csv2db extends AbstractImport2db {
 		 */
 		if(file!=null) {
 			if(file.exists()) {
-				EhiLogger.logState("file to read to: <"+file.getName()+">");
+				EhiLogger.logState("file to read from: <"+file.getName()+">");
 			}else {
 				throw new IoxException("file "+file.getName()+" not found.");
 			}
