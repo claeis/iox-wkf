@@ -10,7 +10,7 @@ MODEL ShapeModel (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 	TOPIC Topic1 =
 		CLASS Point =
 			id : 0 .. 150;
-			the_geom : Lkoord;
+			geometry : Lkoord;
 		END Point;
 	END Topic1;
 	

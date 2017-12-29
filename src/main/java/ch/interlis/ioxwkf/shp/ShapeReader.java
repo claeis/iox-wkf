@@ -77,8 +77,14 @@ public class ShapeReader implements IoxReader{
 	private String topicIliQName="Topic";
 	private String classIliQName=null;
 	
+	// attributes, as read from the underlying geotools library
 	private List<AttributeDescriptor> shapeAttributes=null;
+	// attributes, as returned from this reader (as values of IomObjects).
+	// List is in the same order as shapeAttributes, but case of attribute name might be different.
+	// And name of geometry attribute might be different.
 	private List<String> iliAttributes=null;
+	// Name of the geometry attribute in the IomObject
+	private String theGeomAttr=GEOTOOLS_THE_GEOM;
 
 	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
 	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
@@ -345,48 +351,51 @@ public class ShapeReader implements IoxReader{
 	}
 	private Viewable getViewableByShapeAttributes(List<AttributeDescriptor> shapeAttrs,List<String> iliAttrs) throws IoxException{
     	Viewable viewable=null;
-    	List<String> foundClasses=new ArrayList<String>();
-		ArrayList<String> newIliAttrs=null;
     	ArrayList<ArrayList<Viewable>> models=setupNameMapping();
     	// first last model file.
     	for(int modeli=models.size()-1;modeli>=0;modeli--){
     		ArrayList<Viewable> classes=models.get(modeli);
     		for(int classi=classes.size()-1;classi>=0;classi--){
     			Viewable iliViewable=classes.get(classi);
-    			Map<String,String> iliAttrMap=new HashMap<String,String>();
+    			Map<String,ch.interlis.ili2c.metamodel.AttributeDef> iliAttrMap=new HashMap<String,ch.interlis.ili2c.metamodel.AttributeDef>();
     			Iterator attrIter=iliViewable.getAttributes();
+    			ArrayList<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs=new ArrayList<ch.interlis.ili2c.metamodel.AttributeDef>();
     			while(attrIter.hasNext()){
-    				Element attribute=(Element) attrIter.next();
+    				ch.interlis.ili2c.metamodel.AttributeDef attribute=(ch.interlis.ili2c.metamodel.AttributeDef) attrIter.next();
     				String attrName=attribute.getName();
-    				iliAttrMap.put(attrName.toLowerCase(),attrName);
+    				ch.interlis.ili2c.metamodel.Type type=attribute.getDomainResolvingAliases();
+    				if(type instanceof ch.interlis.ili2c.metamodel.CoordType || type instanceof ch.interlis.ili2c.metamodel.LineType) {
+    					geomAttrs.add(attribute);
+    				}else {
+        				iliAttrMap.put(attrName.toLowerCase(),attribute);
+    				}
     			}
-    			// check if all model attributes are contained in defined header
-				if(equalAttrs(iliAttrMap, shapeAttrs)){
+    			// check if ili model attributes are the same as the attributes in the shape file
+				if(equalAttrs(iliAttrMap, geomAttrs,shapeAttrs)){
 					viewable=iliViewable;
-					foundClasses.add(viewable.getScopedName());
-					newIliAttrs=new ArrayList<String>();
+		    		iliAttrs.clear();
+			    	theGeomAttr=geomAttrs.get(0).getName();
 			    	for(AttributeDescriptor shapeAttr:shapeAttrs) {
-			    		newIliAttrs.add(iliAttrMap.get(shapeAttr.getLocalName().toLowerCase()));
+			    		if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
+			    			iliAttrs.add(theGeomAttr);
+			    		}else {
+				    		iliAttrs.add(iliAttrMap.get(shapeAttr.getLocalName().toLowerCase()).getName());
+			    		}
 			    	}
-					
+		    		return viewable;
 				}
     		}
     	}
-    	if(foundClasses.size()>1) {
-    		throw new IoxException("several possible classes were found: "+foundClasses.toString());
-    	}else if(foundClasses.size()==1){
-    		iliAttrs.clear();
-    		iliAttrs.addAll(newIliAttrs);
-    		return viewable;
-    	}
     	return null;
     }
-    private boolean equalAttrs(Map<String, String> iliAttrs, List<AttributeDescriptor> shapeAttrs) {
-    	if(iliAttrs.size()!=shapeAttrs.size()) {
+    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs,List<AttributeDescriptor> shapeAttrs) {
+    	if(iliAttrs.size()+1!=shapeAttrs.size() || geomAttrs.size()!=1) {
     		return false;
     	}
     	for(AttributeDescriptor shapeAttr:shapeAttrs) {
-    		if(!iliAttrs.containsKey(shapeAttr.getLocalName().toLowerCase())) {
+    		if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
+    			// ignore it
+    		}else if(!iliAttrs.containsKey(shapeAttr.getLocalName().toLowerCase())) {
     			return false;
     		}
     	}
@@ -484,10 +493,16 @@ public class ShapeReader implements IoxReader{
 	public void setFactory(IoxFactoryCollection factory) throws IoxException{
 		this.factory=factory;
 	}
+	/** gets the list of attributes in the read/returned IomObjects.
+	 * @return list of attribute names.
+	 */
 	public String[] getAttributes() {
 		return iliAttributes.toArray(new String[iliAttributes.size()]);
 	}
+	/** gets the name of the geometry attribute in the read/returned IomObjects.
+	 * @return name of geometry attribute
+	 */
 	public String getGeomAttr() {
-		return GEOTOOLS_THE_GEOM;
+		return theGeomAttr;
 	}
 }

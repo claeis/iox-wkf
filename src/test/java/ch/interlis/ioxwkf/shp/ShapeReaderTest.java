@@ -23,7 +23,6 @@ import java.util.HashSet;
 
 public class ShapeReaderTest {
 	
-	private TransferDescription td=null;
 	private static final String TEST_IN="src/test/data/ShapeReader/";
 	
 	@Before
@@ -33,7 +32,7 @@ public class ShapeReaderTest {
 		Configuration ili2cConfig=new Configuration();
 		FileEntry fileEntry=new FileEntry(TEST_IN+"Point/ShapeModel.ili", FileEntryKind.ILIMODELFILE);
 		ili2cConfig.addFileEntry(fileEntry);
-		td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+		TransferDescription td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
 		assertNotNull(td);
 	}
 	
@@ -48,7 +47,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
+			IomObject attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.22857142857142854"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5688311688311687"));
 			assertTrue(reader.read() instanceof EndBasketEvent);
@@ -64,9 +63,15 @@ public class ShapeReaderTest {
 	// Es wird getestet ob ein Model an den Reader gegeben werden kann und die objecttag Informationen des IomObjects
 	// mit den Informationen des Models uebereinstimmen.
 	@Test
-	public void setModel_singlePoint_Ok() throws IoxException, IOException{
+	public void setModel_singlePoint_Ok() throws IoxException, IOException, Ili2cFailure{
 		ShapeReader reader=null;
 		try {
+			// compile model
+			Configuration ili2cConfig=new Configuration();
+			FileEntry fileEntry=new FileEntry(TEST_IN+"Point/ShapeModel.ili", FileEntryKind.ILIMODELFILE);
+			ili2cConfig.addFileEntry(fileEntry);
+			TransferDescription td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+			assertNotNull(td);
 			reader=new ShapeReader(new File(TEST_IN+"Point/Point.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			reader.setModel(td);
@@ -74,7 +79,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
+			IomObject attrObj=iomObj.getattrobj("geometry", 0);
 			assertTrue(iomObj.getobjecttag().equals("ShapeModel.Topic1.Point"));
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.22857142857142854"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5688311688311687"));
@@ -114,9 +119,15 @@ public class ShapeReaderTest {
 	
 	// Es wird getestet ob der Model Name dem Model Name entspricht.
 	@Test
-	public void setModel_modelName_Ok() throws IoxException, IOException{
+	public void setModel_modelName_Ok() throws IoxException, IOException, Ili2cFailure{
 		ShapeReader reader=null;
 		try {
+			// compile model
+			Configuration ili2cConfig=new Configuration();
+			FileEntry fileEntry=new FileEntry(TEST_IN+"Point/ShapeModel.ili", FileEntryKind.ILIMODELFILE);
+			ili2cConfig.addFileEntry(fileEntry);
+			TransferDescription td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+			assertNotNull(td);
 			reader=new ShapeReader(new File(TEST_IN+"Point/Point.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			reader.setModel(td);
@@ -163,9 +174,15 @@ public class ShapeReaderTest {
 	
 	// Es wird getestet ob der Topic Name dem sich im Model befindenden Topic Namen entspricht.
 	@Test
-	public void setModel_topicName_Ok() throws IoxException, IOException{
+	public void setModel_topicName_Ok() throws IoxException, IOException, Ili2cFailure{
 		ShapeReader reader=null;
 		try {
+			// compile model
+			Configuration ili2cConfig=new Configuration();
+			FileEntry fileEntry=new FileEntry(TEST_IN+"Point/ShapeModel.ili", FileEntryKind.ILIMODELFILE);
+			ili2cConfig.addFileEntry(fileEntry);
+			TransferDescription td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+			assertNotNull(td);
 			reader=new ShapeReader(new File(TEST_IN+"Point/Point.shp"));
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			reader.setModel(td);
@@ -278,35 +295,35 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
+			IomObject attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.38701298701298703"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.8259740259740259"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.19220779220779216"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.6935064935064934"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.48831168831168836"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.32727272727272716"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.6649350649350649"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5116883116883116"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.4233766233766234"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5402597402597402"));
 			
@@ -338,35 +355,35 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject attrObj=iomObj.getattrobj("the_geom", 0);
+			IomObject attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.38701298701298703"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.8259740259740259"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.19220779220779216"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.6935064935064934"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.48831168831168836"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.32727272727272716"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.6649350649350649"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5116883116883116"));
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			attrObj=iomObj.getattrobj("the_geom", 0);
+			attrObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(attrObj.getattrvalue("C1").equals("-0.4233766233766234"));
 			assertTrue(attrObj.getattrvalue("C2").equals("0.5402597402597402"));
 			
@@ -392,7 +409,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
+			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-1.0462287104622872"));
@@ -430,7 +447,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
+			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-1.0462287104622872"));
@@ -461,7 +478,7 @@ public class ShapeReaderTest {
 			
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
+			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-2.2610421208961364"));
@@ -493,7 +510,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
+			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
 			IomObject sequence=polyline.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
@@ -541,7 +558,7 @@ public class ShapeReaderTest {
 			IoxEvent event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multiPolylineObj=iomObj.getattrobj("the_geom", 0);
+			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			{
 				IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
 				IomObject sequence=polyline.getattrobj("sequence", 0);
@@ -584,7 +601,7 @@ public class ShapeReaderTest {
 			
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
+			IomObject multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
@@ -625,7 +642,7 @@ public class ShapeReaderTest {
 			
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
+			IomObject multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
@@ -660,19 +677,19 @@ public class ShapeReaderTest {
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			IomObject multisurface=iomObj.getattrobj("the_geom", 0);
+			IomObject multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			multisurface=iomObj.getattrobj("the_geom", 0);
+			multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			multisurface=iomObj.getattrobj("the_geom", 0);
+			multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
@@ -709,19 +726,19 @@ public class ShapeReaderTest {
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
-			multisurface=iomObj.getattrobj("the_geom", 0);
+			multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			multisurface=iomObj.getattrobj("the_geom", 0);
+			multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			event=reader.read();
 			assertTrue(event instanceof ObjectEvent);
 			iomObj=((ObjectEvent)event).getIomObject();
-			multisurface=iomObj.getattrobj("the_geom", 0);
+			multisurface=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			assertTrue(multisurface.getattrvaluecount("surface")==1);
 			
 			assertTrue(reader.read() instanceof EndBasketEvent);
@@ -898,9 +915,7 @@ public class ShapeReaderTest {
 			assertTrue(reader.read() instanceof StartTransferEvent);
 			assertTrue(reader.read() instanceof StartBasketEvent);
 			IoxEvent event=reader.read();
-			fail();
-		}catch(IoxException ex) {
-    		assertTrue(ex.getMessage().contains("several possible classes were found"));
+			assertEquals("BundesModel.Topic1.Polygon",((ObjectEvent)event).getIomObject().getobjecttag());
 		}finally {
 			if(reader!=null) {
 		    	reader.close();
