@@ -52,12 +52,27 @@ public class ShapeWriterTest {
 	}
 	
 	@Test
-	public void emptyTransfer_Ok() throws Iox2jtsException, IoxException {
+	public void setModel_emptyTransfer_Ok() throws Iox2jtsException, IoxException {
 		ShapeWriter writer = null;
 		try {
 			File file = new File(TEST_OUT,"testEmptyTransfer.shp");
 			writer = new ShapeWriter(file);
 			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		writer.close();
+	    		writer=null;
+	    	}
+		}
+	}
+	@Test
+	public void emptyTransfer_Ok() throws Iox2jtsException, IoxException {
+		ShapeWriter writer = null;
+		try {
+			File file = new File(TEST_OUT,"testEmptyTransfer.shp");
+			writer = new ShapeWriter(file);
 			writer.write(new StartTransferEvent());
 			writer.write(new EndTransferEvent());
 		}finally {
@@ -312,7 +327,7 @@ public class ShapeWriterTest {
     	}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn ein mehrere Coords in einen MultiPoint konvertiert wird.
+	// Es wird getestet ob MULTICOORD geschrieben werden kann
 	@Test
 	public void multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint", "o1");
@@ -333,7 +348,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiPoint.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSuccessFormat));
@@ -357,7 +372,7 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
+			assertEquals("MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -386,7 +401,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiPoint2.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSuccessFormat));
@@ -412,7 +427,7 @@ public class ShapeWriterTest {
 			Object attr1=shapeObj.getAttribute("textattr2");
 			assertEquals(attr1.toString(), "text1");
 			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
+			assertEquals("MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -549,7 +564,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiLineString.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objStraightsSuccess));
@@ -573,7 +588,7 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
+			assertEquals( "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -608,7 +623,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiLineString2.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objStraightsSuccess));
@@ -636,7 +651,7 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("attr2MLS");
 			assertEquals(attr2.toString(), "6");
 			Object attr3=shapeObj.getAttribute("the_geom");
-			assertEquals(attr3.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
+			assertEquals( "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr3.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -857,7 +872,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiPolygon.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSurfaceSuccess));
@@ -881,7 +896,7 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))");
+			assertEquals( "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -962,7 +977,7 @@ public class ShapeWriterTest {
 		File file = new File(TEST_OUT,"MultiPolygon2.shp");
 		try {
 			writer = new ShapeWriter(file);
-			writer.setModel(td);
+			//writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSurfaceSuccess));
@@ -990,15 +1005,15 @@ public class ShapeWriterTest {
 			Object attr2=shapeObj.getAttribute("attr2MPG");
 			assertEquals(attr2.toString(), "8");
 			Object attr3=shapeObj.getAttribute("the_geom");
-			assertEquals(attr3.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))");
+			assertEquals( "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr3.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn kein Attribute innerhalb des IomObjektes gefunden werden kann.
+	// Es wird getestet, ob ein Objekt ohne Attributwerte geschrieben werden kann.
 	@Test
-	public void emptyObject_Fail() throws IoxException {
+	public void emptyObject_Ok() throws IoxException {
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
 		ShapeWriter writer = null;
 		try {
@@ -1008,7 +1023,8 @@ public class ShapeWriterTest {
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSuccess));
-			fail();
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
 		}catch(IoxException e) {
 			assertTrue(e.getMessage().equals("no feature found in Test1.Topic1.Point"));
 		}finally {
@@ -1116,36 +1132,4 @@ public class ShapeWriterTest {
 		}
 	}
 	
-	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn 2 Objekte auf einmal gesetzt werden.
-	@Test
-	public void maxCountOfObjectWrong_Fail() throws IoxException {
-		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
-		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
-		coordValue.setattrvalue("C1", "-0.22857142857142854");
-		coordValue.setattrvalue("C2", "0.5688311688311687");
-		IomObject coordValue2=objSuccess.addattrobj("attrPoint", "COORD");
-		coordValue2.setattrvalue("C1", "-0.22857142857142854");
-		coordValue2.setattrvalue("C2", "0.5688311688311687");
-		ShapeWriter writer = null;
-		try {
-			File file = new File(TEST_OUT,"maxCountOfObjectWrong_Fail.shp");
-			writer = new ShapeWriter(file);
-			writer.setModel(td);
-			writer.write(new StartTransferEvent());
-			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
-			writer.write(new ObjectEvent(objSuccess));
-			fail();
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().equals("max one COORD value allowed (attrPoint)"));
-		}finally {
-	    	if(writer!=null) {
-	    		try {
-					writer.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		writer=null;
-	    	}
-		}
-	}
 }

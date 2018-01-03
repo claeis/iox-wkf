@@ -89,6 +89,52 @@ public class Db2ShpTest {
 			}
 		}
 	}
+	@Test
+	public void export_NoRow_Ok() throws Exception
+	{
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoshpschema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+	        	// create dbtoshpschema
+	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
+	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
+	        	preStmt.execute("CREATE TABLE dbtoshpschema.shpexport(attr character varying,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+	        	preStmt.close();
+	        }
+	        {
+				// shp
+				File data=new File(TEST_OUT,"export_NoRow_Ok.shp");
+				// delete file if already exist
+				if(data.exists()) {
+					data.delete();
+				}
+				
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "shpexport");
+				AbstractExportFromdb db2Shp=new Db2Shp();
+				db2Shp.exportData(data, jdbcConnection, config);
+			}
+	        {
+				//Open the file for reading
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_NoRow_Ok.shp"));
+	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+	    		if(featureCollectionIter.hasNext()) {
+	    			fail();
+	    		}
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	}
 	
 	// Es soll keine Fehlermeldung ausgegeben werden, weil auch ohne die Angabe des Datenbank Schemas, die Tabelle gefunden werden kann.
 	// - NOT SET: database-dbtoshpschema

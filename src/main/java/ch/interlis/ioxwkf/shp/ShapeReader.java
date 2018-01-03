@@ -18,6 +18,7 @@ import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.feature.type.AttributeTypeImpl;
+import org.geotools.feature.type.BasicFeatureTypes;
 import org.geotools.feature.type.GeometryTypeImpl;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -50,7 +51,7 @@ import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 	
 public class ShapeReader implements IoxReader{
-	public static final String GEOTOOLS_THE_GEOM = "the_geom";
+	public static final String GEOTOOLS_THE_GEOM = BasicFeatureTypes.GEOMETRY_ATTRIBUTE_NAME;
 	public static final String ENCODING = "ch.interlis.ioxwkf.shp.encoding";
 	// state
 	private int state;

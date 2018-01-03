@@ -27,6 +27,8 @@ import org.geotools.data.DataStoreFinder;
 import org.geotools.data.DefaultTransaction;
 import org.geotools.data.Transaction;
 import org.geotools.data.collection.ListFeatureCollection;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.geotools.data.simple.SimpleFeatureStore;
@@ -48,6 +50,7 @@ import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
 import org.opengis.feature.type.GeometryDescriptor;
 import org.opengis.feature.type.GeometryType;
+import org.opengis.feature.type.Name;
 import org.opengis.filter.identity.FeatureId;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
@@ -80,8 +83,10 @@ import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.generator.Iligml20Generator;
+import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.Element;
+import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.ili2c.metamodel.ViewableTransferElement;
@@ -99,9 +104,10 @@ import java.util.Map;
 public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	
 	private DataStore dataStore=null; // --> data access
-    private ViewableProperties mapping =null; // --> model data
     private List<AttributeDescriptor> attrDesc=null; // --> attribute type data
-    private List<Object> attributes=null; // --> attribute name and value
+	private SimpleFeatureType featureType=null;
+	private SimpleFeatureBuilder featureBuilder=null;
+    
 	// geometry type properties
 	private static final String POINT="pointProperty";
 	private static final String MULTIPOINT="multipointProperty";
@@ -115,12 +121,14 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private static final String POLYLINE="POLYLINE";
 	private static final String MULTIPOLYLINE="MULTIPOLYLINE";
 	private static final String MULTISURFACE="MULTISURFACE";
-	// geom type name
-	private static final String GEOM="the_geom";
-	// srid
-	private String sridCode="2056"; // --> coordinate reference code. if null, default code will be set
+
+	private Integer srsId=null;
 	// model
 	private TransferDescription td=null;
+	private String iliGeomAttrName=null;
+	private Name featureTypeName=new NameImpl("http://www.geotools.org/","shpType");
+	private SimpleFeatureStore featureStore=null;
+	private Transaction transaction=null;
 	
 	/** initialize file and model
 	 * @param file
@@ -134,20 +142,21 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     }
     
 	private void init(File file,Settings settings) throws IoxException{
-        Map<String, Serializable> map = new HashMap<String, Serializable>();
+        Map<String, Serializable> params = new HashMap<String, Serializable>();
         // get file path
         try {
-			map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.URLP.key, file.toURL());
+			params.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.URLP.key, file.toURL());
 			String encoding=settings!=null?settings.getValue(ShapeReader.ENCODING):null;
 			if(encoding!=null) {
-				map.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.DBFCHARSET.key, encoding);
+				params.put(org.geotools.data.shapefile.ShapefileDataStoreFactory.DBFCHARSET.key, encoding);
 			}
 		} catch (MalformedURLException e2) {
 			throw new IoxException(e2);
 		}
         // create data store
         try {
-			dataStore = DataStoreFinder.getDataStore(map);
+            ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory();
+            dataStore = (ShapefileDataStore) dataStoreFactory.createNewDataStore(params);
 		} catch (IOException e2) {
 			throw new IoxException(e2);
 		}
@@ -155,163 +164,201 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		file.setExecutable(true);
 		file.setWritable(true);
 	}
-	
-	/** iterate through model/models and store data to map
-	 * @param td
-	 * @return
-	 */
-    private ViewableProperties createMapping(TransferDescription td) {
-		ViewableProperties mapping=new ViewableProperties();
-    	java.util.HashMap tagv=Iligml20Generator.createDef2NameMapping(td);
-		Iterator tagi=tagv.keySet().iterator();
-		for(;tagi.hasNext();){
-			Element ili2cEle=(Element)tagi.next();
-			String tag=null;
-			ArrayList propv=null; // ViewableProperty
-			if(ili2cEle instanceof AttributeDef){
-				AttributeDef attr=(AttributeDef)ili2cEle;
-				tag=ili2cEle.getContainer().getScopedName(null)+"."+ili2cEle.getName();
-				propv=Ili2cUtility.mapLinetable(attr);
-			}else if(ili2cEle instanceof Viewable){
-				propv=new ArrayList(); // ViewableProperty
-				Viewable v=(Viewable)ili2cEle;
-				tag=v.getScopedName(null);
-				Iterator iter = Iligml20Generator.getAttributesAndRoles2(v);
-				while (iter.hasNext()) {
-					ViewableTransferElement obj = (ViewableTransferElement)iter.next();
-					ViewableProperty prop=Ili2cUtility.mapViewableTransferElement( v, obj);
-					propv.add(prop);
-				}
-			}
-			if(tag!=null){
-				mapping.defineClass(tag, (ViewableProperty[])propv.toArray(new ViewableProperty[propv.size()]));
-			}
-		}
-		return mapping;
-	}
     
-    /** get data of ioxEvent and validate data
-     */
     @Override
 	public void write(IoxEvent event) throws IoxException {
 		if(event instanceof StartTransferEvent){
 			// ignore
 		}else if(event instanceof StartBasketEvent){
-			if(td!=null) {
-				mapping = createMapping(td);
-			}
 		}else if(event instanceof ObjectEvent){
-			attributes=new ArrayList<Object>();
-			attrDesc=new ArrayList<AttributeDescriptor>();
 			ObjectEvent obj=(ObjectEvent) event;
 			IomObject iomObj=(IomObject)obj.getIomObject();
 			String tag = iomObj.getobjecttag();
 			// check if class exist in model/models
-			ViewableProperty[] attrv = null;
-            if (mapping!=null && mapping.existsClass(tag)){
-                attrv = mapping.getClassVProperties(tag);
-            }else {
-            	if(td==null) {
-            		attrv = new ViewableProperty[iomObj.getattrcount()];
+			if(attrDesc==null) {
+				attrDesc=new ArrayList<AttributeDescriptor>();
+				if(td!=null) {
+					Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
+					if (aclass==null){
+	            		throw new IoxException("class "+iomObj.getobjecttag()+" not found in model");
+					}
+					Iterator viewableIter=aclass.getAttributes();
+					while(viewableIter.hasNext()) {
+						Object attrObj=viewableIter.next();
+						if(attrObj instanceof LocalAttribute) {
+							LocalAttribute localAttr= (LocalAttribute)attrObj;
+							String attrName=localAttr.getName();
+	    					//create the builder
+	    					AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+	    					ch.interlis.ili2c.metamodel.Type iliType=localAttr.getDomainResolvingAliases();
+	    					if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
+	    						iliGeomAttrName=attrName;
+		    					attributeBuilder.setBinding(Point.class);
+	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.PolylineType) {
+	    						iliGeomAttrName=attrName;
+		    					attributeBuilder.setBinding(LineString.class);
+	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) {
+	    						iliGeomAttrName=attrName;
+		    					attributeBuilder.setBinding(Polygon.class);
+	    					}else {
+		    					attributeBuilder.setBinding(String.class);
+	    					}
+	    					attributeBuilder.setName(attrName);
+	    					attributeBuilder.setMinOccurs(0);
+	    					attributeBuilder.setMaxOccurs(1);
+	    					attributeBuilder.setNillable(true);
+	    					//build the descriptor
+	    					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
+	    					// add descriptor to descriptor list
+	    					attrDesc.add(descriptor);
+						}
+					}
+	            }else {
             		for(int u=0;u<iomObj.getattrcount();u++) {
             			String attrName=iomObj.getattrname(u);
-            			ViewableProperty prop=new ViewableProperty(attrName);
-            			attrv[u]=prop;
+    					//create the builder
+    					AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+    					if(attrName.equals(iliGeomAttrName)) {
+    						iliGeomAttrName=attrName;
+    						IomObject iomGeom=iomObj.getattrobj(attrName,0);
+    						if (iomGeom != null){
+    							if (iomGeom.getobjecttag().equals(COORD)){
+    	        					attributeBuilder.setBinding(Point.class);
+    							}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
+    	        					attributeBuilder.setBinding(MultiPoint.class);
+    							}else if(iomGeom.getobjecttag().equals(POLYLINE)){
+    	        					attributeBuilder.setBinding(LineString.class);
+    							}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
+    	        					attributeBuilder.setBinding(MultiLineString.class);
+    							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
+    								int surfaceCount=iomGeom.getattrvaluecount("surface");
+    								if(surfaceCount<=1) {
+    		        					attributeBuilder.setBinding(Polygon.class);
+    								}else if(surfaceCount>1){
+    		        					attributeBuilder.setBinding(MultiPolygon.class);
+    								}
+    							}else {
+    	        					attributeBuilder.setBinding(Point.class);
+    							}
+    						}
+    					}else {
+    						if(iliGeomAttrName==null && iomObj.getattrvaluecount(attrName)>0 && iomObj.getattrobj(attrName,0)!=null) {
+        						iliGeomAttrName=attrName;
+        						IomObject iomGeom=iomObj.getattrobj(attrName,0);
+        						if (iomGeom != null){
+        							if (iomGeom.getobjecttag().equals(COORD)){
+        	        					attributeBuilder.setBinding(Point.class);
+        							}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
+        	        					attributeBuilder.setBinding(MultiPoint.class);
+        							}else if(iomGeom.getobjecttag().equals(POLYLINE)){
+        	        					attributeBuilder.setBinding(LineString.class);
+        							}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
+        	        					attributeBuilder.setBinding(MultiLineString.class);
+        							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
+        								int surfaceCount=iomGeom.getattrvaluecount("surface");
+        								if(surfaceCount==1) {
+        		        					attributeBuilder.setBinding(Polygon.class);
+        								}else if(surfaceCount>1){
+        		        					attributeBuilder.setBinding(MultiPolygon.class);
+        								}
+        							}else {
+        	        					attributeBuilder.setBinding(Point.class);
+        							}
+        						}
+    						}else {
+            					attributeBuilder.setBinding(String.class);
+    						}
+    					}
+    					attributeBuilder.setName(attrName);
+    					attributeBuilder.setMinOccurs(0);
+    					attributeBuilder.setMaxOccurs(1);
+    					attributeBuilder.setNillable(true);
+    					//build the descriptor
+    					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
+    					// add descriptor to descriptor list
+    					attrDesc.add(descriptor);
             		}
-            	}else {
-            		throw new IoxException("class "+iomObj.getobjecttag()+" not found in model "+td.getLastModel().getName());
-            	}
-            }
-            storeAttributes(iomObj, attrv);
+	            }
+				featureType=createFeatureType(attrDesc);
+				featureBuilder = new SimpleFeatureBuilder(featureType);
+		        try {
+					dataStore.createSchema(featureType);
+					
+					String typeName = dataStore.getTypeNames()[0];
+					featureStore = (SimpleFeatureStore) dataStore
+					        .getFeatureSource(typeName);
+					
+					transaction = new DefaultTransaction(
+					        "create");
+
+					featureStore.setTransaction(transaction);
+				} catch (IOException e) {
+			        throw new IoxException(e);
+				}
+			}
         	// write object attribute-values of model attribute-names
         	try {
-        		FeatureCollection<SimpleFeatureType, SimpleFeature> features=convertObjects(iomObj, attrv);
-        		if(features!=null) {
-        			writeFeatureCollectionToShapefile(features);
-        		}else {
-        			throw new IoxException("no feature found in "+iomObj.getobjecttag());
-        		}
+        		SimpleFeature feature=convertObject(iomObj);
+    			writeFeatureToShapefile(feature);
 			} catch (IOException e) {
 				throw new IoxException("failed to write object "+iomObj.getobjecttag(),e);
 			} catch (Iox2jtsException e) {
 				throw new IoxException("failed to convert "+iomObj.getobjecttag()+" in jts",e);
 			}
-            close();
 		}else if(event instanceof EndBasketEvent){
 			// ignore
 		}else if(event instanceof EndTransferEvent){
-			// ignore
-		}
-	}
-    
-    /** iterate through attributes and store type-data, attrNames and attrValues
-     * @param iomObj
-     * @param attrv
-     */
-	private void storeAttributes(IomObject iomObj, ViewableProperty[] attrv) {
-		for(int i=0;i<attrv.length;i++) {
-			if(iomObj.getattrvalue(attrv[i].getName())!=null){
-				String attrName=attrv[i].getName();
-				String attrValue=iomObj.getattrvalue(attrName);
-				//create the builder
-				AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
-				attributeBuilder.setName(attrName);
-				attributeBuilder.setBinding(String.class);
-				attributeBuilder.setMinOccurs(0);
-				attributeBuilder.setMaxOccurs(1);
-				attributeBuilder.setNillable(true);
-				//build the descriptor
-				AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
-				// add descriptor to descriptor list
-				attrDesc.add(descriptor);
-				// create the property
-				Property property=new PropertyImpl(attrValue, descriptor) {};
-				attributes.add(property);
+			if(featureStore==null) {
+				// write dummy file
+		        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+		        builder.setName(featureTypeName);
+		        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
+		        SimpleFeatureType featureType=builder.buildFeatureType();
+				try {
+					dataStore.createSchema(featureType);
+				} catch (IOException e) {
+			        throw new IoxException(e);
+				}
+			}
+			if(transaction!=null) {
+	            try {
+					transaction.commit();
+		            transaction.close();
+		            transaction=null;
+				} catch (IOException e) {
+			        throw new IoxException(e);
+				}
 			}
 		}
 	}
 	
-	/** create simple feature type
-	 * @param typeProperty
-	 * @return type
-	 * @throws IoxException
-	 */
-	private SimpleFeatureType getFeatureType(String typeProperty) throws IoxException {
+	private SimpleFeatureType createFeatureType(List<AttributeDescriptor> attrDescs) throws IoxException {
 		//create the builder
 		SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-		builder.setName("shpType");
-		builder.setNamespaceURI("http://www.geotools.org/");
+		builder.setName(featureTypeName);
 		CoordinateReferenceSystem crs = null;
-		CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
-		try {
-			crs = factory.createCoordinateReferenceSystem("EPSG:"+getSridCode());
-		} catch (NoSuchAuthorityCodeException e) {
-			throw new IoxException("coordinate reference: EPSG:"+getSridCode()+" not found",e);
-		} catch (FactoryException e) {
-			throw new IoxException(e);
+		if(srsId!=null) {
+			CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+			try {
+				crs = factory.createCoordinateReferenceSystem("EPSG:"+getSridCode());
+			} catch (NoSuchAuthorityCodeException e) {
+				throw new IoxException("coordinate reference: EPSG:"+getSridCode()+" not found",e);
+			} catch (FactoryException e) {
+				throw new IoxException(e);
+			}
+	        builder.setCRS(crs);
 		}
-		// if no crs was set, set to the global
-        if (builder.getCRS()==null) {
-            builder.setCRS(crs);
+        for(AttributeDescriptor attrDesc:attrDescs) {
+        	if(attrDesc.getLocalName().equals(iliGeomAttrName)) {
+				AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+				attributeBuilder.init(attrDesc);
+				attributeBuilder.setName(ShapeReader.GEOTOOLS_THE_GEOM);
+				builder.add(attributeBuilder.buildDescriptor(ShapeReader.GEOTOOLS_THE_GEOM));
+	            builder.setDefaultGeometry(ShapeReader.GEOTOOLS_THE_GEOM);
+        	}else {
+        		builder.add(attrDesc);
+        	}
         }
-        builder.setDefaultGeometry(GEOM);
-		if(typeProperty.equals(POINT)) {
-			builder.add(GEOM, Point.class);
-		}else if(typeProperty.equals(MULTIPOINT)) {
-			builder.add(GEOM, MultiPoint.class );
-		}else if(typeProperty.equals(LINESTRING)) {
-			builder.add(GEOM, LineString.class );
-		}else if(typeProperty.equals(MULTILINESTRING)) {
-			builder.add(GEOM, MultiLineString.class );
-		}else if(typeProperty.equals(POLYGON)) {
-			builder.add(GEOM, Polygon.class );
-		}else if(typeProperty.equals(MULTIPOLYGON)) {
-			builder.add(GEOM, MultiPolygon.class );
-		}else {
-			// ignore --> attributes are already set at this point
-		}
-		// add index --> count of index is used to add multiple values
-		builder.addAll(attrDesc);
 		// build type
 		SimpleFeatureType simpleFeatureType=builder.buildFeatureType();
 		return simpleFeatureType;
@@ -325,249 +372,141 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	 * @throws IOException
 	 * @throws Iox2jtsException
 	 */
-    private FeatureCollection<SimpleFeatureType, SimpleFeature> convertObjects(IomObject obj, ViewableProperty[] attrv) throws IoxException, IOException, Iox2jtsException {
-    	SimpleFeature feature=null;
-		SimpleFeatureType type=null;
-		FeatureCollection<SimpleFeatureType, SimpleFeature> features = null;
-		List<SimpleFeature> simpleFeatureList=new ArrayList<SimpleFeature>();
-		SimpleFeatureBuilder featureBuilder=null;
-    	for (int i = 0; i < attrv.length; i++){
+    private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
+    	for (int i = 0; i < attrDesc.size(); i++){
 	    	GeometryFactory geometryFactory=new GeometryFactory();
-	    	String attrName=attrv[i].getName();
-	    	int valueCount=obj.getattrvaluecount(attrName);
-			if(valueCount>0){
+	    	String attrName=attrDesc.get(i).getLocalName();
+	    	if(!attrName.equals(iliGeomAttrName)) {
 				String val=obj.getattrprim(attrName,0);
-				// not a primitive
-				if(val==null){
-					IomObject child=obj.getattrobj(attrName,0);
-					if (child != null){
-						if (child.getobjecttag().equals(COORD)){
-							// COORD
-							Coordinate jtsCoord=null;
-							try {
-								// convert ili to jts
-								jtsCoord=ch.interlis.iox_j.jts.Iox2jts.coord2JTS(child);
-							} catch (Iox2jtsException e) {
-								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-							}
-							if(valueCount > 1){
-								throw new IoxException("max one COORD value allowed ("+attrName+")");
-							}
-							Geometry geometry=(geometryFactory.createPoint(jtsCoord));
-							type=getFeatureType(POINT);
-							geometry.setSRID(Integer.parseInt(getSridCode()));
-							
-							featureBuilder = new SimpleFeatureBuilder(type);
-							featureBuilder.set(0, geometry);
-							// add attribute-values
-							if(attributes.size()>0) {
-								writeAttrValuesToGeom(featureBuilder);
-							}
-							feature = featureBuilder.buildFeature(null);
-							simpleFeatureList.add(feature);
-						}else if (child.getobjecttag().equals(MULTICOORD)){
-							child=obj.getattrobj(attrName,0);
-							try {
-								Geometry geometry = Iox2jts.multicoord2JTS(child);
-								type=getFeatureType(MULTIPOINT);
-								featureBuilder = new SimpleFeatureBuilder(type);
-								featureBuilder.set(0, geometry);
-								// add attribute-values
-								if(attributes.size()>0) {
-									writeAttrValuesToGeom(featureBuilder);
-								}
-								feature = featureBuilder.buildFeature(null);
-								simpleFeatureList.add(feature);
-							}catch(Exception e) {
-								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-							}
-						}else if(child.getobjecttag().equals(POLYLINE)){
-							// POLYLINE
-							CoordinateList jtsLineString=null;
-							try{
-								jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(child, true, 0.0);
-							}catch (Iox2jtsException e){
-								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-							}
-							if(valueCount > 1){
-								throw new IoxException("max one POLYLINE value allowed ("+attrName+")");
-							}
-							// convert list to array
-							Coordinate[] coordArray = new Coordinate[jtsLineString.size()];
-							coordArray = (Coordinate[]) jtsLineString.toArray(coordArray);
+				if(val!=null){
+					featureBuilder.set(attrName, val);
+				}
+	    	}else {
+	    		int iomValueCount=obj.getattrvaluecount(iliGeomAttrName);
+				IomObject iomGeom=obj.getattrobj(iliGeomAttrName,0);
+				if (iomGeom != null){
+					if (iomGeom.getobjecttag().equals(COORD)){
+						// COORD
+						Coordinate jtsCoord=null;
+						try {
 							// convert ili to jts
-							Geometry geometry=(geometryFactory.createLineString(coordArray));
-							type=getFeatureType(LINESTRING);
-							geometry.setSRID(Integer.parseInt(getSridCode()));
-							
-							featureBuilder = new SimpleFeatureBuilder(type);
-							featureBuilder.set(0, geometry);
-							// add attribute-values
-							if(attributes.size()>0) {
-								writeAttrValuesToGeom(featureBuilder);
-							}
-							feature = featureBuilder.buildFeature(null);
-							simpleFeatureList.add(feature);
-						}else if (child.getobjecttag().equals(MULTIPOLYLINE)){
-							// MULTIPOLYLINE
-							type=getFeatureType(MULTILINESTRING);
+							jtsCoord=ch.interlis.iox_j.jts.Iox2jts.coord2JTS(iomGeom);
+						} catch (Iox2jtsException e) {
+							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
+						}
+						if(iomValueCount > 1){
+							throw new IoxException("max one COORD value allowed ("+attrName+")");
+						}
+						Geometry geometry=(geometryFactory.createPoint(jtsCoord));
+						if(srsId!=null) {
+							geometry.setSRID(srsId);
+						}
+						featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
+					}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
+						try {
+							Geometry geometry = Iox2jts.multicoord2JTS(iomGeom);
+							featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
+						}catch(Exception e) {
+							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
+						}
+					}else if(iomGeom.getobjecttag().equals(POLYLINE)){
+						// POLYLINE
+						CoordinateList jtsLineString=null;
+						try{
+							jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(iomGeom, true, 0.0);
+						}catch (Iox2jtsException e){
+							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
+						}
+						if(iomValueCount > 1){
+							throw new IoxException("max one POLYLINE value allowed ("+attrName+")");
+						}
+						// convert list to array
+						Coordinate[] coordArray = new Coordinate[jtsLineString.size()];
+						coordArray = (Coordinate[]) jtsLineString.toArray(coordArray);
+						// convert ili to jts
+						Geometry geometry=(geometryFactory.createLineString(coordArray));
+						if(srsId!=null) {
+							geometry.setSRID(srsId);
+						}
+						
+						featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
+					}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
+						// MULTIPOLYLINE
+						try {
+							Geometry geometry = Iox2jts.multipolyline2JTS(iomGeom, 0.0);
+							featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
+						}catch(Exception e) {
+							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
+						}
+					}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
+						if(iomValueCount > 1){
+							throw new IoxException("max one MULTISURFACE value allowed ("+attrName+")");
+						}
+						int surfaceCount=iomGeom.getattrvaluecount("surface");
+						if(surfaceCount==1) {
 							try {
-								Geometry geometry = Iox2jts.multipolyline2JTS(child, 0.0);
-								featureBuilder = new SimpleFeatureBuilder(type);
-								featureBuilder.set(0, geometry);
-								// add attribute-values
-								if(attributes.size()>0) {
-									writeAttrValuesToGeom(featureBuilder);
+								Polygon jtsSurface=Iox2jts.surface2JTS(iomGeom, 0.00);
+								if(srsId!=null) {
+									jtsSurface.setSRID(srsId);
 								}
-								feature = featureBuilder.buildFeature(null);
-								simpleFeatureList.add(feature);
+								featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, jtsSurface);
+							}catch (Iox2jtsException e) {
+								throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
+							}
+						}else if(surfaceCount>1){
+							// MULTIPOLYGON
+							try {
+								Geometry geometry = Iox2jts.multisurface2JTS(iomGeom, 0,0); 
+								if(srsId!=null) {
+									geometry.setSRID(srsId);
+								}
+								featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
 							}catch(Exception e) {
-								throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-							}
-						}else if (child.getobjecttag().equals(MULTISURFACE)){
-							if(valueCount > 1){
-								throw new IoxException("max one MULTISURFACE value allowed ("+attrName+")");
-							}
-							int surfaceCount=child.getattrvaluecount("surface");
-							if(surfaceCount==1) {
-								type=getFeatureType(POLYGON);
-								try {
-									Polygon jtsSurface=Iox2jts.surface2JTS(child, 0.00);
-									jtsSurface.setSRID(Integer.parseInt(getSridCode()));
-									featureBuilder = new SimpleFeatureBuilder(type);
-									featureBuilder.set(0, jtsSurface);
-									// add attribute-values
-									if(attributes.size()>0) {
-										writeAttrValuesToGeom(featureBuilder);
-									}
-									feature = featureBuilder.buildFeature(null);
-									simpleFeatureList.add(feature);
-								}catch (Iox2jtsException e) {
-									throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-								}
-							}else if(surfaceCount>1){
-								// MULTIPOLYGON
-								type=getFeatureType(MULTIPOLYGON);
-								try {
-									Geometry geometry = Iox2jts.multisurface2JTS(child, 0, Integer.valueOf(getSridCode())); 
-									featureBuilder = new SimpleFeatureBuilder(type);
-									featureBuilder.set(0, geometry);
-									// add attribute-values
-									if(attributes.size()>0) {
-										writeAttrValuesToGeom(featureBuilder);
-									}
-									feature = featureBuilder.buildFeature(null);
-									simpleFeatureList.add(feature);
-								}catch(Exception e) {
-									throw new IoxException("failed to convert "+child.getobjecttag()+" to jts",e);
-								}
+								throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
 							}
 						}
 					}else {
-						// attributes continue
+						throw new IoxException("unexpected geometry type "+iomGeom.getobjecttag());
 					}
-				}else{
-					// nothing to write
+				}else {
+					featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, null);
 				}
+	    		
 	    	}
     	}
-    	if(simpleFeatureList.size()>0) {
-    		features = new ListFeatureCollection(type, simpleFeatureList);
-    	}
-    	return features;
-	}
-
-	/** write attributes to feature builder if available
-     * @param featureBuilder
-     */
-	private void writeAttrValuesToGeom(SimpleFeatureBuilder featureBuilder) {
-		int indexCount=1;
-		for(int h=0;h<attributes.size();h++) {
-			Object currentObj=attributes.get(h);
-			Property obj=(Property) currentObj;
-			// set description of containing attributes
-			featureBuilder.setUserData(indexCount, obj.getName(), obj.getValue());
-			// set values of attributes
-			featureBuilder.set(indexCount, obj.getValue());
-			indexCount+=1;
-		}
+    	SimpleFeature feature=featureBuilder.buildFeature(null);
+    	return feature;
 	}
     
 	/** write created features to shape-file
 	 * @param features
 	 * @throws IoxException
 	 */
-	private void writeFeatureCollectionToShapefile(FeatureCollection<SimpleFeatureType, SimpleFeature> features) throws IoxException {
+	private void writeFeatureToShapefile(SimpleFeature feature) throws IoxException {
 	    if (dataStore == null) {
 	        throw new IoxException("datastore null");
 	    }
-	    SimpleFeatureType schema = features.getSchema();
-	    GeometryDescriptor geom = schema
-	            .getGeometryDescriptor();
+		ListFeatureCollection features = new ListFeatureCollection(featureType);
+		features.add(feature);
 	    try {
-	        Transaction transaction = new DefaultTransaction(
-	                "create");
-
-	        String typeName = dataStore.getTypeNames()[0];
-	        List<AttributeDescriptor> attributes = schema.getAttributeDescriptors();
-	        List<AttributeDescriptor> attribs = new ArrayList<AttributeDescriptor>();
-	        
-	        GeometryType geomType = null;
-	        for (AttributeDescriptor attributeDescriptor : attributes) {
-	            AttributeType type = attributeDescriptor.getType();
-	            if (type instanceof GeometryType) {
-	                geomType = (GeometryType) type;
-
-	            } else {
-	                attribs.add(attributeDescriptor);
-	            }
-	        }
-	        GeometryTypeImpl geomTypeImpl = new GeometryTypeImpl(new NameImpl(GEOM), geomType.getBinding(),geomType.getCoordinateReferenceSystem(),geomType.isIdentified(),geomType.isAbstract(),geomType.getRestrictions(), geomType.getSuper(),geomType.getDescription());
-	        GeometryDescriptor geomDesc = new GeometryDescriptorImpl(geomTypeImpl, new NameImpl(GEOM),geom.getMinOccurs(), geom.getMaxOccurs(),geom.isNillable(), geom.getDefaultValue());
-	        attribs.add(0, geomDesc);
-	        SimpleFeatureType shpType = new SimpleFeatureTypeImpl(schema.getName(), attribs, geomDesc,schema.isAbstract(), schema.getRestrictions(),schema.getSuper(), schema.getDescription());
-	        dataStore.createSchema(shpType);
-	        SimpleFeatureSource featureSource = dataStore
-	                .getFeatureSource(typeName);
-	        if (featureSource instanceof SimpleFeatureStore) {
-	            SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
-	            List<SimpleFeature> allFeatures = new ArrayList<SimpleFeature>();
-	            FeatureIterator<SimpleFeature> featureIter = features
-	                    .features();
-	            while (featureIter.hasNext()) {
-	                SimpleFeature aSimpleFeature = featureIter.next();
-	                SimpleFeature reType = SimpleFeatureBuilder
-	                        .build(shpType, aSimpleFeature.getAttributes(), null);
-
-	                allFeatures.add(reType);
-	            }
-	            featureIter.close();
-	            SimpleFeatureCollection collection = new ListFeatureCollection(
-	                    shpType, allFeatures);
-	            featureStore.setTransaction(transaction);
-	            try {
-	                List<FeatureId> ids = featureStore
-	                        .addFeatures(collection);
-	                transaction.commit();
-	            } catch (Exception e) {
-	            	transaction.rollback();
-	            	throw new IoxException(e);
-	            } finally {
-	                transaction.close();
-	            }
-	            // shape file store is writable
-	            
-	        } else {
-	        	// shape file store not writable
-	            
-	        }
+	        featureStore.addFeatures(features);
 	    } catch (IOException e) {
 	        throw new IoxException("no data written to shapefile",e);
 	    }
 	}
 
 	@Override
-    public void close() throws IoxException{
+    public void close() throws IoxException
+	{
+		if(transaction!=null) {
+			try {
+				transaction.rollback();
+				transaction.close();
+				transaction=null;
+			} catch (IOException e) {
+				throw new IoxException(e);
+			}
+		}
 		if(dataStore!=null) {
 			dataStore.dispose();
 			dataStore=null;
@@ -575,20 +514,32 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     }
     
 	@Override
-	public void flush() throws IoxException {}
+	public void flush() throws IoxException 
+	{
+		
+	}
 	@Override
-	public IomObject createIomObject(String arg0, String arg1) throws IoxException {return null;}
+	public IomObject createIomObject(String arg0, String arg1) throws IoxException 
+	{
+		return null;
+	}
 	@Override
-	public IoxFactoryCollection getFactory() throws IoxException {return null;}
+	public IoxFactoryCollection getFactory() throws IoxException 
+	{
+		return null;
+	}
 	@Override
-	public void setFactory(IoxFactoryCollection arg0) throws IoxException {}
+	public void setFactory(IoxFactoryCollection arg0) throws IoxException 
+	{
+		
+	}
 
 	private String getSridCode() {
-		return sridCode;
+		return srsId!=null?srsId.toString():null;
 	}
 
 	public void setSridCode(String sridCode) {
-		this.sridCode = sridCode;
+		this.srsId = Integer.parseInt(sridCode);
 	}
 
 	private TransferDescription getModel() {
@@ -597,5 +548,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 
 	public void setModel(TransferDescription td) {
 		this.td = td;
+	}
+	public String getGeomAttrName() {
+		return iliGeomAttrName;
+	}
+	public void setGeomAttrName(String iliGeomAttrName) {
+		this.iliGeomAttrName = iliGeomAttrName;
 	}
 }
