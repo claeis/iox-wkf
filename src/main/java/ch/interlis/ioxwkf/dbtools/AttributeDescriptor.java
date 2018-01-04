@@ -10,6 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 import ch.interlis.iox.IoxException;
 
+/** the AttributeDescriptor class contains attribute types used within a feature. Attribute types are distinguished by 2 main types:
+ * <p>
+ * <li>A geometry type includes dimensions of coordinates, as well as the appropriate srid.</li>
+ * <li>An attribute type is distinguished by 'primitive' data types and 'other' data types, which fall under the term: 'OTHER' like uuid or xml for example.</li>
+ */
 public class AttributeDescriptor {
 	private String dbColumnName=null;
 	private String iomAttributeName=null;
@@ -21,19 +26,62 @@ public class AttributeDescriptor {
 	private Integer precision=null;
 	
 	// JDBC/DB column type name if java.sql.Types.OTHER
+	/** bool is an additional type name of JDBC/DB to identify the dataType boolean and is defined as char type.
+	 * <br>
+	 * valid boolean values are:
+	 * <li>'true'</li><li>'false'</li><li>'t'</li><li>'f'</li><li>'1'</li><li>'0'</li>
+	 * <br>
+	 * if boolean is true(t) and the JDBC/DB column type name is bool, then it is a boolean type. else could be char (1,0).
+	 */
 	public final static String DBCOLUMN_TYPENAME_BOOL="bool";
+	/** xml fall under the term: 'OTHER'.<br>
+	 * the first character must be a letter or underscore, followed by
+	 * letters, numbers, periods, minus signs or underscores.<br>
+	 * no colons aloud here.<p>
+	 * @see <a href="www.w3.org/TR/REC-xml">www.w3.org/TR/REC-xml.</a>
+	 */
 	public final static String DBCOLUMN_TYPENAME_XML="xml";
+	/** uuid's fall under the term: 'OTHER'.<br>
+	 * They are defined by 36 characters in format of: ISO 11578.<br>
+	 * The first character must be a letter or underscore, followed by
+	 * letters, numbers, periods, minus signs or underscores.<br>
+	 * No colons aloud here.<p>
+	 * @see <a href="www.w3.org/TR/REC-xml">www.w3.org/TR/REC-xml.</a>
+	 */
 	public final static String DBCOLUMN_TYPENAME_UUID="uuid";
+	/** geometry is the type name of JDBC/DB to identify the dataType as geometry.
+	 */
 	public final static String DBCOLUMN_TYPENAME_GEOMETRY="geometry";
-	
-	// geometry type
+	// geometry types
+	/** multiPolygon is a collection of Polygons.<br>
+	 * As per the OGC SFS specification, the Polygons in a MultiPolygon may not overlap,
+	 * and may only touch at single points. This allows the topological point-set
+	 * semantics to be well-defined.
+	 */
 	public final static String GEOMETRYTYPE_MULTIPOLYGON="MULTIPOLYGON";
+	/** represents a polygon with linear edges, which may include holes.
+	 * The outer boundary (shell) and inner boundaries (holes) of the polygon are represented by LinearRings.
+	 * The boundary rings of the polygon may have any orientation.
+	 * Polygons are closed and simple geometries by definition.
+	 */
 	public final static String GEOMETRYTYPE_POLYGON="POLYGON";
+	/** a MultiLineString is defined by one or more LineStrings,
+	 * referenced through lineString elements.
+	 */
 	public final static String GEOMETRYTYPE_MULTILINESTRING="MULTILINESTRING";
+	/** a sequence of line segments, each having a parameterization like the one LineSegment.
+	 * The class essentially combines a List of LineSegment into a single object.
+	 */
 	public final static String GEOMETRYTYPE_LINESTRING="LINESTRING";
+	/** an aggregate class containing only instances of Point.
+	 * The association role element shall be the set of points
+	 * contained in this MultiPoint.
+	 */
 	public final static String GEOMETRYTYPE_MULTIPOINT="MULTIPOINT";
+	/** a basic data type for a geometric object consisting of one point.
+	 */
 	public final static String GEOMETRYTYPE_POINT="POINT";
-
+	
 	private final static String GEOMCOLUMNS_COLUMN_TYPE="type";
 	private final static String GEOMCOLUMNS_COLUMN_SRID="srid";
 	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
@@ -162,6 +210,10 @@ public class AttributeDescriptor {
 		}
 		return attrs;
 	}
+	
+	/** check if current datatype is part of geometry.
+	 * @return true if datatype is part of geometry, false if not.
+	 */
 	public boolean isGeometry() {
 		return attributeType==Types.OTHER && attributeTypeName!=null && attributeTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_GEOMETRY);
 	}
