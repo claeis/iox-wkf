@@ -54,6 +54,7 @@ import org.opengis.feature.type.Name;
 import org.opengis.filter.identity.FeatureId;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
+import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -95,6 +96,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -103,10 +106,12 @@ import java.util.Map;
 
 public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	
+	private static final String CRS_CODESPACE_EPSG = "EPSG";
 	private DataStore dataStore=null; // --> data access
-    private List<AttributeDescriptor> attrDesc=null; // --> attribute type data
+    private List<AttributeDescriptor> attrDescs=null; // --> attribute type data
 	private SimpleFeatureType featureType=null;
 	private SimpleFeatureBuilder featureBuilder=null;
+	private SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd"); // XTF format
     
 	// geometry type properties
 	private static final String POINT="pointProperty";
@@ -123,6 +128,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private static final String MULTISURFACE="MULTISURFACE";
 
 	private Integer srsId=null;
+	private Integer defaultSrsId;
 	// model
 	private TransferDescription td=null;
 	private String iliGeomAttrName=null;
@@ -175,8 +181,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 			IomObject iomObj=(IomObject)obj.getIomObject();
 			String tag = iomObj.getobjecttag();
 			// check if class exist in model/models
-			if(attrDesc==null) {
-				attrDesc=new ArrayList<AttributeDescriptor>();
+			if(attrDescs==null) {
+				attrDescs=new ArrayList<AttributeDescriptor>();
 				if(td!=null) {
 					Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
 					if (aclass==null){
@@ -194,12 +200,21 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
 	    						iliGeomAttrName=attrName;
 		    					attributeBuilder.setBinding(Point.class);
+    							if(defaultSrsId!=null) {
+    								attributeBuilder.setCRS(createCrs(defaultSrsId));
+    							}
 	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.PolylineType) {
 	    						iliGeomAttrName=attrName;
 		    					attributeBuilder.setBinding(LineString.class);
+    							if(defaultSrsId!=null) {
+    								attributeBuilder.setCRS(createCrs(defaultSrsId));
+    							}
 	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) {
 	    						iliGeomAttrName=attrName;
 		    					attributeBuilder.setBinding(Polygon.class);
+    							if(defaultSrsId!=null) {
+    								attributeBuilder.setCRS(createCrs(defaultSrsId));
+    							}
 	    					}else {
 		    					attributeBuilder.setBinding(String.class);
 	    					}
@@ -210,7 +225,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					//build the descriptor
 	    					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
 	    					// add descriptor to descriptor list
-	    					attrDesc.add(descriptor);
+	    					attrDescs.add(descriptor);
 						}
 					}
 	            }else {
@@ -240,6 +255,9 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     							}else {
     	        					attributeBuilder.setBinding(Point.class);
     							}
+    							if(defaultSrsId!=null) {
+    								attributeBuilder.setCRS(createCrs(defaultSrsId));
+    							}
     						}
     					}else {
     						if(iliGeomAttrName==null && iomObj.getattrvaluecount(attrName)>0 && iomObj.getattrobj(attrName,0)!=null) {
@@ -264,6 +282,9 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         							}else {
         	        					attributeBuilder.setBinding(Point.class);
         							}
+        							if(defaultSrsId!=null) {
+        								attributeBuilder.setCRS(createCrs(defaultSrsId));
+        							}
         						}
     						}else {
             					attributeBuilder.setBinding(String.class);
@@ -276,10 +297,12 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     					//build the descriptor
     					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
     					// add descriptor to descriptor list
-    					attrDesc.add(descriptor);
+    					attrDescs.add(descriptor);
             		}
 	            }
-				featureType=createFeatureType(attrDesc);
+			}
+			if(featureType==null) {
+				featureType=createFeatureType(attrDescs);
 				featureBuilder = new SimpleFeatureBuilder(featureType);
 		        try {
 					dataStore.createSchema(featureType);
@@ -310,10 +333,18 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}else if(event instanceof EndTransferEvent){
 			if(featureStore==null) {
 				// write dummy file
-		        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
-		        builder.setName(featureTypeName);
-		        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
-		        SimpleFeatureType featureType=builder.buildFeatureType();
+		        SimpleFeatureType featureType=null;
+				if(attrDescs!=null) {
+					featureType=createFeatureType(attrDescs);
+				}else {
+			        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
+			        builder.setName(featureTypeName);
+			        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
+			        if(defaultSrsId!=null) {
+			        	builder.setCRS(createCrs(defaultSrsId));
+			        }
+			        featureType=builder.buildFeatureType();
+				}
 				try {
 					dataStore.createSchema(featureType);
 				} catch (IOException e) {
@@ -332,22 +363,21 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}
 	}
 	
+	private CoordinateReferenceSystem createCrs(int srsId) throws IoxException {
+		CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
+		try {
+			return factory.createCoordinateReferenceSystem("EPSG:"+srsId);
+		} catch (NoSuchAuthorityCodeException e) {
+			throw new IoxException("coordinate reference: EPSG:"+srsId+" not found",e);
+		} catch (FactoryException e) {
+			throw new IoxException(e);
+		}
+		
+	}
 	private SimpleFeatureType createFeatureType(List<AttributeDescriptor> attrDescs) throws IoxException {
 		//create the builder
 		SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
 		builder.setName(featureTypeName);
-		CoordinateReferenceSystem crs = null;
-		if(srsId!=null) {
-			CRSAuthorityFactory factory = CRS.getAuthorityFactory(true);
-			try {
-				crs = factory.createCoordinateReferenceSystem("EPSG:"+getSridCode());
-			} catch (NoSuchAuthorityCodeException e) {
-				throw new IoxException("coordinate reference: EPSG:"+getSridCode()+" not found",e);
-			} catch (FactoryException e) {
-				throw new IoxException(e);
-			}
-	        builder.setCRS(crs);
-		}
         for(AttributeDescriptor attrDesc:attrDescs) {
         	if(attrDesc.getLocalName().equals(iliGeomAttrName)) {
 				AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
@@ -355,6 +385,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				attributeBuilder.setName(ShapeReader.GEOTOOLS_THE_GEOM);
 				builder.add(attributeBuilder.buildDescriptor(ShapeReader.GEOTOOLS_THE_GEOM));
 	            builder.setDefaultGeometry(ShapeReader.GEOTOOLS_THE_GEOM);
+	    		CoordinateReferenceSystem crs =((GeometryType)attrDesc.getType()).getCoordinateReferenceSystem();
+	    		if(crs!=null) {
+	    	        builder.setCRS(crs);
+	    	        srsId=getEPSGCode(crs);
+	    		}
         	}else {
         		builder.add(attrDesc);
         	}
@@ -364,6 +399,14 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		return simpleFeatureType;
 	}
     
+	private Integer getEPSGCode(CoordinateReferenceSystem crs) {
+		for(ReferenceIdentifier id:crs.getIdentifiers()) {
+			if(CRS_CODESPACE_EPSG.equals(id.getCodeSpace())) {
+				return Integer.parseInt(id.getCode());
+			}
+		}
+		return null;
+	}
 	/** convert IomObject to jts format
 	 * @param obj
 	 * @param attrv
@@ -373,13 +416,23 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	 * @throws Iox2jtsException
 	 */
     private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
-    	for (int i = 0; i < attrDesc.size(); i++){
+    	for (int i = 0; i < attrDescs.size(); i++){
 	    	GeometryFactory geometryFactory=new GeometryFactory();
-	    	String attrName=attrDesc.get(i).getLocalName();
+	    	String attrName=attrDescs.get(i).getLocalName();
 	    	if(!attrName.equals(iliGeomAttrName)) {
 				String val=obj.getattrprim(attrName,0);
 				if(val!=null){
-					featureBuilder.set(attrName, val);
+					if(attrDescs.get(i).getType().getBinding().equals(java.util.Date.class)){
+						try {
+							// match attrValue to format.
+							java.util.Date utilDate=dateFormat.parse(val);
+							featureBuilder.set(attrName, utilDate);
+						} catch (ParseException e) {
+							throw new IoxException(val+" does not match format: "+dateFormat.toPattern());
+						}
+					}else {
+						featureBuilder.set(attrName, val);
+					}
 				}
 	    	}else {
 	    		int iomValueCount=obj.getattrvaluecount(iliGeomAttrName);
@@ -534,12 +587,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		
 	}
 
-	private String getSridCode() {
-		return srsId!=null?srsId.toString():null;
-	}
-
-	public void setSridCode(String sridCode) {
-		this.srsId = Integer.parseInt(sridCode);
+	public void setDefaultSridCode(String sridCode) {
+		defaultSrsId = Integer.parseInt(sridCode);
 	}
 
 	private TransferDescription getModel() {
@@ -549,10 +598,16 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	public void setModel(TransferDescription td) {
 		this.td = td;
 	}
-	public String getGeomAttrName() {
-		return iliGeomAttrName;
+	public AttributeDescriptor[] getAttributeDescriptors() {
+		return attrDescs.toArray(new AttributeDescriptor[attrDescs.size()]);
 	}
-	public void setGeomAttrName(String iliGeomAttrName) {
-		this.iliGeomAttrName = iliGeomAttrName;
+	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
+		this.attrDescs = new ArrayList<AttributeDescriptor>();
+		for(AttributeDescriptor attrDesc:attrDescs) {
+			if(attrDesc.getType() instanceof GeometryType) {
+				iliGeomAttrName=attrDesc.getLocalName();
+			}
+			this.attrDescs.add(attrDesc);
+		}
 	}
 }

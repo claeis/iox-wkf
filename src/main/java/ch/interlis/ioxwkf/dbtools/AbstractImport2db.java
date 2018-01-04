@@ -187,53 +187,51 @@ public abstract class AbstractImport2db {
 			String attrValue=iomObj.getattrvalue(iomAttrName);
 			
 			if(attrValue!=null || iomObj.getattrobj(iomAttrName,0)!=null){
-				if(dataType.equals(Types.OTHER)) {
-					if(dataTypeName!=null && dataTypeName.equals(AttributeDescriptor.SET_GEOMETRY)) {
-						IomObject attrObjValue=iomObj.getattrobj(iomAttrName,0);
-						int srsCode=attribute.getSrId();
-						int coordDimension=0;
-						boolean is3D=false;
-						if(coordDimension==3) {
-							is3D=true;
-						}else {
-							is3D=false;
-						}
-						// point
-						String geoColumnTypeName=attribute.getGeomColumnTypeName();
-						if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
-							ps.setObject(position, pgConverter.fromIomCoord(attrObjValue, srsCode, is3D));
-							position+=1;
-							// multipoint
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
-							ps.setObject(position, pgConverter.fromIomMultiCoord(attrObjValue, srsCode, is3D));
-							position+=1;
-							// line
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
-							ps.setObject(position, pgConverter.fromIomPolyline(attrObjValue, srsCode, is3D, 0));
-							position+=1;
-							// multiline
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
-							ps.setObject(position, pgConverter.fromIomMultiPolyline(attrObjValue, srsCode, is3D, 0));
-							position+=1;
-							// polygon
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
-							ps.setObject(position, pgConverter.fromIomSurface(attrObjValue, srsCode, false, is3D, 0));
-							position+=1;
-							// multipolygon
-						}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
-							ps.setObject(position, pgConverter.fromIomMultiSurface(attrObjValue, srsCode, false, is3D, 0));
-							position+=1;
-						}
+				if(attribute.isGeometry()) {
+					IomObject attrObjValue=iomObj.getattrobj(iomAttrName,0);
+					int srsCode=attribute.getSrId();
+					int coordDimension=0;
+					boolean is3D=false;
+					if(coordDimension==3) {
+						is3D=true;
 					}else {
-						// uuid
-						if(dataTypeName.equals(AttributeDescriptor.SET_UUID)) {
-							ps.setObject(position, pgConverter.fromIomUuid(attrValue));
-							position+=1;
-						// xml	
-						}else if(dataTypeName.equals(AttributeDescriptor.SET_XML)) {
-							ps.setObject(position, pgConverter.fromIomXml(attrValue));
-							position+=1;
-						}
+						is3D=false;
+					}
+					// point
+					String geoColumnTypeName=attribute.getDbColumnGeomTypeName();
+					if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
+						ps.setObject(position, pgConverter.fromIomCoord(attrObjValue, srsCode, is3D));
+						position+=1;
+						// multipoint
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOINT)) {
+						ps.setObject(position, pgConverter.fromIomMultiCoord(attrObjValue, srsCode, is3D));
+						position+=1;
+						// line
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
+						ps.setObject(position, pgConverter.fromIomPolyline(attrObjValue, srsCode, is3D, 0));
+						position+=1;
+						// multiline
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTILINESTRING)) {
+						ps.setObject(position, pgConverter.fromIomMultiPolyline(attrObjValue, srsCode, is3D, 0));
+						position+=1;
+						// polygon
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
+						ps.setObject(position, pgConverter.fromIomSurface(attrObjValue, srsCode, false, is3D, 0));
+						position+=1;
+						// multipolygon
+					}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOLYGON)) {
+						ps.setObject(position, pgConverter.fromIomMultiSurface(attrObjValue, srsCode, false, is3D, 0));
+						position+=1;
+					}
+				}else if(dataType.equals(Types.OTHER)) {
+					// uuid
+					if(dataTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_UUID)) {
+						ps.setObject(position, pgConverter.fromIomUuid(attrValue));
+						position+=1;
+					// xml	
+					}else if(dataTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_XML)) {
+						ps.setObject(position, pgConverter.fromIomXml(attrValue));
+						position+=1;
 					}
 				}else {
 					if(dataType.equals(Types.BIT)) {
@@ -424,20 +422,20 @@ public abstract class AbstractImport2db {
 		for(AttributeDescriptor attribute:attrDesc) {
 			queryBuild.append(comma);
 			String geoColumnTypeGeom=attribute.getDbColumnTypeName();
-			if(geoColumnTypeGeom!=null && geoColumnTypeGeom.equals(AttributeDescriptor.SET_GEOMETRY)) {
+			if(attribute.isGeometry()) {
 				int srsCode=attribute.getSrId();
-				String geoColumnTypeName=attribute.getGeomColumnTypeName();
-				if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POINT)) {
+				String geoColumnTypeName=attribute.getDbColumnGeomTypeName();
+				if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperCoord("?", srsCode));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOINT)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOINT)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperMultiCoord("?", srsCode));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_LINESTRING)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperPolyline("?", srsCode));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTILINESTRING)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTILINESTRING)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperMultiPolyline("?", srsCode));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_POLYGON)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperSurface("?", srsCode));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.SET_GEOMETRY_MULTIPOLYGON)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOLYGON)) {
 					queryBuild.append(pgConverter.getInsertValueWrapperMultiSurface("?", srsCode));
 				}
 			}else {

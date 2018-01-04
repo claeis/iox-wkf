@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import ch.interlis.iox.IoxException;
@@ -14,28 +15,28 @@ public class AttributeDescriptor {
 	private String iomAttributeName=null;
 	private Integer attributeType=null;
 	private String attributeTypeName=null;
-	private String geomColumnTypeName=null;
+	private String dbColumnGeomTypeName=null;
 	private Integer coordDimension=null;
 	private Integer srId=null;
 	private Integer precision=null;
 	
-	// setting possibilities
-	public final static String SET_XML="xml";
-	public final static String SET_UUID="uuid";
-	public final static String SET_SRID="srid";
-	public final static String SET_DIMENSION="coord_dimension";
-	public final static String SET_UDTNAME="udt_name";
-	public final static String SET_COLUMNNAME="column_name";
-	public final static String SET_TYPE="type";
-	public final static String SET_BOOL="bool";
+	// JDBC/DB column type name if java.sql.Types.OTHER
+	public final static String DBCOLUMN_TYPENAME_BOOL="bool";
+	public final static String DBCOLUMN_TYPENAME_XML="xml";
+	public final static String DBCOLUMN_TYPENAME_UUID="uuid";
+	public final static String DBCOLUMN_TYPENAME_GEOMETRY="geometry";
+	
 	// geometry type
-	public final static String SET_GEOMETRY="geometry";
-	public final static String SET_GEOMETRY_MULTIPOLYGON="MULTIPOLYGON";
-	public final static String SET_GEOMETRY_POLYGON="POLYGON";
-	public final static String SET_GEOMETRY_MULTILINESTRING="MULTILINESTRING";
-	public final static String SET_GEOMETRY_LINESTRING="LINESTRING";
-	public final static String SET_GEOMETRY_MULTIPOINT="MULTIPOINT";
-	public final static String SET_GEOMETRY_POINT="POINT";
+	public final static String GEOMETRYTYPE_MULTIPOLYGON="MULTIPOLYGON";
+	public final static String GEOMETRYTYPE_POLYGON="POLYGON";
+	public final static String GEOMETRYTYPE_MULTILINESTRING="MULTILINESTRING";
+	public final static String GEOMETRYTYPE_LINESTRING="LINESTRING";
+	public final static String GEOMETRYTYPE_MULTIPOINT="MULTIPOINT";
+	public final static String GEOMETRYTYPE_POINT="POINT";
+
+	private final static String GEOMCOLUMNS_COLUMN_TYPE="type";
+	private final static String GEOMCOLUMNS_COLUMN_SRID="srid";
+	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
 	
 	protected String getDbColumnName() {
 		return dbColumnName;
@@ -61,11 +62,11 @@ public class AttributeDescriptor {
 	protected void setDbColumnTypeName(String attributeTypeName) {
 		this.attributeTypeName = attributeTypeName;
 	}
-	protected String getGeomColumnTypeName() {
-		return geomColumnTypeName;
+	protected String getDbColumnGeomTypeName() {
+		return dbColumnGeomTypeName;
 	}
-	protected void setGeomColumnTypeName(String geomColumnTypeName) {
-		this.geomColumnTypeName = geomColumnTypeName;
+	protected void setDbColumnGeomTypeName(String dbColumnGeomTypeName) {
+		this.dbColumnGeomTypeName = dbColumnGeomTypeName;
 	}
 	protected Integer getCoordDimension() {
 		return coordDimension;
@@ -95,10 +96,10 @@ public class AttributeDescriptor {
 	 */
 	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException {
 		for(AttributeDescriptor attr:attributeDesc) {
-			if(attr.getDbColumnTypeName().equals(SET_GEOMETRY)) {
+			if(attr.getDbColumnTypeName().equals(DBCOLUMN_TYPENAME_GEOMETRY)) {
 				ResultSet tableInDb =null;
 				StringBuilder queryBuild=new StringBuilder();
-				queryBuild.append("SELECT coord_dimension, srid, type FROM geometry_columns WHERE ");
+				queryBuild.append("SELECT "+GEOMCOLUMNS_COLUMN_DIMENSION+","+GEOMCOLUMNS_COLUMN_SRID+","+ GEOMCOLUMNS_COLUMN_TYPE+" FROM geometry_columns WHERE ");
 				if(schemaName!=null) {
 					queryBuild.append("f_table_schema='"+schemaName+"' AND ");
 				}
@@ -111,9 +112,9 @@ public class AttributeDescriptor {
 					throw new SQLException(e);
 				}
 				tableInDb.next();
-				attr.setCoordDimension(tableInDb.getInt(SET_DIMENSION));
-				attr.setSrId(tableInDb.getInt(SET_SRID));
-				attr.setGeomColumnTypeName(tableInDb.getString(SET_TYPE));
+				attr.setCoordDimension(tableInDb.getInt(GEOMCOLUMNS_COLUMN_DIMENSION));
+				attr.setSrId(tableInDb.getInt(GEOMCOLUMNS_COLUMN_SRID));
+				attr.setDbColumnGeomTypeName(tableInDb.getString(GEOMCOLUMNS_COLUMN_TYPE));
 			}
 		}
 		return attributeDesc;
@@ -160,5 +161,8 @@ public class AttributeDescriptor {
 			throw new IoxException(e);
 		}
 		return attrs;
+	}
+	public boolean isGeometry() {
+		return attributeType==Types.OTHER && attributeTypeName!=null && attributeTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_GEOMETRY);
 	}
 }

@@ -3,6 +3,7 @@ package ch.interlis.ioxwkf.dbtools;
 import static org.junit.Assert.*;
 import java.io.File;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -82,6 +83,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -128,6 +131,8 @@ public class Db2ShpTest {
 	    		if(featureCollectionIter.hasNext()) {
 	    			fail();
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -185,6 +190,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -241,6 +248,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -298,6 +307,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -351,10 +362,12 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "9223372036854775807");
+					assertEquals(9223372036854775807.0,attr1);
 					Object attr2=shapeObj.getAttribute("the_geom");
-					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -410,6 +423,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -465,6 +480,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -520,6 +537,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -575,6 +594,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -630,6 +651,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -685,6 +708,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -736,67 +761,13 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "2017-02-15");
+					assertEquals(java.util.Date.class.getName(),attr1.getClass().getName());
+					assertEquals(new java.util.Date(2017-1900,02-1,15),attr1);
 					Object attr2=shapeObj.getAttribute("the_geom");
-					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
-			}
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-
-	// Es wird getestet, ob das Date auf das definierte Format geprueft wird und das Date im richtigen Format in die Shape-Datei geschrieben wird.
-	// - set: header-present
-	// - set: database-dbtoshpschema
-	// - set: database-table
-	// - set: date-format
-	// --
-	// Erwartung: SUCCESS: datatype=date
-	@Test
-	public void export_Datatype_Date_DateFormat_Ok() throws Exception
-	{
-		Settings config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop dbtoshpschema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
-	        	// create dbtoshpschema
-	        	preStmt.execute("CREATE SCHEMA dbtoshpschema");
-	        	// CREATE TABLE dbtoshpschema.in dbtoshpschema
-	        	preStmt.execute("CREATE TABLE dbtoshpschema.exportdatatype(attr date,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
-	        	preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportdatatype(attr,the_geom) VALUES ('2020-11-25','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
-	        	preStmt.close();
-	        }
-	        {
-				// shp
-				File data=new File(TEST_OUT,"export_DataTypeDate_DateFormat.shp");
-				
-				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
-				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
-				config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "dd-MM-yyyy");
-				AbstractExportFromdb db2Shp=new Db2Shp();
-				db2Shp.exportData(data, jdbcConnection, config);
-			}
-	        {
-				//Open the file for reading
-	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeDate_DateFormat.shp"));
-	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
-	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
-	    		if(featureCollectionIter.hasNext()) {
-					// feature object
-					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "25-11-2020");
-					Object attr2=shapeObj.getAttribute("the_geom");
-					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
-	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -851,6 +822,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -865,8 +838,8 @@ public class Db2ShpTest {
 	// - set: database-exportdatatype
 	// --
 	// Erwartung: SUCCESS.
-	@Ignore //TODO no feature found in file.
-	public void export_SomeDataTypes_NoValueDefined_Ok() throws Exception
+	@Test
+	public void export_SomeDataTypes_NULL_Ok() throws Exception
 	{
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
@@ -886,7 +859,7 @@ public class Db2ShpTest {
 	        }
 	        {
 				// shp
-				File data=new File(TEST_OUT,"export_DataTypeDateNull.shp");
+				File data=new File(TEST_OUT,"export_DataTypeNull.shp");
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Shp=new Db2Shp();
@@ -894,10 +867,12 @@ public class Db2ShpTest {
 			}
 	        {
 				//Open the file for reading
-	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeDateNull.shp"));
+	        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_DataTypeNull.shp"));
 	        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
 	    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
 	    		assertTrue(featureCollectionIter.hasNext());
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -953,6 +928,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1004,10 +981,12 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
-					assertEquals(attr1.toString(), "123");
+					assertEquals(123.0,attr1);
 					Object attr2=shapeObj.getAttribute("the_geom");
-					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1063,6 +1042,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1119,6 +1100,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1177,6 +1160,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1232,6 +1217,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1287,6 +1274,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1344,6 +1333,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1399,6 +1390,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1455,6 +1448,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1511,6 +1506,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -1567,6 +1564,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
@@ -1624,6 +1623,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1679,6 +1680,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1733,6 +1736,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1788,6 +1793,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1843,6 +1850,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){
@@ -1897,6 +1906,8 @@ public class Db2ShpTest {
 					Object attr2=shapeObj.getAttribute("the_geom");
 					assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)))");
 	    		}
+		        featureCollectionIter.close();
+		        dataStore.dispose();
 			}
 		}finally{
 			if(jdbcConnection!=null){

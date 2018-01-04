@@ -36,7 +36,7 @@ public class Shp2db extends AbstractImport2db {
 		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
 		AttributeDescriptor geomAttr=null;
 		for(AttributeDescriptor attrDesc:attrDescriptors) {
-			if(attrDesc.getGeomColumnTypeName()!=null) {
+			if(attrDesc.getDbColumnGeomTypeName()!=null) {
 				geomAttr=attrDesc;
 			}
 			attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);

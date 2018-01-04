@@ -3,15 +3,22 @@ package ch.interlis.ioxwkf.shp;
 import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.feature.AttributeTypeBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.type.AttributeDescriptor;
+
 import com.vividsolutions.jts.geom.MultiLineString;
+import com.vividsolutions.jts.geom.Point;
+
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -232,7 +239,7 @@ public class ShapeWriterTest {
 		
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn 3 Attribute in Fields konvertiert werden
 	@Test
-	public void pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
+	public void setModel_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Point2", "o1");
 		inputObj.setattrvalue("id1", "1");
 		inputObj.setattrvalue("Text", "text1");
@@ -276,6 +283,114 @@ public class ShapeWriterTest {
 				assertEquals(attr3.toString(), "53434");
 				Object attr4=shapeObj.getAttribute("the_geom");
 				assertEquals(attr4.toString(), "POINT (-0.4025974025974026 1.3974025974025972)");
+    		}
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
+	}
+	@Test
+	public void setAttrDesc_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
+		AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+		AttributeDescriptor[] attrDescs=new AttributeDescriptor[6];
+		
+		String id1_attr = "id1";
+		attributeBuilder.setBinding(String.class);
+		attributeBuilder.setName(id1_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[0]=attributeBuilder.buildDescriptor(id1_attr);
+		
+		String text_attr = "Text";
+		attributeBuilder.setBinding(String.class);
+		attributeBuilder.setName(text_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[1]=attributeBuilder.buildDescriptor(text_attr);
+		
+		String double_attr = "Double";
+		attributeBuilder.setBinding(Double.class);
+		attributeBuilder.setName(double_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[2]=attributeBuilder.buildDescriptor(double_attr);
+		
+		String geom_attr = "attrPoint2";
+		attributeBuilder.setBinding(Point.class);
+		attributeBuilder.setName(geom_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[3]=attributeBuilder.buildDescriptor(geom_attr);
+
+		String date_attr = "adate";
+		attributeBuilder.setBinding(java.util.Date.class);
+		attributeBuilder.setName(date_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[4]=attributeBuilder.buildDescriptor(date_attr);
+
+		String int_attr = "aint";
+		attributeBuilder.setBinding(Integer.class);
+		attributeBuilder.setName(int_attr);
+		attributeBuilder.setMinOccurs(0);
+		attributeBuilder.setMaxOccurs(1);
+		attributeBuilder.setNillable(true);
+		attrDescs[5]=attributeBuilder.buildDescriptor(int_attr);
+		
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Point2", "o1");
+		inputObj.setattrvalue(id1_attr, "1");
+		inputObj.setattrvalue(text_attr, "text1");
+		inputObj.setattrvalue(double_attr, "53434");
+		IomObject coordValue=inputObj.addattrobj(geom_attr, "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		inputObj.setattrvalue(date_attr, "2017-04-22");
+		inputObj.setattrvalue(int_attr, "1234");
+		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"Point2.shp");
+		try {
+			writer = new ShapeWriter(file);
+			writer.setAttributeDescriptors(attrDescs);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		{
+			//Open the file for reading
+        	FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"Point2.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		if(featureCollectionIter.hasNext()) {
+				// feature object
+				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+				Object attr1=shapeObj.getAttribute(id1_attr);
+				assertEquals(attr1.toString(), "1");
+				Object attr2=shapeObj.getAttribute(text_attr);
+				assertEquals(attr2.toString(), "text1");
+				Object attr3=shapeObj.getAttribute(double_attr);
+				assertEquals(53434.0,attr3);
+				Object attr4=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+				assertEquals(attr4.toString(), "POINT (-0.4025974025974026 1.3974025974025972)");
+				Object attr5=shapeObj.getAttribute(date_attr);
+				assertEquals("2017-04-22",new SimpleDateFormat("yyyy-MM-dd").format(attr5));
+				Object attr6=shapeObj.getAttribute(int_attr);
+				assertEquals(Integer.class.getName(),attr6.getClass().getName());
+				assertEquals(1234,attr6);
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -1050,7 +1165,7 @@ public class ShapeWriterTest {
 		try {
 			writer = new ShapeWriter(new File(TEST_OUT,"sridWrong_Fail.shp"));
 			writer.setModel(td);
-			writer.setSridCode("99999999");
+			writer.setDefaultSridCode("99999999");
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objSuccess));

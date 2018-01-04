@@ -1,6 +1,8 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.List;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iom_j.csv.CsvWriter;
@@ -11,7 +13,7 @@ public class Db2Csv extends AbstractExportFromdb {
 	private String attributes[]=null;
 	
 	@Override
-	protected IoxWriter createWriter(File file, Settings config) throws IoxException {
+	protected IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException {
 		/** mandatory: file to reader has not to be null.
 		 */
 		if(file!=null) {
