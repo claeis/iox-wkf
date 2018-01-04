@@ -25,7 +25,7 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.+'
     compile group: 'ch.interlis', name: 'iox-ili', version: 'latest.integration' // use SNAPSHOT
     compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.+' // use SNAPSHOT
-	testCompile group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
+	runtime group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	testCompile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
 	compile('ch.interlis:ili2pg:3.+'){
         exclude group: 'ch.interlis', module: 'iox-ili'
