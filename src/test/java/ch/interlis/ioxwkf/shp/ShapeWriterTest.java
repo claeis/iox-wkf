@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -15,10 +14,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
-
 import com.vividsolutions.jts.geom.MultiLineString;
 import com.vividsolutions.jts.geom.Point;
-
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -32,7 +29,6 @@ import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import ch.interlis.iox_j.jts.Iox2jtsException;
 import ch.interlis.ioxwkf.shp.ShapeReader;
 import ch.interlis.ioxwkf.shp.ShapeWriter;
 
@@ -58,24 +54,44 @@ public class ShapeWriterTest {
 		assertNotNull(td);
 	}
 	
+	// In diesem Test wird ein transfer-event gestartet und gleich wieder beendet.
+	// Die Shapedatei muss dabei erstellt werden, darf jedoch keinen Inhalt aufweisen.
+	// In diesem Test wird die td gesetzt.
 	@Test
-	public void setModel_emptyTransfer_Ok() throws Iox2jtsException, IoxException {
+	public void setModel_emptyTransfer_Ok() throws IoxException, IOException {
 		ShapeWriter writer = null;
+		File file = new File(TEST_OUT,"testEmptyTransfer.shp");
 		try {
-			File file = new File(TEST_OUT,"testEmptyTransfer.shp");
 			writer = new ShapeWriter(file);
 			writer.setModel(td);
 			writer.write(new StartTransferEvent());
 			writer.write(new EndTransferEvent());
 		}finally {
-	    	if(writer!=null) {
-	    		writer.close();
+			if(writer!=null) {
+				try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
 	    		writer=null;
-	    	}
+			}
 		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"testEmptyTransfer.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
 	}
+	
+	// In diesem Test wird ein transfer-event gestartet und gleich wieder beendet.
+	// Die Shapedatei muss dabei erstellt werden, darf jedoch keinen Inhalt aufweisen.
+	// In diesem Test wird die td NICHT gesetzt.
 	@Test
-	public void emptyTransfer_Ok() throws Iox2jtsException, IoxException {
+	public void emptyTransfer_Ok() throws IoxException, IOException {
 		ShapeWriter writer = null;
 		try {
 			File file = new File(TEST_OUT,"testEmptyTransfer.shp");
@@ -83,15 +99,31 @@ public class ShapeWriterTest {
 			writer.write(new StartTransferEvent());
 			writer.write(new EndTransferEvent());
 		}finally {
-	    	if(writer!=null) {
-	    		writer.close();
+			if(writer!=null) {
+				try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
 	    		writer=null;
-	    	}
+			}
 		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"testEmptyTransfer.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
 	}
 	
+	// In diesem Test wird innerhalb der transfer-events, ein basket-event gestartet und gleich wieder beendet.
+	// Die Shapedatei muss dabei erstellt werden, darf jedoch keinen Inhalt aufweisen.
+	// In diesem Test wird die td gesetzt.
 	@Test
-	public void emptyBasket_Ok() throws Iox2jtsException, IoxException {
+	public void setModel_emptyBasket_Ok() throws IoxException, IOException {
 		ShapeWriter writer = null;
 		try {
 			File file = new File(TEST_OUT,"testEmptyBakset.shp");
@@ -102,11 +134,145 @@ public class ShapeWriterTest {
 			writer.write(new EndBasketEvent());
 			writer.write(new EndTransferEvent());
 		}finally {
+			if(writer!=null) {
+				try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+			}
+		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"testEmptyBakset.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
+	}
+	
+	// In diesem Test wird innerhalb der transfer-events, ein basket-event gestartet und gleich wieder beendet.
+	// Die Shapedatei muss dabei erstellt werden, darf jedoch keinen Inhalt aufweisen.
+	// In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void emptyBasket_Ok() throws IoxException, IOException {
+		ShapeWriter writer = null;
+		try {
+			File file = new File(TEST_OUT,"testEmptyBakset.shp");
+			writer = new ShapeWriter(file);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}finally {
+			if(writer!=null) {
+				try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+			}
+		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"testEmptyBakset.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
+	}
+	
+	// In diesem Test wird innerhalb der basket-events, ein leeres object-event dem writer uebergeben.
+	// Die Shapedatei muss dabei erstellt werden, soll 1 Objekt enthalten, welches jedoch keinen Inhalt aufweisen darf.
+	// In diesem Test wird die td gesetzt.
+	@Test
+	public void setModel_emptyObject_Ok() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
+		ShapeWriter writer = null;
+		try {
+			File file = new File(TEST_OUT,"emptyObject_Ok.shp");
+			writer = new ShapeWriter(file);
+			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}catch(IoxException e) {
+			assertEquals("no feature found in Test1.Topic1.Point", e.getMessage());
+		}finally {
 	    	if(writer!=null) {
-	    		writer.close();
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
 	    		writer=null;
 	    	}
 		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"emptyObject_Ok.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(true,featureCollectionIter.hasNext());
+    		// feature object
+    		SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+    		assertEquals(1,shapeObj.getAttributeCount());
+    		assertEquals(null,shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM));
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
+	}
+	
+	// In diesem Test wird innerhalb der basket-events, ein leeres object-event dem writer uebergeben.
+	// Die Shapedatei muss dabei erstellt werden, soll 1 Objekt enthalten, welches jedoch keinen Inhalt aufweisen darf.
+	// In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void emptyObject_Ok() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
+		ShapeWriter writer = null;
+		try {
+			File file = new File(TEST_OUT,"emptyObject_Ok.shp");
+			writer = new ShapeWriter(file);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		}catch(IoxException e) {
+			assertEquals("no feature found in Test1.Topic1.Point", e.getMessage());
+		}finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		{
+			//Open the file for reading
+			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"emptyObject_Ok.shp"));
+        	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+    		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		assertEquals(true,featureCollectionIter.hasNext());
+    		// feature object
+    		SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+    		assertEquals(1,shapeObj.getAttributeCount());
+    		assertEquals(null,shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM));
+    		assertEquals(false,featureCollectionIter.hasNext());
+    		featureCollectionIter.close();
+    		dataStore.dispose();
+    	}
 	}
 	
 	// Der Benutzer gibt 3 models an.
@@ -118,7 +284,7 @@ public class ShapeWriterTest {
     public void setMultipleModels_ClassFoundInLastInputModel_Ok() throws IoxException, Ili2cFailure, IOException{
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("BundesModel.Topic1.Polygon", "o1");
 		objSurfaceSuccess.setattrvalue("id", "10");
-		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("the_geom", "MULTISURFACE");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj(ShapeReader.GEOTOOLS_THE_GEOM, "MULTISURFACE");
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
 		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
 		// polyline
@@ -187,8 +353,8 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -229,8 +395,8 @@ public class ShapeWriterTest {
     		if(featureCollectionIter.hasNext()) {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-				Object attr1=shapeObj.getAttribute("the_geom");
-				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+				Object attr1=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+				assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr1.toString());
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -276,13 +442,13 @@ public class ShapeWriterTest {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 				Object attr1=shapeObj.getAttribute("id1");
-				assertEquals(attr1.toString(), "1");
+				assertEquals("1",attr1.toString());
 				Object attr2=shapeObj.getAttribute("Text");
-				assertEquals(attr2.toString(), "text1");
+				assertEquals("text1",attr2.toString());
 				Object attr3=shapeObj.getAttribute("Double");
-				assertEquals(attr3.toString(), "53434");
-				Object attr4=shapeObj.getAttribute("the_geom");
-				assertEquals(attr4.toString(), "POINT (-0.4025974025974026 1.3974025974025972)");
+				assertEquals("53434",attr3.toString());
+				Object attr4=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+				assertEquals("POINT (-0.4025974025974026 1.3974025974025972)",attr4.toString());
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -379,13 +545,13 @@ public class ShapeWriterTest {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 				Object attr1=shapeObj.getAttribute(id1_attr);
-				assertEquals(attr1.toString(), "1");
+				assertEquals("1",attr1.toString());
 				Object attr2=shapeObj.getAttribute(text_attr);
-				assertEquals(attr2.toString(), "text1");
+				assertEquals("text1",attr2.toString());
 				Object attr3=shapeObj.getAttribute(double_attr);
 				assertEquals(53434.0,attr3);
 				Object attr4=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
-				assertEquals(attr4.toString(), "POINT (-0.4025974025974026 1.3974025974025972)");
+				assertEquals("POINT (-0.4025974025974026 1.3974025974025972)",attr4.toString());
 				Object attr5=shapeObj.getAttribute(date_attr);
 				assertEquals("2017-04-22",new SimpleDateFormat("yyyy-MM-dd").format(attr5));
 				Object attr6=shapeObj.getAttribute(int_attr);
@@ -434,8 +600,8 @@ public class ShapeWriterTest {
     		if(featureCollectionIter.hasNext()) {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-				Object attr1=shapeObj.getAttribute("the_geom");
-				assertEquals(attr1.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+				Object attr1=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+				assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr1.toString());
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -486,7 +652,7 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			Object attr2=shapeObj.getAttribute("the_geom");
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 			assertEquals("MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))",attr2.toString());
 		}
 		featureCollectionIter.close();
@@ -540,8 +706,8 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr1=shapeObj.getAttribute("textattr2");
-			assertEquals(attr1.toString(), "text1");
-			Object attr2=shapeObj.getAttribute("the_geom");
+			assertEquals("text1",attr1.toString());
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 			assertEquals("MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))",attr2.toString());
 		}
 		featureCollectionIter.close();
@@ -552,7 +718,7 @@ public class ShapeWriterTest {
 	@Test
 	public void lineString_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.LineString", "o1");
-		IomObject polylineValue=objStraightsSuccess.addattrobj("the_geom", "POLYLINE");
+		IomObject polylineValue=objStraightsSuccess.addattrobj(ShapeReader.GEOTOOLS_THE_GEOM, "POLYLINE");
 		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
 		IomObject coordStart=segments.addattrobj("segment", "COORD");
 		IomObject coordEnd=segments.addattrobj("segment", "COORD");
@@ -587,9 +753,9 @@ public class ShapeWriterTest {
     		if(featureCollectionIter.hasNext()) {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-				Object attr2=shapeObj.getAttribute("the_geom");
+				Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 				MultiLineString multiline=(MultiLineString)attr2;
-				assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
+				assertEquals("MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))",attr2.toString());
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -640,11 +806,11 @@ public class ShapeWriterTest {
 				// feature object
 				SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 				Object attr1=shapeObj.getAttribute("attr1LS");
-				assertEquals(attr1.toString(), "text1");
+				assertEquals("text1",attr1.toString());
 				Object attr2=shapeObj.getAttribute("attr2LS");
-				assertEquals(attr2.toString(), "5");
-				Object attr3=shapeObj.getAttribute("the_geom");
-				assertEquals(attr3.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
+				assertEquals("5",attr2.toString());
+				Object attr3=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+				assertEquals("MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))",attr3.toString());
     		}
     		featureCollectionIter.close();
     		dataStore.dispose();
@@ -702,8 +868,8 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals( "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr2.toString());
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -762,11 +928,11 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr1=shapeObj.getAttribute("attr1MLS");
-			assertEquals(attr1.toString(), "text2");
+			assertEquals("text2",attr1.toString());
 			Object attr2=shapeObj.getAttribute("attr2MLS");
-			assertEquals(attr2.toString(), "6");
-			Object attr3=shapeObj.getAttribute("the_geom");
-			assertEquals( "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr3.toString());
+			assertEquals("6",attr2.toString());
+			Object attr3=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))",attr3.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -833,8 +999,8 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -905,11 +1071,11 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr1=shapeObj.getAttribute("attr1PG");
-			assertEquals(attr1.toString(), "text2");
+			assertEquals("text2",attr1.toString());
 			Object attr2=shapeObj.getAttribute("attr2PG");
-			assertEquals(attr2.toString(), "6");
-			Object attr3=shapeObj.getAttribute("the_geom");
-			assertEquals(attr3.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
+			assertEquals("6",attr2.toString());
+			Object attr3=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))",attr3.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -1010,8 +1176,8 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			Object attr2=shapeObj.getAttribute("the_geom");
-			assertEquals( "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr2.toString());
+			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr2.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
@@ -1116,47 +1282,19 @@ public class ShapeWriterTest {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 			Object attr1=shapeObj.getAttribute("attr1MPG");
-			assertEquals(attr1.toString(), "text3");
+			assertEquals("text3",attr1.toString());
 			Object attr2=shapeObj.getAttribute("attr2MPG");
-			assertEquals(attr2.toString(), "8");
-			Object attr3=shapeObj.getAttribute("the_geom");
-			assertEquals( "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr3.toString());
+			assertEquals("8",attr2.toString());
+			Object attr3=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+			assertEquals("MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)), ((0.228 1.3, 0.158 0.5, 0.158 0.5, 0.158 1.568, 0.158 1.568, 0.228 1.3)))",attr3.toString());
 		}
 		featureCollectionIter.close();
 		dataStore.dispose();
 	}
 	
-	// Es wird getestet, ob ein Objekt ohne Attributwerte geschrieben werden kann.
-	@Test
-	public void emptyObject_Ok() throws IoxException {
-		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
-		ShapeWriter writer = null;
-		try {
-			File file = new File(TEST_OUT,"emptyObject_Fail.shp");
-			writer = new ShapeWriter(file);
-			writer.setModel(td);
-			writer.write(new StartTransferEvent());
-			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
-			writer.write(new ObjectEvent(objSuccess));
-			writer.write(new EndBasketEvent());
-			writer.write(new EndTransferEvent());
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().equals("no feature found in Test1.Topic1.Point"));
-		}finally {
-	    	if(writer!=null) {
-	    		try {
-					writer.close();
-				} catch (IoxException e) {
-					throw new IoxException(e);
-				}
-	    		writer=null;
-	    	}
-		}
-	}
-	
 	// die srid wird gesetzt und ist falsch oder kann nicht gefunden werden.
 	@Test
-	public void sridWrong_Fail() throws IoxException {
+	public void sridWrong_Fail() throws IoxException, IOException {
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
 		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
@@ -1219,7 +1357,7 @@ public class ShapeWriterTest {
 	
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn die Coord nicht konvertiert werden kann.
 	@Test
-	public void failedToConvertToJts_Fail() throws IoxException {
+	public void failedToConvertToJts_Fail() throws IoxException, IOException {
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
 		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
 		coordValue.setattrvalue("C1", "-0.22857142857142854");
@@ -1246,5 +1384,4 @@ public class ShapeWriterTest {
 	    	}
 		}
 	}
-	
 }
