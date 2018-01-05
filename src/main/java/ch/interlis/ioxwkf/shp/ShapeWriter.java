@@ -378,6 +378,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		//create the builder
 		SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
 		builder.setName(featureTypeName);
+		boolean hasGeometry=false;
         for(AttributeDescriptor attrDesc:attrDescs) {
         	if(attrDesc.getLocalName().equals(iliGeomAttrName)) {
 				AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
@@ -390,9 +391,16 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    	        builder.setCRS(crs);
 	    	        srsId=getEPSGCode(crs);
 	    		}
+	    		hasGeometry=true;
         	}else {
         		builder.add(attrDesc);
         	}
+        }
+        if(!hasGeometry) {
+	        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
+	        if(defaultSrsId!=null) {
+	        	builder.setCRS(createCrs(defaultSrsId));
+	        }
         }
 		// build type
 		SimpleFeatureType simpleFeatureType=builder.buildFeatureType();
