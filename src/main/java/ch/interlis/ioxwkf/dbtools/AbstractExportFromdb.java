@@ -20,6 +20,8 @@ import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
 
+/** export data (converted from PostGis to Interlis dataTypes) from database and write data with appropriate IoxWriter to file.
+ */
 public abstract class AbstractExportFromdb {
 	private IoxFactoryCollection factory;
 	private int objectCount=0;
@@ -28,64 +30,59 @@ public abstract class AbstractExportFromdb {
 	private SimpleDateFormat timeFormat;
 	private SimpleDateFormat timeStampFormat;
 	
-	/** default model content.
+	/** the default model content.
 	 */
 	private static final String MODELNAME="model";
 	
-	/** default topic content.
+	/** the default topic content.
 	 */
 	private static final String TOPICNAME="topic";
 	
 	/** create a writer in the appropriate format.
 	 * @param file to write to.
 	 * @param config to set by user.
-	 * @param attributes[] 
-	 * @return writer object.
+	 * @param dbColumns[] 
+	 * @return IoxWriter
 	 * @throws IoxException
 	 */
 	protected abstract IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException;
 	
 	/** export from data base table to file.
 	 * @param file to write to.
-	 * @param connection to db.
+	 * @param db
 	 * @param config to set by user.
 	 * @throws IoxException 
 	 */
 	public void exportData(File file,Connection db,Settings config) throws IoxException {
-		/** data base connection has not to be null.
-		 */
+		// data base connection has not to be null.
 		if(db==null) {
 			throw new IoxException("connection==null");
 		}else {
 			EhiLogger.logState("connection to database: <success>.");
 		}
 		
-		/** optional: set the dateFormat.
-		 */
+		// optional: set the dateFormat.
 		String dateFormatPattern=config.getValue(IoxWkfConfig.SETTING_DATEFORMAT);
 		if(dateFormatPattern==null) {
 			dateFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE;
 		}
 		dateFormat = new SimpleDateFormat(dateFormatPattern);
 		
-		/** optional: set the timeFormat.
-		 */
+		// optional: set the timeFormat.
 		String timeFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMEFORMAT);
 		if(timeFormatPattern==null) {
 			timeFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME;
 		}
 		timeFormat = new SimpleDateFormat(timeFormatPattern);
 		
-		/** optional: set the timeStampFormat.
-		 */
+		// optional: set the timeStampFormat.
 		String timeStampFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT);
 		if(timeStampFormatPattern==null) {
 			timeStampFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP;
 		}
 		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
-		/** optional: set database schema, if table is not in default schema.
-		 */
+		// optional: set database schema, if table is not in default schema.
 		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
 		if(definedSchemaName==null) {
 			EhiLogger.logState("no db schema name defined, get default schema.");
@@ -93,8 +90,7 @@ public abstract class AbstractExportFromdb {
 			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
 		}
 		
-		/** mandatory: set database table to insert data into.
-		 */
+		// mandatory: set database table to insert data into.
 		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
 		if(definedTableName==null) {
 			throw new IoxException("database table==null.");
@@ -102,8 +98,7 @@ public abstract class AbstractExportFromdb {
 			EhiLogger.logState("db table name: <"+definedTableName+">.");
 		}
 
-		/** create selection to get information about attributes of target data base table.
-		 */
+		// create selection to get information about attributes of target data base table.
 		List<AttributeDescriptor> attributes=null;
 		try {
 			attributes=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
@@ -116,11 +111,9 @@ public abstract class AbstractExportFromdb {
 			}
 		}
 		
-		
 		IomObject iomObject=null;
 		
-		/** create appropriate IoxWriter.
-		 */
+		// create appropriate IoxWriter.
 		IoxWriter writer=createWriter(file, config,attributes.toArray(new AttributeDescriptor[attributes.size()]));
 
 		EhiLogger.logState("start to write records.");
@@ -128,16 +121,14 @@ public abstract class AbstractExportFromdb {
 		PreparedStatement ps=null;
 		ResultSet rs=null;
 		try {
-			/** create selection for appropriate datatypes.
-			 *  geometry datatypes are wrapped from db to ili.
-			 */
+			// create selection for appropriate datatypes.
+			// geometry datatypes are wrapped from db to ili.
 			String selectQuery = getSelectStatement(definedSchemaName, definedTableName, attributes, db);
 			ps = db.prepareStatement(selectQuery);
 			ps.clearParameters();
 			rs = ps.executeQuery();
 			while(rs.next()) {
-				/** convert records to iomObject data types.
-				 */
+				// convert records to iomObject data types.
 				iomObject=convertRecordToIomObject(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, attributes, rs, db);
 				try {
 					writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
@@ -168,8 +159,7 @@ public abstract class AbstractExportFromdb {
 		writer.write(new EndBasketEvent());
 		writer.write(new EndTransferEvent());
 		
-		/** close writer if open.
-		 */
+		// close writer if open.
 		if(writer!=null) {
 			writer.close();
 			writer=null;
@@ -180,19 +170,16 @@ public abstract class AbstractExportFromdb {
 	/** create a selection and wrapp all geometries, xml and blob datatypes from db to ili format.
 	 * @param schemaName
 	 * @param tableName
-	 * @param attrsPool
+	 * @param attrs
 	 * @param db
-	 * @return
-	 * @throws IoxException
+	 * @return selectionQueryBuild.toString()
 	 * @throws SQLException
-	 * @throws ConverterException
 	 */
 	private String getSelectStatement(String schemaName, String tableName, List<AttributeDescriptor> attrs, Connection db) throws SQLException {
 		StringBuilder selectionQueryBuild=new StringBuilder();
 		String comma="";
 		selectionQueryBuild.append("SELECT ");
-		/** convert each attribute to db valid data type.
-		 */
+		// convert each attribute to db valid data type.
 		for(AttributeDescriptor attr:attrs) {
 			String dbColName="\""+attr.getDbColumnName()+"\"";
 			Integer datatype=attr.getDbColumnType();
@@ -231,14 +218,16 @@ public abstract class AbstractExportFromdb {
 	}
 	
 	/** get iomObject with all attributes in appropriate datatype.
-	 * @param attribute
-	 * @param exportData
+	 * @param definedSchemaName
 	 * @param definedTableName
 	 * @param modelName
 	 * @param topicName
-	 * @return complete iomObject
-	 * @throws SQLException 
-	 * @throws IoxException 
+	 * @param attrs
+	 * @param rs
+	 * @param db
+	 * @return iomObj
+	 * @throws IoxException
+	 * @throws SQLException
 	 */
 	private IomObject convertRecordToIomObject(String definedSchemaName,String definedTableName, String modelName, String topicName, List<AttributeDescriptor> attrs, ResultSet rs, Connection db) throws IoxException, SQLException {
 		IomObject geoIomObj=null;
@@ -258,8 +247,7 @@ public abstract class AbstractExportFromdb {
 			Integer dataType=attr.getDbColumnType();
 			boolean is3D=false;
 			try {
-				/** get attribute value in appropriate data type.
-				 */
+				// get attribute value in appropriate data type.
 				if(attr.isGeometry()) {
 					geoColumnTypeName=attr.getDbColumnGeomTypeName();
 					int coordDimension=attr.getCoordDimension();

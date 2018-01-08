@@ -23,19 +23,26 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxWriter;
 import ch.interlis.ioxwkf.shp.ShapeWriter;
 
+/** create a ShapeWriter.
+ */
 public class Db2Shp extends AbstractExportFromdb {
+	/** create the ShpWriter and return created IoxWriter.
+	 * @param file
+	 * @param config
+	 * @param dbColumns[]
+	 * @exception IoxException
+	 * @return IoxWriter
+	 */
 	@Override
 	protected IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException {
-		/** mandatory: file to reader has not to be null.
-		 */
+		// mandatory: file to reader has not to be null.
 		if(file!=null) {
 			EhiLogger.logState("file to write to: <"+file.getName()+">");
 		}else {
 			throw new IoxException("file==null.");
 		}
 		
-		/** create and return a shape writer.
-		 */
+		// create and return a shape writer.
 		ShapeWriter writer=new ShapeWriter(file,config);
 		org.opengis.feature.type.AttributeDescriptor attrDescs[]=new org.opengis.feature.type.AttributeDescriptor[dbColumns.length];
 		for(int i=0;i<dbColumns.length;i++) {
