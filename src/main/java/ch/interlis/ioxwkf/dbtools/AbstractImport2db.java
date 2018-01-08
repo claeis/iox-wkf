@@ -25,6 +25,8 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox_j.IoxInvalidDataException;
 
+/** read data of files with the appropriated IoxReader, convert java dataTypes to valid JDBC/DB types and import converted data to database.
+ */
 public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
 	private SimpleDateFormat dateFormat;
@@ -33,28 +35,26 @@ public abstract class AbstractImport2db {
 	/** create a reader in the appropriate format.
 	 * @param file
 	 * @param config
-	 * @return reader
+	 * @return IoxReader
 	 * @throws IoxException
 	 */
 	protected abstract IoxReader createReader(File file, Settings config) throws IoxException;
 	
 	/** import from file to data base.
 	 * @param file to write to.
-	 * @param connection to db.
+	 * @param db
 	 * @param config to set by user.
 	 * @throws IoxException
 	 */
 	public void importData(File file,Connection db,Settings config) throws IoxException {
-		/** validity of connection
-		 */
+		// validity of connection
 		if(db==null) {
 			throw new IoxException("connection==null.");
 		}else {
 			EhiLogger.logState("connection to database: <success>.");
 		}
 		
-		/** optional: set database schema, if table is not in default schema.
-		 */
+		// optional: set database schema, if table is not in default schema.
 		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
 		if(definedSchemaName==null) {
 			EhiLogger.logState("no db schema name defined, get default schema.");
@@ -62,8 +62,7 @@ public abstract class AbstractImport2db {
 			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
 		}
 		
-		/** mandatory: set database table to insert data into.
-		 */
+		// mandatory: set database table to insert data into.
 		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
 		if(definedTableName==null) {
 			throw new IoxException("database table==null.");
@@ -71,36 +70,31 @@ public abstract class AbstractImport2db {
 			EhiLogger.logState("db table name: <"+definedTableName+">.");
 		}
 		
-		/** optional: set the dateFormat.
-		 */
+		// optional: set the dateFormat.
 		String dateFormatPattern=config.getValue(IoxWkfConfig.SETTING_DATEFORMAT);
 		if(dateFormatPattern==null) {
 			dateFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE;
 		}
 		dateFormat = new SimpleDateFormat(dateFormatPattern);
 		
-		/** optional: set the timeFormat.
-		 */
+		// optional: set the timeFormat.
 		String timeFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMEFORMAT);
 		if(timeFormatPattern==null) {
 			timeFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME;
 		}
 		timeFormat = new SimpleDateFormat(timeFormatPattern);
 		
-		/** optional: set the timeStampFormat.
-		 */
+		// optional: set the timeStampFormat.
 		String timeStampFormatPattern=config.getValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT);
 		if(timeStampFormatPattern==null) {
 			timeStampFormatPattern=IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP;
 		}
 		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
-		/** create appropriate IoxReader.
-		 */
+		// create appropriate IoxReader.
 		IoxReader reader=createReader(file, config);
 		
-		/** create list with all attribute descriptors include data
-		 */
+		// create list with all attribute descriptors including data
 		List<AttributeDescriptor> attrDescriptors=null;
 		if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
 			attrDescriptors=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
@@ -112,8 +106,7 @@ public abstract class AbstractImport2db {
 		}else {
 			throw new IoxException("expected tablename");
 		}
-		/** insert statement to insert data to db.
-		 */
+		// insert statement to insert data to db.
 		String insertQuery=getInsertStatement(definedSchemaName, definedTableName, attrDescriptors, db);
 		PreparedStatement ps=null;
 		try {
@@ -122,8 +115,7 @@ public abstract class AbstractImport2db {
 			throw new IoxException(e);
 		}
 		
-		/** read IoxEvents
-		 */
+		// read IoxEvents
 		IoxEvent event=reader.read();
 		EhiLogger.logState("start import");
 		while(event instanceof IoxEvent){
@@ -132,8 +124,7 @@ public abstract class AbstractImport2db {
 				int rs;
 				try {
 					ps.clearParameters();
-					/** convert data to import data type.
-					 */
+					// convert data to import data type.
 					convertObject(attrDescriptors, iomObj, ps, db, config, dateFormatPattern);
 					rs = ps.executeUpdate();
 				} catch (SQLException e) {
@@ -165,17 +156,23 @@ public abstract class AbstractImport2db {
 		event=null;
 	}
 
+	/** set attribute names to attribute descriptor.
+	 * @param reader
+	 * @param attrDescriptors
+	 * @param missingAttributes
+	 */
 	protected abstract void setIomAttrNames(IoxReader reader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes);
 	
-	/** convert to valid datatypes.
+	/** convert attributes of IomObject from javaTypes to JDBC/DB dataTypes.
 	 * @param attrDescriptors
 	 * @param iomObj
 	 * @param ps
 	 * @param db
-	 * @return preparedstatement of converted objects.
-	 * @throws SQLException 
-	 * @throws ConverterException 
-	 * @throws IoxException 
+	 * @param config
+	 * @param definedFormat
+	 * @throws SQLException
+	 * @throws ConverterException
+	 * @throws IoxException
 	 */
 	private void convertObject(List<AttributeDescriptor> attrDescriptors, IomObject iomObj, PreparedStatement ps, Connection db, Settings config, String definedFormat) throws SQLException, ConverterException, IoxException {
 		int position=1;
@@ -385,13 +382,12 @@ public abstract class AbstractImport2db {
 		return false;
 	}
 
-	/** create insert statement in format of prepared statement
+	/** create and return insert statement.
 	 * @param schemaName
 	 * @param tableName
-	 * @param iomObj
 	 * @param attrDesc
 	 * @param db
-	 * @return
+	 * @return queryBuild.toString()
 	 * @throws IoxException
 	 */
 	private String getInsertStatement(String schemaName, String tableName, List<AttributeDescriptor> attrDesc, Connection db) throws IoxException {

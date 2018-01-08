@@ -11,11 +11,17 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.ioxwkf.shp.ShapeReader;
 
+/** set iom attribute names to attribute descriptor, create shapeReader and return the created shapeReader.
+ */
 public class Shp2db extends AbstractImport2db {
+	/** create the ShpReader and return created ShpReader.
+	 * @param file to read from
+	 * @param config defined settings
+	 * @return IoxReader
+	 */
 	@Override
 	protected IoxReader createReader(File file, Settings config) throws IoxException {
-		/** mandatory: file to reader has not to be null.
-		 */
+		// mandatory: file to reader has not to be null.
 		if(file!=null) {
 			if(file.exists()) {
 				EhiLogger.logState("file to read from: <"+file.getName()+">");
@@ -26,10 +32,14 @@ public class Shp2db extends AbstractImport2db {
 			throw new IoxException("file==null.");
 		}
 		
-		/** create and return a shape reader.
-		 */
+		// create and return a shape reader.
 		return new ShapeReader(file,config);
 	}
+	/** set iom attribute names to attribute descriptor
+	 * @param ioxReader
+	 * @param attrDescriptors
+	 * @param missingAttributes
+	 */
 	@Override
 	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
 		ShapeReader reader=(ShapeReader)ioxReader;

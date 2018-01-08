@@ -10,11 +10,18 @@ import ch.interlis.iom_j.csv.CsvReader;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 
+/** validate configuration settings, create the CsvReader and set the attribute names of IomObject.
+ */
 public class Csv2db extends AbstractImport2db {
+	
+	/** validate the configuration settings, create the CsvReader and return created CsvReader.
+	 * @param file to read from
+	 * @param config defined settings
+	 * @return IoxReader
+	 */
 	@Override
 	protected IoxReader createReader(File file, Settings config) throws IoxException {
-		/** mandatory: file to reader has not to be null.
-		 */
+		// mandatory: file to reader has not to be null.
 		if(file!=null) {
 			if(file.exists()) {
 				EhiLogger.logState("file to read from: <"+file.getName()+">");
@@ -25,28 +32,24 @@ public class Csv2db extends AbstractImport2db {
 			throw new IoxException("file==null.");
 		}
 		
-		/** create csv reader.
-		 */
+		// create csv reader.
 		CsvReader reader=new CsvReader(file,config);
 		
-		/** optional char: value delimiter.
-		 */
+		// optional char: value delimiter.
 		String valueDelimiter=config.getValue(IoxWkfConfig.SETTING_VALUEDELIMITER);
 		if(valueDelimiter!=null) {
 			reader.setValueDelimiter(valueDelimiter.charAt(0));
 			EhiLogger.traceState("valueDelimiter <"+valueDelimiter+">.");
 		}
 		
-		/** optional char: value separator.
-		 */
+		// optional char: value separator.
 		String valueSeparator=config.getValue(IoxWkfConfig.SETTING_VALUESEPARATOR);
 		if(valueSeparator!=null) {
 			reader.setValueSeparator(valueSeparator.charAt(0));
 			EhiLogger.traceState("valueSeparator <"+valueSeparator+">.");
 		}
 		
-		/** optional boolean: first line is set as header or as data.
-		 */
+		// optional boolean: first line is set as header or as data.
 		boolean firstLineIsHeader=false;
 		if(config.getValue(IoxWkfConfig.SETTING_FIRSTLINE)!=null) {
 			firstLineIsHeader=config.getValue(IoxWkfConfig.SETTING_FIRSTLINE).equals(IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
@@ -57,6 +60,11 @@ public class Csv2db extends AbstractImport2db {
 		return reader;
 	}
 
+	/** set iom attribute names to attribute descriptor
+	 * @param ioxReader
+	 * @param attrDescriptors
+	 * @param missingAttributes
+	 */
 	@Override
 	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
 		CsvReader reader=(CsvReader)ioxReader;
