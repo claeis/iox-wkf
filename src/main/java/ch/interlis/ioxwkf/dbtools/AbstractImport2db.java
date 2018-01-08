@@ -25,7 +25,7 @@ import ch.interlis.iox.ObjectEvent;
 import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox_j.IoxInvalidDataException;
 
-/** read data of files with the appropriated IoxReader, convert java dataTypes to valid JDBC/DB types and import converted data to database.
+/** read data of files with the appropriated IoxReader, converted from Interlis to PostGis dataTypes and import converted data to database.
  */
 public abstract class AbstractImport2db {
 	private PostgisColumnConverter pgConverter=new PostgisColumnConverter();
@@ -163,7 +163,7 @@ public abstract class AbstractImport2db {
 	 */
 	protected abstract void setIomAttrNames(IoxReader reader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes);
 	
-	/** convert attributes of IomObject from javaTypes to JDBC/DB dataTypes.
+	/** convert attributes of IomObject to PostGis dataTypes.
 	 * @param attrDescriptors
 	 * @param iomObj
 	 * @param ps
