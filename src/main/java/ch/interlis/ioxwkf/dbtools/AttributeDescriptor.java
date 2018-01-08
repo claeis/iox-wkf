@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import ch.interlis.iox.IoxException;
 
-/** describes a list of dataTypes.
+/** describes an attribute and shows possibilities which can be set.
  */
 public class AttributeDescriptor {
 	private String dbColumnName=null;
@@ -39,8 +39,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnTypeName()</li>
 	 */
 	public final static String DBCOLUMN_TYPENAME_XML="xml";
-	/** xml is a name of JDBC/DB column type.<br>
-	 * it is defined by 36 characters in format of: ISO 11578.
+	/** uuid is a name of JDBC/DB column type.<br>
+	 * the uuid (Universally Unique Identifier) is mentioned in the ISO 11578.
 	 * <p>
 	 * requirements:
      * <li>has to be type of: 'java.sql.Types.OTHER'</li>
@@ -59,7 +59,8 @@ public class AttributeDescriptor {
 	 */
 	public final static String DBCOLUMN_TYPENAME_GEOMETRY="geometry";
 	// geometry types
-	/** multiPolygon is a collection of Polygons.
+	/** multiPolygon is the name of a type that is used for a multiPolygon.<br>
+	 * multiPolygon is a collection of Polygons.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -68,7 +69,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnGeomTypeName()</li>
 	 */
 	public final static String GEOMETRYTYPE_MULTIPOLYGON="MULTIPOLYGON";
-	/** represents a polygon with linear edges, which includes shell and may includes holes.
+	/** polygon is the name of a type that is used for a polygon.<br>
+	 * a polygon is a shape with linear edges, which includes shell and may includes holes.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -77,7 +79,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnGeomTypeName()</li>
 	 */
 	public final static String GEOMETRYTYPE_POLYGON="POLYGON";
-	/** a MultiLineString is defined by one or more LineStrings.
+	/** multiLineString is the name of a type that is used for a multiLineString.<br>
+	 * a multiLineString could be one or more LineStrings.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -86,7 +89,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnGeomTypeName()</li>
 	 */
 	public final static String GEOMETRYTYPE_MULTILINESTRING="MULTILINESTRING";
-	/** lineString is a sequence of line segments.
+	/** lineString is the name of a type that is used for a lineString.<br>
+	 * lineString is a sequence of line segments.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -95,7 +99,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnGeomTypeName()</li>
 	 */
 	public final static String GEOMETRYTYPE_LINESTRING="LINESTRING";
-	/** an aggregate class containing only instances of Point.
+	/** multiPoint is the name of a type that is used for a multiPoint.<br>
+	 * multipoint is a geometric object consisting of one or more points.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -104,7 +109,8 @@ public class AttributeDescriptor {
 	 * <li>getDbColumnGeomTypeName()</li>
 	 */
 	public final static String GEOMETRYTYPE_MULTIPOINT="MULTIPOINT";
-	/** a geometric object consisting of one point.
+	/** point is the name of a type that is used for a point.<br>
+	 * point is a geometric object consisting of one point.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
@@ -119,24 +125,27 @@ public class AttributeDescriptor {
 	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
 	
 	/** get the name of column.
-	 * @return column name as String.
+	 * @return dbColumnName
 	 */
 	protected String getDbColumnName() {
 		return dbColumnName;
 	}
-	/** set given name as column name in String.
+	/** set the db column name.
 	 * @param attributeName
 	 */
 	protected void setDbColumnName(String attributeName) {
 		this.dbColumnName = attributeName;
 	}
 	/** get the attribute name of an iomObject.
-	 * @return object name in String.
+	 * <p>
+	 * if iomAttributeName is not set, dbColumnName will be returned.
+	 * <p>
+	 * @return iomAttributeName if !=null or dbColumnName
 	 */
 	protected String getIomAttributeName() {
 		return iomAttributeName==null? dbColumnName : iomAttributeName;
 	}
-	/** set the given attribute name in type String.
+	/** set attribute name of IomObject.
 	 * @param attributeName
 	 */
 	protected void setIomAttributeName(String attributeName) {
@@ -147,12 +156,12 @@ public class AttributeDescriptor {
 	 * requirements:
      * <li>has to be a type of: java.sql.Types</li>
      * <p>
-	 * @return typeNumber in integer.
+	 * @return typeNumber
 	 */
 	protected Integer getDbColumnType() {
 		return attributeType;
 	}
-	/** set the given attribute type.
+	/** set db column type.
 	 * <p>
 	 * requirements:
      * <li>has to be a type of: java.sql.Types</li>
@@ -167,12 +176,12 @@ public class AttributeDescriptor {
 	 * requirements:
      * <li>has to be type of: 'java.sql.Types.OTHER'</li>
      * <p>
-	 * @return DBColumnTypeName in String.
+	 * @return DBColumnTypeName
 	 */
 	protected String getDbColumnTypeName() {
 		return attributeTypeName;
 	}
-	/** set the given DBColumn type name in String.
+	/** set the db column type name.
 	 * <p>
 	 * requirements:
      * <li>has to be type of: 'java.sql.Types.OTHER'</li>
@@ -182,20 +191,25 @@ public class AttributeDescriptor {
 	protected void setDbColumnTypeName(String attributeTypeName) {
 		this.attributeTypeName = attributeTypeName;
 	}
-	/** get the type of DBColumn geometry name.
+	/** get the type of db column geometry name.
+	 * <p>
+	 * the geometry_columns table contains a column with the geometry column type name.
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
+     * @return dbColumnGeomTypeName
 	 */
 	protected String getDbColumnGeomTypeName() {
 		return dbColumnGeomTypeName;
 	}
-	/** set the given geometry type name.
+	/** set the geometry type name.<br>
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
      * <p>
-     * @param dbColumnGeomTypeName in String.
+	 * the geometry_columns table contains a column with the geometry column type name.
+	 * <p>
+     * @param dbColumnGeomTypeName
 	 */
 	protected void setDbColumnGeomTypeName(String dbColumnGeomTypeName) {
 		this.dbColumnGeomTypeName = dbColumnGeomTypeName;
@@ -205,46 +219,46 @@ public class AttributeDescriptor {
 	 * <p>
 	 * requirements:
      * <li>isGeometry() has to be true</li>
-     * <p>
-     * @return coordDimension in integer.
+     * coordDimenstion can be found in table geometry_columns.
+     * @return coordDimension
 	 */
 	protected Integer getCoordDimension() {
 		return coordDimension;
 	}
-	/** set the given coordinate dimension.<br>
+	/** set the coordinate dimension.<br>
 	 * the dimension of the coordinates that define this Geometry, which must be the same as the coordinate dimension of the coordinate reference system for this Geometry.
 	 * <p>
 	 * requirements:
-     * <li>isGeometry() has to be true</li>
-     * <p>
-     * @param coordDimension in Integer.
+     * <li>isGeometry() has to be true</li><br>
+     * coordDimenstion can be found in table geometry_columns.
+     * @param coordDimension
 	 */
 	protected void setCoordDimension(Integer coordDimension) {
 		this.coordDimension = coordDimension;
 	}
-	/** get the SRID.<br>
+	/** get the srid.<br>
 	 * the srId is an integer value that uniquely identifies the Spatial Referencing System (SRS) within the database.
 	 * <p>
 	 * requirements:
-     * <li>isGeometry() has to be true</li>
-     * <p>
-     * @return srId in Integer.
+     * <li>isGeometry() has to be true</li><br>
+     * srid can be found in table geometry_columns.
+     * @return srId
 	 */
 	protected Integer getSrId() {
 		return srId;
 	}
-	/** set the given srId.<br>
+	/** set the srId.<br>
 	 * the srId is an integer value that uniquely identifies the Spatial Referencing System (SRS) within the database.
 	 * <p>
 	 * requirements:
-     * <li>isGeometry() has to be true</li>
-     * <p>
+     * <li>isGeometry() has to be true</li><br>
+     * srid can be found in table geometry_columns.
      * @param srId
 	 */
 	protected void setSrId(Integer srId) {
 		this.srId = srId;
 	}
-	/** get the precision in Integer.<br>
+	/** get the precision.<br>
 	 * precision is the number of digits in the unscaled value.
 	 * <p>
 	 * @return precision.
@@ -252,7 +266,7 @@ public class AttributeDescriptor {
 	protected Integer getPrecision() {
 		return precision;
 	}
-	/** set the given bytePrecision in Integer.<br>
+	/** set the bytePrecision.<br>
 	 * precision is the number of digits in the unscaled value.
 	 * <p>
 	 * @param precision
@@ -260,7 +274,7 @@ public class AttributeDescriptor {
 	protected void setPrecision(Integer precision) {
 		this.precision = precision;
 	}
-	/** add geometry data to geometry attribute in given attribute descriptors.
+	/** add geometry data to geometry attribute in attribute descriptors.
 	 * @param schemaName
 	 * @param tableName
 	 * @param attributeDesc
