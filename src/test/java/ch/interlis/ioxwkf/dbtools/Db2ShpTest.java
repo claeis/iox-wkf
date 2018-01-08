@@ -19,6 +19,7 @@ import org.postgresql.util.PSQLException;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iox.IoxException;
+import ch.interlis.ioxwkf.shp.ShapeReader;
 
 //-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Db2ShpTest {
@@ -80,7 +81,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "coord2d");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -92,6 +93,10 @@ public class Db2ShpTest {
 			}
 		}
 	}
+	
+	// Es soll keine Fehlermeldung ausgegeben werden, wenn keine Reihe in die Shp-Datei geschrieben wird.
+	// --
+	// Erwartung: SUCCESS.
 	@Test
 	public void export_NoRow_Ok() throws Exception
 	{
@@ -187,7 +192,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "coord2d");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -245,7 +250,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "coord2d");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -304,7 +309,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "coord2d");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -363,7 +368,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(9223372036854775807.0,attr1);
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
 		        featureCollectionIter.close();
@@ -420,7 +425,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "true");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -477,7 +482,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "true");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -534,7 +539,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "true");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -591,7 +596,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "101");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -648,7 +653,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "a");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -705,7 +710,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "abc");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -763,7 +768,7 @@ public class Db2ShpTest {
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(java.util.Date.class.getName(),attr1.getClass().getName());
 					assertEquals(new java.util.Date(2017-1900,02-1,15),attr1);
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
 		        featureCollectionIter.close();
@@ -819,7 +824,7 @@ public class Db2ShpTest {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					assertTrue(shapeObj.getAttribute("attr")==null);
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -925,7 +930,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "12");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -982,7 +987,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(123.0,attr1);
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals("POINT (-0.2285714285714285 0.5688311688311687)",attr2.toString());
 	    		}
 		        featureCollectionIter.close();
@@ -1039,7 +1044,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "character varying");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1097,7 +1102,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "10:10:59");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1157,7 +1162,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "11:06:30.555");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1214,7 +1219,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "5");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1271,7 +1276,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "2014-05-15T12:30:30.555");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1330,7 +1335,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "25-04-1987 12:30:30");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1387,7 +1392,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "123e4567-e89b-12d3-a456-426655440000");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1445,7 +1450,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "<attrText>character varying</attrText>");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1503,7 +1508,7 @@ public class Db2ShpTest {
 	    		if(featureCollectionIter.hasNext()) {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1561,7 +1566,7 @@ public class Db2ShpTest {
 	    		if(featureCollectionIter.hasNext()) {
 					// feature object
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1620,7 +1625,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "coord2d");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
 	    		}
 		        featureCollectionIter.close();
@@ -1677,7 +1682,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "multicoord");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "MULTIPOINT ((-0.2285714285714285 0.5688311688311687), (-0.1922077922077922 0.6935064935064934), (-0.4883116883116884 0.3272727272727272))");
 	    		}
 		        featureCollectionIter.close();
@@ -1733,7 +1738,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "linestring");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687))");
 	    		}
 		        featureCollectionIter.close();
@@ -1790,7 +1795,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "multilinestring");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "MULTILINESTRING ((-0.2285714285714285 0.5688311688311687, -0.2255714285714285 0.5658311688311687), (-0.2255714285714285 0.5658311688311687, -0.2275514285714285 0.5558351688311687))");
 	    		}
 		        featureCollectionIter.close();
@@ -1847,7 +1852,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "polygon");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))");
 	    		}
 		        featureCollectionIter.close();
@@ -1903,7 +1908,7 @@ public class Db2ShpTest {
 					SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
 					Object attr1=shapeObj.getAttribute("attr");
 					assertEquals(attr1.toString(), "multipolygon");
-					Object attr2=shapeObj.getAttribute("the_geom");
+					Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 					assertEquals(attr2.toString(), "MULTIPOLYGON (((-0.228 0.568, -0.158 0.588, -0.158 0.588, -0.158 0.568, -0.158 0.568, -0.228 0.568)))");
 	    		}
 		        featureCollectionIter.close();
