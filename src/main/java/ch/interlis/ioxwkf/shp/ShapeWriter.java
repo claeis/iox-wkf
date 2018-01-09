@@ -104,6 +104,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/** write content to shape file.
+ * this class implements a INTERLIS 2 writer.
+ */
 public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	
 	private static final String CRS_CODESPACE_EPSG = "EPSG";
@@ -136,13 +139,19 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private SimpleFeatureStore featureStore=null;
 	private Transaction transaction=null;
 	
-	/** initialize file and model
+	/** initialize shape writer.
 	 * @param file
 	 * @throws IoxException
 	 */
-    public ShapeWriter(java.io.File file) throws IoxException { 
+    public ShapeWriter(java.io.File file) throws IoxException {
     	this(file,null);
     }
+    
+    /** initialize shape writer with settings.
+     * @param file
+     * @param settings
+     * @throws IoxException
+     */
     public ShapeWriter(java.io.File file,Settings settings) throws IoxException { 
 		init(file,settings);
     }
@@ -171,6 +180,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		file.setWritable(true);
 	}
     
+	/** write content in IomObjects sequential in IoxEvents to shape file.
+	 * @param event to help to write content of IomObject to shape file.
+	 * @exception IoxException
+	 */
     @Override
 	public void write(IoxEvent event) throws IoxException {
 		if(event instanceof StartTransferEvent){
@@ -415,14 +428,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}
 		return null;
 	}
-	/** convert IomObject to jts format
-	 * @param obj
-	 * @param attrv
-	 * @return collection of all features and attributes in feature collection
-	 * @throws IoxException
-	 * @throws IOException
-	 * @throws Iox2jtsException
-	 */
+	
     private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
     	for (int i = 0; i < attrDescs.size(); i++){
 	    	GeometryFactory geometryFactory=new GeometryFactory();
@@ -539,7 +545,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     	return feature;
 	}
     
-	/** write created features to shape-file
+	/** write features to shape-file
 	 * @param features
 	 * @throws IoxException
 	 */
@@ -556,6 +562,9 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    }
 	}
 
+	/** close dataStore and transaction.
+	 * @exception IoxException
+	 */
 	@Override
     public void close() throws IoxException
 	{
@@ -574,41 +583,72 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}
     }
     
+	/** flush.
+	 * @exception IoxException
+	 */
 	@Override
-	public void flush() throws IoxException 
+	public void flush() throws IoxException
 	{
-		
 	}
+	
+	/** create IomObject.
+	 * @param arg0
+	 * @param arg1
+	 * @exception IoxException
+	 */
 	@Override
 	public IomObject createIomObject(String arg0, String arg1) throws IoxException 
 	{
 		return null;
 	}
+	
+	/** get iox factory collection
+	 * @return IoxFactoryCollection
+	 * @exception IoxException
+	 */
 	@Override
 	public IoxFactoryCollection getFactory() throws IoxException 
 	{
 		return null;
 	}
+	
+	/** set iox factory collection.
+	 * @param ar0
+	 * @exception IoxException
+	 */
 	@Override
 	public void setFactory(IoxFactoryCollection arg0) throws IoxException 
-	{
-		
+	{	
 	}
-
+	
+	/** set default srid code.
+	 * @param sridCode
+	 */
 	public void setDefaultSridCode(String sridCode) {
 		defaultSrsId = Integer.parseInt(sridCode);
 	}
-
+	
 	private TransferDescription getModel() {
 		return td;
 	}
-
+	
+	/** set model.
+	 * @param td
+	 */
 	public void setModel(TransferDescription td) {
 		this.td = td;
 	}
+	
+	/** get attribute descriptors.
+	 * @return AttributeDescriptor[]
+	 */
 	public AttributeDescriptor[] getAttributeDescriptors() {
 		return attrDescs.toArray(new AttributeDescriptor[attrDescs.size()]);
 	}
+	
+	/** set attribute descriptors.
+	 * @param attrDescs[]
+	 */
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
 		this.attrDescs = new ArrayList<AttributeDescriptor>();
 		for(AttributeDescriptor attrDesc:attrDescs) {

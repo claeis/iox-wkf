@@ -49,10 +49,20 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-	
+
+/** reading shape file.
+ * this class implements a INTERLIS 2 reader.
+ */
 public class ShapeReader implements IoxReader{
+	
+	/** the_geom is used for the geometry attribute name.
+     */
 	public static final String GEOTOOLS_THE_GEOM = BasicFeatureTypes.GEOMETRY_ATTRIBUTE_NAME;
+	
+	/** the name of the setting to encode a DBF file.
+	 */
 	public static final String ENCODING = "ch.interlis.ioxwkf.shp.encoding";
+	
 	// state
 	private int state;
 	private static final int START=0;
@@ -80,21 +90,31 @@ public class ShapeReader implements IoxReader{
 	
 	// attributes, as read from the underlying geotools library
 	private List<AttributeDescriptor> shapeAttributes=null;
+	
 	// attributes, as returned from this reader (as values of IomObjects).
 	// List is in the same order as shapeAttributes, but case of attribute name might be different.
 	// And name of geometry attribute might be different.
 	private List<String> iliAttributes=null;
+	
 	// Name of the geometry attribute in the IomObject
 	private String theGeomAttr=GEOTOOLS_THE_GEOM;
 
 	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
 	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-	/** Creates a new reader.
+	
+	/** Creates a new shape reader.
 	 * @param shpFile to read from
+	 * @throws IoxException
 	 */
 	public ShapeReader(java.io.File shpFile) throws IoxException{
 		this(shpFile,null);
 	}
+	
+	/** Creates a new shape reader, which contains settings.
+	 * @param shpFile to read from
+	 * @param settings
+	 * @throws IoxException
+	 */
 	public ShapeReader(java.io.File shpFile,Settings settings) throws IoxException{
 		state=START;
 		td=null;
@@ -102,10 +122,10 @@ public class ShapeReader implements IoxReader{
 		init(inputFile,settings);
 	}
 	
-	/** Initialize file content.
-	 * @param java.io.File shapeFile
+	/** initialize file content.
+	 * @param shapeFile
+	 * @param settings
 	 * @throws IoxException
-	 * @throws  
 	 */
 	private void init(java.io.File shapeFile,Settings settings) throws IoxException{
 		factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
@@ -131,16 +151,15 @@ public class ShapeReader implements IoxReader{
 		}
 	}
 	
-	/**
-	 * set model.
-	 * @param td, transfer description.
+	/** set model.
+	 * @param td transfer description.
 	 */
 	public void setModel(TransferDescription td){
 		this.td=td;
 	}
 
-	/**
-	 * read the path of input shape file and get the single name of shape file.
+	/** read the path of input shape file and get the single name of shape file.
+	 * @return file path to read from.
 	 * @throws IoxException
 	 */
 	private String getNameOfDataFile() throws IoxException{
@@ -158,9 +177,9 @@ public class ShapeReader implements IoxReader{
 		}
 	}
 	
-	/**
-	 * read file elements in simple feature file.
-	 * @return IoxEvent's.
+	/** read file elements in simple feature file.
+	 * @return IoxEvent
+	 * @exception IoxException
 	 */
 	@Override
     public IoxEvent read() throws IoxException{
@@ -298,7 +317,6 @@ public class ShapeReader implements IoxReader{
 	        				Coordinate coord=pointObj.getCoordinate();
 							subIomObj=Jts2iox.JTS2coord(coord);
 							iomObj.addattrobj(iliAttrName, subIomObj);
-							
 	        			}else if(shapeAttrValue instanceof Polygon) {
 	        				// polygon
 	        				Polygon polygonObj=(Polygon)shapeAttrValue;
@@ -350,6 +368,7 @@ public class ShapeReader implements IoxReader{
 		}
 		return ret.toString();
 	}
+    
 	private Viewable getViewableByShapeAttributes(List<AttributeDescriptor> shapeAttrs,List<String> iliAttrs) throws IoxException{
     	Viewable viewable=null;
     	ArrayList<ArrayList<Viewable>> models=setupNameMapping();
@@ -389,6 +408,7 @@ public class ShapeReader implements IoxReader{
     	}
     	return null;
     }
+	
     private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs,List<AttributeDescriptor> shapeAttrs) {
     	if(iliAttrs.size()+1!=shapeAttrs.size() || geomAttrs.size()!=1) {
     		return false;
@@ -444,9 +464,8 @@ public class ShapeReader implements IoxReader{
 		return models;
     }
     
-    /**
-     * increase count is used to increase oid and bid.
-     * @return increasing number.
+    /** increase count is used to increase oid and bid.
+     * @return String of increasing number.
      */
     private String getNextId(){
     	int count=nextId;
@@ -454,9 +473,11 @@ public class ShapeReader implements IoxReader{
     	return String.valueOf(count);
     }
     
-    /**
-     * create a new IomObject with a unique object id.
-     * @return created IomObject.
+    /** create a new IomObject.
+     * @param type
+     * @param oid
+     * @return IomObject
+     * @exception IoxException
      */
     @Override
 	public IomObject createIomObject(String type, String oid)throws IoxException{
@@ -466,8 +487,8 @@ public class ShapeReader implements IoxReader{
 		return factory.createIomObject(type, oid);
 	}
     
-    /**
-     * delete Path of inputFile.
+    /** close feature collection iterator and data store.
+     * @exception IoxException
      */
 	@Override
 	public void close() throws IoxException {
@@ -481,27 +502,33 @@ public class ShapeReader implements IoxReader{
 		}
 	}
 
-	/** get set factory.
+	/** get factory.
+	 * @return IoxFactoryCollection
+	 * @exception IoxException
 	 */
 	@Override
 	public IoxFactoryCollection getFactory() throws IoxException{
 		return factory;
 	}
 	
-	/** set content of IoxFactoryCollection.
+	/** set factory.
+	 * @param factory to set.
+	 * @exception IoxException
 	 */
 	@Override
 	public void setFactory(IoxFactoryCollection factory) throws IoxException{
 		this.factory=factory;
 	}
+	
 	/** gets the list of attributes in the read/returned IomObjects.
 	 * @return list of attribute names.
 	 */
 	public String[] getAttributes() {
 		return iliAttributes.toArray(new String[iliAttributes.size()]);
 	}
+	
 	/** gets the name of the geometry attribute in the read/returned IomObjects.
-	 * @return name of geometry attribute
+	 * @return name of geometry attribute.
 	 */
 	public String getGeomAttr() {
 		return theGeomAttr;
