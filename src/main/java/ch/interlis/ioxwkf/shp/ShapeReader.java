@@ -50,16 +50,211 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 
-/** reading shape file.
- * this class implements a INTERLIS 2 reader.
+/**<b>ShapeReader</b>
+ * <p>
+ * 
+ * <b>The main task</b><br>
+ * Reading data from a ShapeFile.<br>
+ * <li>If the file to read from not found, a exception will be thrown.</li>
+ * <p>
+ * 
+ * <b>(Optional) Setting possibilities</b><br>
+ * There is only one Setting to use:<br>
+ * <li>ShapeReader.ENCODING</li><br>
+ * {@code ENCODING} is the name of the setting to define the text used to encode a DBF file.<br>
+ * <p>
+ * example: Settings settings.setValue(ShapeReader.ENCODING, "Code");
+ * <p>
+ * 
+ * <b>(Optional) Set Model</b><br>
+ * <li>If a model is set, make shore that the file content matches the class in the model. If the class can not be found, an exception will be thrown.</li>
+ * <li>If no model is set, the first object will be used to create the IomObject.</li>
+ * <p>
+ * example:<br>
+ * File file = new File("file.shp");<br>
+ * ShapeReader reader = new ShapeReader(file);<br>
+ * reader.setModel(td);<br>
+ * <p>
+ * 
+ * <b>Geometry Attributenames</b><br>
+ * Important to know is that all the geometry names are equal. They call: 'the_geom'.<br>
+ * If a model is set, the geometry names are made from the model attribute names.
+ * <p>
+ * 
+ * <b>IomObject</b><br>
+ * IomObject iomObj=createIomObject("{@code type}", "{@code oid}");<br>
+ * Define param:<br>
+ * <br>
+ * if model is set:
+ * <li>type=="modelname.topicname.classname"</li>
+ * <li>oid==Start counting by 1, go on adding 1 to existing count. model, basket and class id's are unique.</li>
+ * <p>
+ * if no model set:
+ * <li>The default modelname is: 'The name of the shapefile'</li>
+ * <li>The default topicname is: 'Topic(1,2,3,...)'</li>
+ * <li>The default classname is: 'Class(1,2,3,...)'</li>
+ * <li>type=="modelname.topicname.classname"</li>
+ * <li>oid==Start counting by 1, go on adding 1 to existing count. model, basket and class id's are unique.</li>
+ * <p>
+ * 
+ * <b>Supported INTERLIS data types</b><br>
+ * <table border="1">
+ * <tr>
+ *   <th>Shape Type</th> 
+ *   <th>INTERLIS Type</th>
+ *   <th>Format</th>
+ * </tr>
+ * <tr>
+ *   <td>String</td> 
+ *   <td>EnumerationType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ *  <tr>
+ *   <td>String</td> 
+ *   <td>EnumTreeValueType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>String</td> 
+ *   <td>AlignmentType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>Boolean</td>
+ *   <td>BooleanType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>Double</td>
+ *   <td>DoubleType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>Integer</td> 
+ *   <td>NumericType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>String</td>
+ *   <td>FormattedType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>Point</td> 
+ *   <td>CoordinateType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>(OTHER) uuid</td> 
+ *   <td>OIDType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>(OTHER) xml</td>
+ *   <td>BlackboxType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>String</td> 
+ *   <td>ClassType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>String</td> 
+ *   <td>AttributePathType</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>(SimpleDateFormat) DateFormat</td>
+ *   <td>java.util.Date xtfDate</td>
+ *   <td>
+ * 		<li>IoxWkfConfig.SETTING_DATEFORMAT:<br>
+ *          Default DateFormat for Date: yyyy-MM-dd<br>
+ *          IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE.
+ *      </li>
+ * 		<li>Own DateFormat, see link.<br>
+ * 		    See Attachement DateFormatDefinition
+ *      </li>
+ *   </td>
+ * </tr>
+ * <tr>
+ *   <td>(SimpleDateFormat) DateFormat</td>
+ *   <td>java.util.Date xtfTime</td>
+ *   <td>
+ * 		<li>IoxWkfConfig.SETTING_TIMEFORMAT:<br>
+ *          Default DateFormat for Time: HH:mm:ss<br>
+ *          IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME.
+ *      </li>
+ * 		<li>Own DateFormat, see link.<br>
+ * 		    See Attachement DateFormatDefinition
+ *      </li>
+ *   </td>
+ * </tr>
+ * <tr>
+ *   <td>(SimpleDateFormat) DateFormat</td>
+ *   <td>java.util.Date xtfDateTime</td>
+ *   <td>
+ * 		<li>IoxWkfConfig.SETTING_TIMESTAMPFORMAT:<br>
+ *          Default DateFormat for TimeStamp:<br>
+ *          yyyy-MM-dd'T'HH:mm:ss.SSS<br>
+ *          IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP.
+ *      </li>
+ * 		<li>Own DateFormat, see link.<br>
+ * 		    See Attachement DateFormatDefinition
+ *      </li>
+ *   </td>
+ * </tr>
+ * <tr>
+ *   <td>Point</td> 
+ *   <td>Coord</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>MultiPoint</td> 
+ *   <td>MultiCoord</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>Polygon</td> 
+ *   <td>Surface</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>MultiPolygon</td>
+ *   <td>MultiSurface</td> 
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>LineString</td> 
+ *   <td>Polyline</td>
+ *    <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * <tr>
+ *   <td>MultiLineString</td>
+ *   <td>MultiPolyline</td>
+ *   <td>See attachement: Shapespecification</a></td>
+ * </tr>
+ * </table>
+ * <p>
+ * 
+ * <b>Not Supported INTERLIS data types</b><br>
+ * <li>StructureType</li>
+ * <li>ReferenceType</li>
+ * <li>AssociationType</li>
+ * <p>
+ * 
+ * <b>Attachement</b><br>
+ * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapespecification</a></li>
+ * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlisspecification</a></li>
+ * <li><a href="https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html">DateFormatDefinition</a></li>
  */
 public class ShapeReader implements IoxReader{
 	
-	/** the_geom is used for the geometry attribute name.
+	/** the_geom is used for the geometry attribute name of geotools.
      */
 	public static final String GEOTOOLS_THE_GEOM = BasicFeatureTypes.GEOMETRY_ATTRIBUTE_NAME;
 	
-	/** the name of the setting to encode a DBF file.
+	/** the name of the setting to define the text which is used to encode a DBF file.
 	 */
 	public static final String ENCODING = "ch.interlis.ioxwkf.shp.encoding";
 	
@@ -110,7 +305,12 @@ public class ShapeReader implements IoxReader{
 		this(shpFile,null);
 	}
 	
-	/** Creates a new shape reader, which contains settings.
+	/** Creates a new shape reader, which contains settings.<br>
+	 * There is only one Setting to use:<br>
+     * <li>ShapeReader.ENCODING</li><br>
+     * ENCODING is the name of the setting to define the text used to encode a DBF file.<br>
+     * example: Settings settings.setValue(ShapeReader.ENCODING, "Code");
+     * <p>
 	 * @param shpFile to read from
 	 * @param settings
 	 * @throws IoxException
@@ -151,14 +351,20 @@ public class ShapeReader implements IoxReader{
 		}
 	}
 	
-	/** set model.
-	 * @param td transfer description.
+	/** The model.
+	 * <li>If a model is set, the Shapefile will match the class in the model. If the class can not be found, an error message will be displayed. It is important to make sure the Shapefile matches the set model.</li>
+	 * <li>If no model is set, the first object will be used.</li>
+	 * example:<br>
+	 * File file = new File("file.shp");<br>
+	 * ShapeReader reader = new ShapeReader(file);<br>
+	 * reader.setModel(td);<br>
+	 * @param td
 	 */
 	public void setModel(TransferDescription td){
 		this.td=td;
 	}
 
-	/** read the path of input shape file and get the single name of shape file.
+	/** read the path of input shape file and return the single name of shape file.
 	 * @return file path to read from.
 	 * @throws IoxException
 	 */
@@ -473,12 +679,26 @@ public class ShapeReader implements IoxReader{
     	return String.valueOf(count);
     }
     
-    /** create a new IomObject.
-     * @param type
-     * @param oid
-     * @return IomObject
-     * @exception IoxException
-     */
+   /** create a new IomObject.
+    * IomObject iomObj=createIomObject("{@code type}", "{@code oid}");<br>
+	* Define param:<br>
+	* <br>
+	* if model is set:
+	* <li>type=="modelname.topicname.classname"</li>
+	* <li>oid==Start counting by 1, go on adding 1 to existing count. model, basket and class id's are unique.</li>
+	* <p>
+	* if no model set:
+	* <li>The default modelname is: 'The name of the shapefile'</li>
+	* <li>The default topicname is: 'Topic(1,2,3,...)'</li>
+	* <li>The default classname is: 'Class(1,2,3,...)'</li>
+	* <li>type=="modelname.topicname.classname"</li>
+    * <li>oid==Start counting by 1, go on adding 1 to existing count. model, basket and class id's are unique.</li>
+    * <p>
+    * @param type
+    * @param oid
+    * @return IomObject
+    * @exception IoxException
+    */
     @Override
 	public IomObject createIomObject(String type, String oid)throws IoxException{
     	if(oid==null){
