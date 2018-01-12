@@ -1,5 +1,5 @@
 group 'ch.interlis'
-version '0.9.0'+System.getProperty('release','-SNAPSHOT')
+version '1.0.0'+System.getProperty('release','-SNAPSHOT')
 
 apply plugin: "java"
 apply plugin: "maven"
@@ -23,8 +23,8 @@ dependencies {
         exclude group: 'com.vividsolutions', module: 'jts' // use version that iox-ili depends on
     }
     testCompile group: 'junit', name: 'junit', version: '4.+'
-    compile group: 'ch.interlis', name: 'iox-ili', version: 'latest.integration' // use SNAPSHOT
-    compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.+' // use SNAPSHOT
+    compile group: 'ch.interlis', name: 'iox-ili', version: '1.20.1'
+    compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.7.6'
 	runtime group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	testCompile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
 	compile('ch.interlis:ili2pg:3.+'){

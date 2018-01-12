@@ -20,138 +20,13 @@ import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox_j.EndBasketEvent;
 import ch.interlis.iox_j.EndTransferEvent;
 
-/**<b>AbstractExportFromdb</b>
- * <p>
- * 
- * <b>The main task</b><br>
- * export data (converted from PostGis to Interlis dataTypes) from database and write data with appropriate IoxWriter to file.
- * <p>
- * 
- * <b>Create a new AbstractExportFromdb</b><br>
- * <li>Create an Db2Csv object. Db2Csv extends AbstractExportFromdb class.</li>
- * <li>Create an Db2Shp object. Db2Shp extends AbstractExportFromdb class.</li>
- * <p>
- * 
- * <b>AbstractExport Settings</b><br>
- * <table border="1">
- * <tr>
- *   <th>Setting Name</th>
- *   <th>Description</th>
- *   <th>Example</th>
- * </tr>
- * <tr>
- *   <td>Set File (Mandatory)</td>
- *   <td>The file to write to.<p>
- * 	 	 File will be created in folder of defined path.</td>
- *   <td>File file=new File("C:\file.csv");<br>
- *		 Db2Csv csvExport= new Db2Csv();<br>
- *		 csvExport.exportData(file,"Connection", config);
- *	 </td>
- * </tr>
- * <tr>
- *   <td>Connection (Mandatory)</td>
- *   <td>The Connection has to be valid.</td>
- *   <td>-</td>
- * </tr>
- *  <tr>
- *   <td>SETTING_DBSCHEMA</td>
- *   <td>The data base schema.<p>
- * 		Decide between:<br>
- * 		<li>Set dbschema and export data from dbtable inside defined dbschema.</li>
- * 		<li>Set no dbschema and export data from default dbschema.</li></td>
- *   <td>Settings config=new Settings();<br>
- *		 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA,"schemaName");<br>
- *		 Db2Csv csvExport= new Db2Csv();<br>
- *		 csvExport.exportData(new File("file"),"Connection", config);
- *	 </td>
- * </tr>
- *  <tr>
- *   <td>SETTING_DBTABLE <b>(Mandatory)</b></td>
- *   <td>The data base table.<br>
- *   	 Import/Export data to this table inside defined or default dbschema.</td>
- *   <td>Settings config=new Settings();<br>
- *		 config.setValue(IoxWkfConfig.SETTING_DBTABLE,"tableName");<br>
- *		 Db2Csv csvExport= new Db2Csv();<br>
- *		 csvExport.exportData(new File("file"),"Connection", config);
- *	 </td>
- * </tr>
- *  <tr>
- *   <td>SETTING_FIRSTLINE</td>
- *   <td> CSV import/export<br>
- *		the first line of CSV file.<p>
- *		decide between:<br>
- *		<li>SETTING_FIRSTLINE_AS_HEADER</li>
- * 		<li>SETTING_FIRSTLINE_AS_VALUE</li></td>
- *   <td>
- *   Settings config=new Settings();<br>
- *	 Db2Csv csvExport= new Db2Csv();<br>
- *	 config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);<br>
- *	 config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_VALUE);<br>
- *	 csvExport.exportData(new File("file"),"Connection", config);
- *   </td>
- * </tr>
- *  <tr>
- *   <td>SETTING_DATEFORMAT</td>
- *   <td>The date format.<p>
- * 		 decide between:<br>
- * 		 <li>the default date format pattern: yyyy-MM-dd SETTING_DEFAULTFORMAT_DATE.</li>
- * 		 <li>user defined date format pattern.</li>
- * 		 <p>
- * 		 See: <a href="https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html">valid patterns</a></td>
- *   <td>
- *   	Settings config=new Settings();<br>
- *	 	Db2Csv csvExport= new Db2Csv();<br>
- *	 	config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE);<br>
- *		config.setValue(IoxWkfConfig.SETTING_DATEFORMAT, "yyyy-MM-dd");<br>
- *	 	csvExport.exportData(new File("file"),"Connection", config);
- *   </td>
- * </tr>
- *  <tr>
- *   <td>SETTING_TIMEFORMAT</td>
- *   <td>The time format.<p>
- * 		 decide between:<br>
- * 		 <li>the default time format pattern: HH:mm:ss SETTING_DEFAULTFORMAT_TIME.</li>
- * 		 <li>user defined time format pattern.</li>
- *  	 <p>
- * 		 See: <a href="https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html">valid patterns</a></td>
- *   <td>
- *   	Settings config=new Settings();<br>
- *	 	Db2Csv csvExport= new Db2Csv();<br>
- *	 	config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME);<br>
- *		config.setValue(IoxWkfConfig.SETTING_TIMEFORMAT, "HH:mm:ss");<br>
- *	 	csvExport.exportData(new File("file"),"Connection", config);
- *   </td>
- * </tr>
- *  <tr>
- *   <td>SETTING_TIMESTAMPFORMAT</td>
- *   <td>The time stamp format.<p>
- *		 decide between:<br>
- *		 <li>the default time stamp format pattern: yyyy-MM-dd'T'HH:mm:ss.SSS SETTING_DEFAULTFORMAT_TIMESTAMP.</li>
- *		 <li>user defined time stamp format pattern.</li>
- *		 <p>
- *		 See: <a href="https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html">valid patterns</a></td>
- *   <td>
- *   	Settings config=new Settings();<br>
- *	 	Db2Csv csvExport= new Db2Csv();<br>
- *	 	config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP);<br>
- *		config.setValue(IoxWkfConfig.SETTING_TIMESTAMPFORMAT, "yyyy-MM-dd'T'HH:mm:ss.SSS");<br>
- *	 	csvExport.exportData(new File("file"),"Connection", config);
- *   </td>
- * </tr>
- * </table>
- * <p>
- * 
- * <b>AttributeDescriptor possibilities</b><br>
- * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
- * <p>
- * 
- * <b>Setting possibilities</b><br>
- * {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}<br>
- * <p>
- * 
- * <b>Attachement</b><br>
- * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapespecification</a></li>
- * <li><a href="https://docs.oracle.com/javase/6/docs/api/java/sql/Types.html">java.sql.Types</a></li>
+/** Writes data from a database to a IoxWriter.
+ * The IoxWriter can be configured by overriding the {@link #createWriter(File, Settings, AttributeDescriptor[])} method.
+ * {@link IoxWkfConfig#SETTING_DBSCHEMA}
+ * {@link IoxWkfConfig#SETTING_DBTABLE}
+ * {@link IoxWkfConfig#SETTING_DATEFORMAT}
+ * {@link IoxWkfConfig#SETTING_TIMEFORMAT}
+ * {@link IoxWkfConfig#SETTING_TIMESTAMPFORMAT}
  */
 public abstract class AbstractExportFromdb {
 	private IoxFactoryCollection factory;
@@ -168,64 +43,16 @@ public abstract class AbstractExportFromdb {
 	/** the default topic content.
 	 */
 	private static final String TOPICNAME="topic";
-	/** create a writer in the appropriate format.<br>
-	 * <p>
-	 * 
-	 * Set File (Mandatory)<br>
-	 * The file to write to.
-	 * <p>
-	 * 
-	 * Path has to exist.<br>
-	 * File file=new File("C:\file.csv");<br>
-	 * Db2Csv csvExport= new Csv2db();<br>
-	 * csvExport.exportData(file,"Connection", config);
-	 * <p>
-	 * 
-	 * Setting possibilities:<br>
-	 * <li>Setting possibilities<br>
-	 *	   {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}
-	 * </li>
-	 * 
-	 * AttributeDescriptor possibilities<br>
-	 * Data base columns of AttributeDescriptor<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}
-	 * <p>
-	 * 
-	 * @param file to write to.
-	 * @param config to set by user.
-	 * @param dbColumns[] 
-	 * @return IoxWriter
+	/** Creates the writer to be used by the export.
+	 * @param file to write
+	 * @param config further parameters/options
+	 * @param dbColumns info about the columns to export
+	 * @return
 	 * @throws IoxException
 	 */
 	protected abstract IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException;
 	
-	/** exportData.<br>
-	 * export from data base table to file.<br>
-	 * <p>
-	 * 
-	 * Set File (Mandatory)<br>
-	 * The file to write to.<br>
-	 * File has to exist.<br>
-	 * <p>
-	 * 
-	 * File file=new File("C:\file.csv");<br>
-	 * Db2Csv csvExport= new Db2Csv();<br>
-	 * csvExport.exportData(file,"Connection", config);
-	 * <p>
-	 * 
-	 * Connection (Mandatory)<br>
-	 * The Connection has to be valid.
-	 * 
-	 * Setting possibilities:<br>
-	 * <li>Setting possibilities<br>
-	 *	   {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}
-	 * </li>
-	 * <p>
-	 * 
-	 * @param file to write to.
-	 * @param db
-	 * @param config to set by user.
-	 * @throws IoxException
+	/** export from data base table to a file.
 	 */
 	public void exportData(File file,Connection db,Settings config) throws IoxException {
 		// data base connection has not to be null.
@@ -341,50 +168,6 @@ public abstract class AbstractExportFromdb {
 		EhiLogger.logState("export: <successful>.");
 	}
 	
-	/** getSelectStatement<br>
-	 * create a selection and wrapp all geometries, xml and blob datatypes from db to ili format.<br>
-	 * <table border="1">
-	 *  <tr>
-	 *   <td>SETTING_DBSCHEMA</td>
-	 *   <td>The data base schema.<p>
-	 * 		Decide between:<br>
-	 * 		<li>Set dbschema and export data from dbtable inside defined dbschema.</li>
-	 * 		<li>Set no dbschema and export data from default dbschema.</li></td>
-	 *   <td>Settings config=new Settings();<br>
-	 *		 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA,"schemaName");<br>
-	 *		 Db2Csv csvExport= new Db2Csv();<br>
-	 *		 csvExport.exportData(new File("file"),"Connection", config);
-	 *	 </td>
-	 * </tr>
-	 * <tr>
-	 *   <td>SETTING_DBTABLE <b>(Mandatory)</b></td>
-	 *   <td>The data base table.<br>
-	 *   	 Import/Export data to this table inside defined or default dbschema.</td>
-	 *   <td>Settings config=new Settings();<br>
-	 *		 config.setValue(IoxWkfConfig.SETTING_DBTABLE,"tableName");<br>
-	 *		 Db2Csv csvExport= new Csv2db();<br>
-	 *		 csvExport.exportData(new File("file"),"Connection", config);
-	 *	 </td>
-	 *  </tr>
-	 *  <tr>
-	 * 		<td>AttributeDescriptor</td>
-	 * 		<td>-</td>
-	 * 		<td>{@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}</td>
-	 *  </tr>
-	 *  <tr>
-	 * 		<td>Connection</td>
-	 * 		<td>-</td>
-	 * 		<td>{@link java.sql.Connection}</td>
-	 *  </tr>
-	 * </table>
-	 * 
-	 * @param schemaName
-	 * @param tableName
-	 * @param attrs
-	 * @param db
-	 * @return selectionQueryBuild.toString()
-	 * @throws SQLException
-	 */
 	private String getSelectStatement(String schemaName, String tableName, List<AttributeDescriptor> attrs, Connection db) throws SQLException {
 		StringBuilder selectionQueryBuild=new StringBuilder();
 		String comma="";
@@ -427,68 +210,6 @@ public abstract class AbstractExportFromdb {
 		return selectionQueryBuild.toString();
 	}
 	
-	/** convertRecordToIomObject<br>
-	 * get iomObject with all attributes in appropriate datatype.<br>
-	 * <p>
-	 * 
-	 * <table border="1">
-	 *  <tr>
-	 *   <td>SETTING_DBSCHEMA</td>
-	 *   <td>The data base schema.<p>
-	 * 		Decide between:<br>
-	 * 		<li>Set dbschema and export data from dbtable inside defined dbschema.</li>
-	 * 		<li>Set no dbschema and export data from default dbschema.</li></td>
-	 *   <td>Settings config=new Settings();<br>
-	 *		 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA,"schemaName");<br>
-	 *		 Db2Csv csvExport= new Db2Csv();<br>
-	 *		 csvExport.exportData(new File("file"),"Connection", config);
-	 *	 </td>
-	 *  </tr>
-	 *  <tr>
-	 *   <td>SETTING_DBTABLE <b>(Mandatory)</b></td>
-	 *   <td>The data base table.<br>
-	 *   	 Import/Export data to this table inside defined or default dbschema.</td>
-	 *   <td>Settings config=new Settings();<br>
-	 *		 config.setValue(IoxWkfConfig.SETTING_DBTABLE,"tableName");<br>
-	 *		 Db2Csv csvExport= new Db2Csv();<br>
-	 *		 csvExport.exportData(new File("file"),"Connection", config);
-	 *	 </td>
-	 *  </tr>
-	 *  <tr>
-	 *   <td>ModelName</td>
-	 *   <td>The name of the model.</td>
-	 *   <td>-</td>
-	 *  </tr>
-	 *  <tr>
-	 *   <td>TopicName</td>
-	 *   <td>The name of the topic.</td>
-	 *   <td>-</td>
-	 *  </tr>
-	 * </table>
-	 *
-	 * AttributeDescriptor possibilities<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
-	 * <p>
-	 * 
-	 * ResultSet:<br>
-	 * {@link java.sql.ResultSet}
-	 * <p>
-	 * 
-	 * Connection db:<br>
-	 * {@link java.sql.Connection}
-	 * <p>
-	 * 
-	 * @param definedSchemaName
-	 * @param definedTableName
-	 * @param modelName
-	 * @param topicName
-	 * @param attrs
-	 * @param rs
-	 * @param db
-	 * @return iomObj
-	 * @throws IoxException
-	 * @throws SQLException
-	 */
 	private IomObject convertRecordToIomObject(String definedSchemaName,String definedTableName, String modelName, String topicName, List<AttributeDescriptor> attrs, ResultSet rs, Connection db) throws IoxException, SQLException {
 		IomObject geoIomObj=null;
 		// create iomObject to put attributes or objects inside.
@@ -702,25 +423,6 @@ public abstract class AbstractExportFromdb {
 		return iomObj;
 	}
 	
-	/** createIomObject<br>
-	 * create an IomObject.<br>
-	 * <p>
-	 * 
-	 * type:<br>
-	 * the type consists of:<br>
-	 * <li>modelname.</li>
-	 * <li>topicname.</li>
-	 * <li>classname</li>
-	 * <p>
-	 * 
-	 * example:<br>
-	 * iomObj = createIomObject(modelName+"."+topicName+"."+definedTableName);<br>
-	 * <p>
-	 *
-	 * @param type
-	 * @return iomObject.
-	 * @throws IoxException
-	 */
 	private IomObject createIomObject(String type)throws IoxException{
     	factory=new ch.interlis.iox_j.DefaultIoxFactoryCollection();
     	objectCount+=1;

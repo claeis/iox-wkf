@@ -106,218 +106,35 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**<b>ShapeWriter</b>
+/** Write data to a Shapefile.
+ * If the file already exists, the existing file will be replaced.
  * <p>
- * 
- * <b>The main task</b><br>
- * Writing data to a ShapeFile.<br>
- * <li>If the file does not already exist, the file will be created by the defined name within the defined path.</li>
- * <li>If the file already exists, the existing file will be replaced by the new file.</li>
- * <p>
- * 
- * <b>(Optional) Setting possibilities</b><br>
- * There is only one Setting to use:<br>
- * <li>ShapeReader.ENCODING</li><br>
- * {@code ENCODING} is the name of the setting to define the text used to encode a DBF file.<br>
- * <p>
- * example: Settings settings.setValue(ShapeReader.ENCODING, "Code");
- * <p>
- * 
- * <b>(Optional) Set Model</b><br>
- * <li>If a model is set, make shore that the file content matches the class in the model. If the class can not be found, an exception will be thrown.</li>
+ * <b>Settings</b><p>
+ * <ul>
+ * <li>{@link ShapeReader.ENCODING} might be set to define the encoding of text attributes in the DBF file.</li>
+ * </ul>
+ * <b>Interlis model</b><p>
+ * <ul>
+ * <li>If a model is set, a class as defined by the object tag is required. The feature type is created based on this class. If the class can not be found, an exception will be thrown.</li>
+ * <li>If no model is set, but attribute descriptors defined, these attributes descriptors are used to create the feature type (see {@link #setAttributeDescriptors(AttributeDescriptor[])}.</li>
  * <li>If no model is set, the first object will be used to create the feature type.</li>
- * <li>If no model is set, there is the possibility to use your own AttributeDescriptor. For more information see: {@code AttrDesc}.</li>
+ * </ul>
  * <p>
- * example:<br>
- * File file = new File("file.shp");<br>
- * ShapeWriter writer = new ShapeWriter(file);<br>
- * writer.setModel(td);<br>
- * <p>
- * 
- * <b>(Optional) Set Epsg/Srs</b><br>
- * The {@code srId} is an integer value that uniquely identifies the Spatial Referencing System (SRS) within the database.<br>
- * <li>If no default-SRS code is set, the SRS code of the database is adopted.</li>
- * <li>If an SRS code is set, the set SRS code is adopted.</li>
- * <p>
- * example:<br>
- * File file = new File("file.shp");<br>
- * ShapeWriter writer = new ShapeWriter(file);<br>
- * writer.setDefaultSridCode("SRS Code");<br>
- * <p>
- * 
- * <b>(Optional) AttrDesc</b><br>
- * As an alternative to setting a model, a separate AttributeDescriptor can be used.<br>
- * An AttributeDescriptor describes an attribute and shows possibilities which can be set.<br>
- * <li>If an AttributeDescriptor is set, the first object of AttributeDescriptor will be used to define the {@code createFeatureType}.</li>
- * <li>If no AttributeDescriptor is set, depends on model is set or not, see: Set Model</li>
- * <p>
- * example:<br>
- * File file = new File("file.shp");<br>
- * ShapeWriter writer = new ShapeWriter(file);<br>
- * writer.setAttributeDescriptors(AttributeDescriptor attrDescs[]);<br>
- * Definition of an AttributeDescriptor, see: {@code AttributeDescriptor}<br>
- * <p>
- * 
- * <b>Supported INTERLIS data types</b><br>
- * <table border="1">
- * <tr>
- *   <th>INTERLIS Type</th>
- *   <th>Shape Type</th> 
- *   <th>Format</th>
- * </tr>
- * <tr>
- *   <td>EnumerationType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- *  <tr>
- *   <td>EnumTreeValueType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>AlignmentType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- *  <tr>
- *   <td>BooleanType</td>
- *   <td>There are sereval ways in Shape type:<br>
- *       <li>String: ('Y' 'N'), ('T' 'F'), ('True' 'False')</li>
- *       <li>Binary Numbers: ('1' '0')</li>
- *       <li>Boolean: if dataTypeName=<br>
- *           AttributeDescriptor.DBCOLUMN_TYPENAME_BOOL: (true false)</li>
- *   </td>
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>NumericType</td>
- *   <td>Integer</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>DoubleType</td>
- *   <td>Double</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>FormattedType</td>
- *   <td>String</td>
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>CoordinateType</td>
- *   <td>Point</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>OIDType</td>
- *   <td>(OTHER) uuid</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>BlackboxType</td>
- *   <td>(OTHER) xml</td>
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>ClassType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>AttributePathType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>TextType</td>
- *   <td>String</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>xtfDate</td>
- *   <td>(SimpleDateFormat) DateFormat</td> 
- *   <td>
- * 		<li>IoxWkfConfig.SETTING_DATEFORMAT:<br>
- *          Default DateFormat for Date: yyyy-MM-dd<br>
- *          IoxWkfConfig.SETTING_DEFAULTFORMAT_DATE.
- *      </li>
- * 		<li>Own DateFormat, see link.<br>
- * 		    See Attachement DateFormatDefinition
- *      </li>
- *   </td>
- * </tr>
- * <tr>
- *   <td>xtfTime</td>
- *   <td>(SimpleDateFormat) DateFormat</td>
- *   <td>
- * 		<li>IoxWkfConfig.SETTING_TIMEFORMAT:<br>
- *          Default DateFormat for Time: HH:mm:ss<br>
- *          IoxWkfConfig.SETTING_DEFAULTFORMAT_TIME.
- *      </li>
- * 		<li>Own DateFormat, see link.<br>
- * 		    See Attachement DateFormatDefinition
- *      </li>
- *   </td>
- * </tr>
- * <tr>
- *   <td>xtfDateTime</td>
- *   <td>(SimpleDateFormat) DateFormat</td>
- *   <td>
- * 		<li>IoxWkfConfig.SETTING_TIMESTAMPFORMAT:<br>
- *          Default DateFormat for TimeStamp:<br>
- *          yyyy-MM-dd'T'HH:mm:ss.SSS<br>
- *          IoxWkfConfig.SETTING_DEFAULTFORMAT_TIMESTAMP.
- *      </li>
- * 		<li>Own DateFormat, see link.<br>
- * 		    See Attachement DateFormatDefinition
- *      </li>
- *   </td>
- * </tr>
- * <tr>
- *   <td>Coord</td>
- *   <td>Point</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>MultiCoord</td>
- *   <td>MultiPoint</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>Surface</td>
- *   <td>Polygon</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>MultiSurface</td>
- *   <td>MultiPolygon</td> 
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>Polyline</td>
- *   <td>LineString</td> 
- *    <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * <tr>
- *   <td>MultiPolyline</td>
- *   <td>MultiLineString</td>
- *   <td>See attachement: Interlisspecification</a></td>
- * </tr>
- * </table>
- * <p>
- * 
- * <b>Not Supported INTERLIS data types</b><br>
+ * <b>Data type mapping</b><br>
+ * Any attribute type that is not Numeric, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a  text attribute in the shape file
+ * and its value is encoded according to Interlis 2.3 encoding rules.<p>
+ * <b>Not supported INTERLIS data types</b><p>
  * <li>StructureType</li>
  * <li>ReferenceType</li>
- * <li>AssociationType</li>
+ * <p>
+ * <b>Not supported INTERLIS data types</b><p>
+ * <li>StructureType</li>
+ * <li>ReferenceType</li>
  * <p>
  * 
- * <b>Attachement</b><br>
- * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapespecification</a></li>
- * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlisspecification</a></li>
- * <li><a href="https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html">DateFormatDefinition</a></li>
+ * <b>Attachement</b><p>
+ * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapefile specification</a></li>
+ * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlis specification</a></li>
  */
 public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	
@@ -351,24 +168,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private SimpleFeatureStore featureStore=null;
 	private Transaction transaction=null;
 	
-	/** initialize shape writer.
-	 * @param file
-	 * @throws IoxException
-	 */
     public ShapeWriter(java.io.File file) throws IoxException {
     	this(file,null);
     }
     
-    /** initialize shape writer with settings.
-     * @param file
-     * @param settings
-     * There is only one Setting to use:<br>
-     * <li>ShapeReader.ENCODING</li><br>
-     * ENCODING is the name of the setting to define the text used to encode a DBF file.<br>
-     * example: Settings settings.setValue(ShapeReader.ENCODING, "Code");
-     *
-     * @throws IoxException
-     */
     public ShapeWriter(java.io.File file,Settings settings) throws IoxException { 
 		init(file,settings);
     }
@@ -397,10 +200,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		file.setWritable(true);
 	}
     
-	/** write content in IomObjects in IoxEvents to shape file.
-	 * @param event
-	 * @exception IoxException
-	 */
     @Override
 	public void write(IoxEvent event) throws IoxException {
 		if(event instanceof StartTransferEvent){
@@ -781,9 +580,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    }
 	}
 
-	/** Close all open objects.
-	 * @exception IoxException
-	 */
 	@Override
     public void close() throws IoxException
 	{
@@ -802,108 +598,52 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}
     }
     
-	/** flush.
-	 * @exception IoxException
-	 */
 	@Override
 	public void flush() throws IoxException
 	{
 	}
 	
-	/** create IomObject.
-	 * @param arg0
-	 * @param arg1
-	 * @exception IoxException
-	 */
 	@Override
 	public IomObject createIomObject(String arg0, String arg1) throws IoxException 
 	{
 		return null;
 	}
 	
-	/** get iox factory collection
-	 * @return IoxFactoryCollection
-	 * @exception IoxException
-	 */
 	@Override
 	public IoxFactoryCollection getFactory() throws IoxException 
 	{
 		return null;
 	}
 	
-	/** set iox factory collection.
-	 * @param ar0
-	 * @exception IoxException
-	 */
 	@Override
 	public void setFactory(IoxFactoryCollection arg0) throws IoxException 
 	{	
 	}
 	
-	/** The default srid code.
-	 * The SRS is an integer value that uniquely identifies the Spatial Referencing System (SRS) within the database.<br>
-	 * <li>If no default-SRS code is set, the SRS code of the database is adopted.</li>
-	 * <li>If an SRS code is set, the set SRS code is adopted.</li>
-	 * example:<br>
-	 * File file = new File("file.shp");<br>
-	 * ShapeWriter writer = new ShapeWriter(file);<br>
-	 * writer.setDefaultSridCode("SRS Code");<br>
-	 * @param sridCode
+	/** The default srid code, used if not given by the model or the attribute descriptors.
+	 * @param sridCode EPSG code e.g. "2056"
 	 */
 	public void setDefaultSridCode(String sridCode) {
 		defaultSrsId = Integer.parseInt(sridCode);
 	}
 	
-	/** The model.
-	 * <li>If a model is set, the Shapefile will match the class in the model. If the class can not be found, an error message will be displayed. It is important to make sure the Shapefile matches the set model.</li>
-	 * <li>If no model is set, the first object will be used.</li>
-	 * <li>If no model is set, there is the possibility to use own AttributeDescriptor. For more information see: AttrDesc.</li>
-	 * example:<br>
-	 * writer.getModel();<br>
-	 * @param td
-	 */
 	private TransferDescription getModel() {
 		return td;
 	}
 	
-	/** The model.
-	 * <li>If a model is set, the Shapefile will match the class in the model. If the class can not be found, an error message will be displayed. It is important to make sure the Shapefile matches the set model.</li>
-	 * <li>If no model is set, the first object will be used.</li>
-	 * <li>If no model is set, there is the possibility to use own AttributeDescriptor. For more information see: AttrDesc.</li>
-	 * example:<br>
-	 * File file = new File("file.shp");<br>
-	 * ShapeWriter writer = new ShapeWriter(file);<br>
-	 * writer.setModel(td);<br>
-	 * @param td
+	/** Defines the Interlis model/class of the file, to be written.
+	 * @param td Interlis model
 	 */
 	public void setModel(TransferDescription td) {
 		this.td = td;
 	}
 	
-	/** Get AttributeDescriptor.
-	 * As an alternative to setting a model, a separate AttributeDescriptor can be used.<br>
-	 * An AttributeDescriptor describes an attribute and shows possibilities which can be set.<br>
-	 * <li>If an AttributeDescriptor is set, AttributeDescriptor Objects will be used.</li>
-	 * <li>If no AttributeDescriptor is set, depends on model is set or not, see: Set Model</li>
-	 * example:<br>
-	 * writer.getAttributeDescriptors();<br>
-	 * Definition of an AttributeDescriptor, see: #AttributeDescriptor<br>
-	 * @return AttributeDescriptor[]
-	 */
 	public AttributeDescriptor[] getAttributeDescriptors() {
 		return attrDescs.toArray(new AttributeDescriptor[attrDescs.size()]);
 	}
 	
-	/** Set the AttributeDescriptor
-	 * As an alternative to setting a model, a separate AttributeDescriptor can be used.<br>
-	 * An AttributeDescriptor describes an attribute and shows possibilities which can be set.<br>
-	 * <li>If an AttributeDescriptor is set, AttributeDescriptor Objects will be used.</li>
-	 * <li>If no AttributeDescriptor is set, depends on model is set or not, see: Set Model</li>
-	 * example:<br>
-	 * File file = new File("file.shp");<br>
-	 * ShapeWriter writer = new ShapeWriter(file);<br>
-	 * writer.setAttributeDescriptors(AttributeDescriptor attrDescs[]);<br>
-	 * Definition of an AttributeDescriptor, see: #AttributeDescriptor<br>
+	/** Sets the attribute descriptors of the shape file.
+	 * Alternative to setting a model.
 	 * @param attrDescs[]
 	 */
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
