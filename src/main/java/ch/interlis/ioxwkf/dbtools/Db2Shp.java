@@ -23,10 +23,46 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxWriter;
 import ch.interlis.ioxwkf.shp.ShapeWriter;
 
-/** create a ShapeWriter.
+/**<b>Db2Shp</b>
+ * <p>
+ * 
+ * <b>The main task</b><br>
+ * write data of data base with any IoxWriter, converted from PostGis to Interlis dataTypes and export converted data to SHP file.<br>
+ * <p>
+ * 
+ * <b>Create a new Db2Shp</b><br>
+ * <li>Create an Db2Shp object. Db2Csv extends AbstractExport2db class.</li>
+ * <p>
+ * 
+ * <b>AttributeDescriptor possibilities</b><br>
+ * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
+ * <p>
+ * 
+ * <b>Setting possibilities</b><br>
+ * {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}<br>
+ * <p>
+ * 
+ * <b>Attachement</b><br>
+ * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapespecification</a></li>
+ * <li><a href="https://docs.oracle.com/javase/6/docs/api/java/sql/Types.html">java.sql.Types</a></li>
  */
 public class Db2Shp extends AbstractExportFromdb {
-	/** create the ShpWriter and return created IoxWriter.
+	/** Create the ShpWriter and return created IoxWriter.<br>
+	 * <p>
+	 * Set File (Mandatory)<br>
+	 * The file to write to.
+	 * <p>
+	 * 
+	 * Path has to exist.<br>
+	 * File file=new File("C:\file.shp");<br>
+	 * Db2Shp shpExport= new Db2Shp();<br>
+	 * shpExport.exportData(file,"Connection", config);
+	 * <p>
+	 * 
+	 * Setting possibilities:<br>
+	 * <li>Setting possibilities<br>
+	 *	   {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}
+	 * </li>
 	 * @param file
 	 * @param config
 	 * @param dbColumns[]
