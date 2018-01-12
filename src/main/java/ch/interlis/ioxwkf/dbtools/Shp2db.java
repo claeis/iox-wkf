@@ -6,15 +6,54 @@ import java.util.List;
 
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.iom_j.csv.CsvReader;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.ioxwkf.shp.ShapeReader;
 
-/** set iom attribute names to attribute descriptor, create shapeReader and return the created shapeReader.
+/**<b>Shp2db</b>
+ * <p>
+ * 
+ * <b>The main task</b><br>
+ * read data of files with any IoxReader, converted from Interlis to PostGis dataTypes and import converted data to database.<br>
+ * <p>
+ * 
+ * <b>Create a new Shp2db</b><br>
+ * <li>Create an Shp2db object. Shp2db extends AbstractImport2db class.</li>
+ * <p>
+ * 
+ * <b>AttributeDescriptor possibilities</b><br>
+ * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
+ * <p>
+ * 
+ * <b>Setting possibilities</b><br>
+ * {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}<br>
+ * <p>
+ * 
+ * <b>Attachement</b><br>
+ * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapespecification</a></li>
+ * <li><a href="https://docs.oracle.com/javase/6/docs/api/java/sql/Types.html">java.sql.Types</a></li>
  */
 public class Shp2db extends AbstractImport2db {
-	/** create the ShpReader and return created ShpReader.
+	/** Create the IoxReader.<br>
+	 * There are 2 parameter to define:<br>
+	 * <li>the file to read from.</li>
+	 * <li>the config.</li>
+	 * <p>
+	 * 
+	 * Set File (Mandatory)<br>
+	 * The file to read from.
+	 * <p>
+	 * 
+	 * File has to exist and has to be readable.<br>
+	 * File file=new File("C:\file.shp");<br>
+	 * Shp2db shpImport= new Shp2db();<br>
+	 * shpImport.importData(file,"Connection", config);
+	 * <p>
+	 * 
+	 * Setting possibilities:<br>
+	 * <li>Setting possibilities<br>
+	 *	   {@link ch.interlis.ioxwkf.dbtools.IoxWkfConfig}
+	 * </li>
 	 * @param file to read from
 	 * @param config defined settings
 	 * @return IoxReader
@@ -35,7 +74,22 @@ public class Shp2db extends AbstractImport2db {
 		// create and return a shape reader.
 		return new ShapeReader(file,config);
 	}
-	/** set iom attribute names to attribute descriptor
+	
+	/** setIomAttrNames<br>
+	 * set attribute names to attribute descriptor.<br>
+	 * <p>
+	 * 
+	 * IoxReader:<br>
+	 * {@link ch.interlis.ioxwkf.dbtools.AbstractImport2db#createReader()}
+	 * <p>
+	 * 
+	 * AttributeDescriptor possibilities<br>
+	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
+	 * <p>
+	 * 
+	 * Missing Attributes:<br>
+	 * Set iom attribute names to attribute descriptor.
+	 * 
 	 * @param ioxReader
 	 * @param attrDescriptors
 	 * @param missingAttributes
