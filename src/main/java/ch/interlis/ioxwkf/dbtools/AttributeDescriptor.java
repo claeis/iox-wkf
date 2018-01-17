@@ -1,6 +1,7 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -156,6 +157,7 @@ public class AttributeDescriptor {
 	private Integer coordDimension=null;
 	private Integer srId=null;
 	private Integer precision=null;
+	private Boolean mandatory=null;
 	
 	/** The typeName bool is an alias of boolean type.
 	 * <p>
@@ -489,54 +491,24 @@ public class AttributeDescriptor {
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setSrId(Integer srId)
 	 *  </td>
-	 *  <p>
-	 *  <td>precision</td>
-	 *  <td>Precision is the number of digits in the not scaled value.</td>
-	 *  <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setPrecision(Integer precision)
-	 *  </td>
-	 *  <p>
      * @param srId
 	 */
 	protected void setSrId(Integer srId) {
 		this.srId = srId;
 	}
-	/** <td>The srId is an integer that uniquely identifies the Spatial Referencing System (SRS) within the database.
-	 *   	<p>
-	 *	 	requirements:<br>
-	 *      <li>isGeometry() has to be true</li><br>
-	 *      srid can be found in table geometry_columns.
-	 *  </td>
-	 *  <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setSrId(Integer srId)
-	 *  </td>
-	 *  <p>
-	 *  <td>precision</td>
-	 *  <td>Precision is the number of digits in the not scaled value.</td>
-	 *  <td>
+	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
+	 *   </td>
+	 *   <td>
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setPrecision(Integer precision)
-	 *  </td>
+	 *   </td>
 	 * @return precision
 	 */
 	protected Integer getPrecision() {
 		return precision;
 	}
-	/**  <td>The srId is an integer that uniquely identifies the Spatial Referencing System (SRS) within the database.
-	 *   	<p>
-	 *	 	requirements:<br>
-	 *      <li>isGeometry() has to be true</li><br>
-	 *      srid can be found in table geometry_columns.
+	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
 	 *   </td>
-	 *   <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setSrId(Integer srId)
-	 *   </td>
-	 *   <p>
-	 *   <td>precision</td>
-	 *   <td>Precision is the number of digits in the not scaled value.</td>
 	 *   <td>
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setPrecision(Integer precision)
@@ -554,8 +526,9 @@ public class AttributeDescriptor {
 	 * @param db
 	 * @return final list of attribute descriptors
 	 * @throws SQLException 
+	 * @throws IoxException 
 	 */
-	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException {
+	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException, IoxException {
 		for(AttributeDescriptor attr:attributeDesc) {
 			if(attr.getDbColumnTypeName().equals(DBCOLUMN_TYPENAME_GEOMETRY)) {
 				ResultSet tableInDb =null;
@@ -572,7 +545,9 @@ public class AttributeDescriptor {
 				} catch (SQLException e) {
 					throw new SQLException(e);
 				}
+				
 				tableInDb.next();
+				
 				attr.setCoordDimension(tableInDb.getInt(GEOMCOLUMNS_COLUMN_DIMENSION));
 				attr.setSrId(tableInDb.getInt(GEOMCOLUMNS_COLUMN_SRID));
 				attr.setDbColumnGeomTypeName(tableInDb.getString(GEOMCOLUMNS_COLUMN_TYPE));
@@ -617,6 +592,13 @@ public class AttributeDescriptor {
 				attr.setDbColumnName(rsmd.getColumnName(k));
 				attr.setDbColumnType(rsmd.getColumnType(k));
 				attr.setDbColumnTypeName(rsmd.getColumnTypeName(k));
+				int nullable = rsmd.isNullable(k);
+				if(nullable == ResultSetMetaData.columnNullable) {
+					attr.setMandatory(false);
+				}else {
+					attr.setMandatory(true);
+				}
+				
 				attrs.add(attr);
 			}
 		} catch (SQLException e) {
@@ -634,5 +616,13 @@ public class AttributeDescriptor {
 	 */
 	public boolean isGeometry() {
 		return attributeType==Types.OTHER && attributeTypeName!=null && attributeTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_GEOMETRY);
+	}
+	
+	public Boolean isMandatory() {
+		return mandatory;
+	}
+	
+	public void setMandatory(Boolean mandatory) {
+		this.mandatory = mandatory;
 	}
 }
