@@ -24,8 +24,8 @@ import ch.interlis.iox.IoxException;
 public class Db2Ili{
 	// ili file
 	private static final String ILIFILE_VERSION="2.3";
-	private static final String ILIFILE_MAILTO="ce@eisenhutinformatik.ch";
-	private static final String TOPICNAME="topic1";
+	private static final String ILIFILE_MAILTO=System.getProperties().getProperty("user.name")+"@localhost.ch";
+	public static final String TOPICNAME="topic1";
     private static final char NEWLINE='\n';
 	private static final String DEFINEDOVERLAB="0.01";
 	private static final String INDENT="  ";
@@ -50,9 +50,9 @@ public class Db2Ili{
 		}
 		
 		// mandatory: set the DB-Schema from which all database tables are exported.
-		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
-		if(definedSchemaName!=null) {
-			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+		String dbSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
+		if(dbSchemaName!=null) {
+			EhiLogger.logState("db schema name: <"+dbSchemaName+">.");
 		}else {
 			throw new IoxException("db schema name==null");
 		}
@@ -60,7 +60,7 @@ public class Db2Ili{
 		// get all DB-Table names inside target DB-Schema.
 		List<String> dbTableNames=null;
 		try {
-			dbTableNames=getTables(db, definedSchemaName);
+			dbTableNames=getTables(db, dbSchemaName);
 		} catch (IoxException e) {
 			throw new IoxException(e);
 		}
@@ -80,7 +80,7 @@ public class Db2Ili{
 			writer.write(NEWLINE);
 			writer.write(NEWLINE);
 			// model
-			writer.write("MODEL "+definedSchemaName+" AT \"mailto:"+ILIFILE_MAILTO+"\" VERSION \""+getCurrentDate()+"\" =");
+			writer.write("MODEL "+dbSchemaName+" AT \"mailto:"+ILIFILE_MAILTO+"\" VERSION \""+getCurrentDate()+"\" =");
 			writer.write(NEWLINE);
 			writer.write(NEWLINE);
 			// topic
@@ -94,72 +94,19 @@ public class Db2Ili{
 			writer.write("DOMAIN");
 			writer.write(NEWLINE);
 			
-			// epsg 2056 coord length definition
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("scoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m];");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("hcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m], 1045000.000 .. 1310000.000 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("lcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m], 1045000.000 .. 1310000.000 [INTERLIS.m], -200.000 .. 5000.000 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(NEWLINE);
-			
-			// epsg 21781 coord length definition
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("scoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m];");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("hcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m], 45000.000 .. 310000.000 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("lcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m], 45000.000 .. 310000.000 [INTERLIS.m], -200.000 .. 5000.000 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(NEWLINE);
-			
-			// epsg other coord length definition
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("scoordOther = COORD 0.000 .. 999999.999 [INTERLIS.m];");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("hcoordOther = COORD 0.000 .. 999999.999 [INTERLIS.m], 0.000 .. 999999.999 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("lcoordOther = COORD 0.000 .. 999999.999 [INTERLIS.m], 0.000 .. 999999.999 [INTERLIS.m], -999.999 .. 9999.999 [INTERLIS.m], ROTATION 2 -> 1;");
-			writer.write(NEWLINE);
-			writer.write(NEWLINE);
-			
 		} catch (IOException e) {
 			throw new IoxException(e);
 		}
 		try {
 			for(String dbTableName : dbTableNames) {
-				attrDesc=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, dbTableName, db);
+				attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, dbTableName, db);
 				if(attrDesc!=null) {
 					try {
-						AttributeDescriptor.addGeomDataToAttributeDescriptors(definedSchemaName, dbTableName, attrDesc, db);
+						AttributeDescriptor.addGeomDataToAttributeDescriptors(dbSchemaName, dbTableName, attrDesc, db);
 					} catch (SQLException e) {
 						throw new IoxException(e);
 					}
+					writeCoordDefinition(attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]), writer);
 					// write to class
 					writeClass(writer, dbTableName, attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]));
 				}else {
@@ -176,9 +123,11 @@ public class Db2Ili{
 			writer.write(NEWLINE);
 			// end Model.
 			writer.write("END ");
-			writer.write(definedSchemaName);
+			writer.write(dbSchemaName);
 			writer.write(".");
+			
 			close(writer);
+			
 		} catch (IOException e) {
 			throw new IoxException(e);
 		}
@@ -290,6 +239,7 @@ public class Db2Ili{
 	 * @throws IoxException
 	 */
 	private void writeAttribute(Writer writer,AttributeDescriptor attribute) throws IoxException{
+		Boolean isMandatory=false;
 		try {
 			String attrName=attribute.getIomAttributeName();
 			if(attrName!=null) {
@@ -301,9 +251,9 @@ public class Db2Ili{
 			// ili type
 			writer.write(" : ");
 			// mandatory
-			Boolean isMandatory=attribute.isMandatory();
+			isMandatory=attribute.isMandatory();
 			if(isMandatory!=null && isMandatory) {
-				writer.write("MANDATORY");
+				writer.write("MANDATORY ");
 			}
 			String iliType = getIliTypeDefinition(attribute);
 			if(iliType==null) {
@@ -331,12 +281,12 @@ public class Db2Ili{
 			Integer coordDimension=attribute.getCoordDimension();
 			Integer epsg=attribute.getSrId();
 			String geoColumnTypeName=attribute.getDbColumnGeomTypeName();
-			if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
+			if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
 				resultType.append(getCoordDefinition(coordDimension, epsg));
 			}else {
-				if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
-					resultType.append("POLYLINE WITH (STRAIGHTS) VERTEX ");
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
+				if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
+					resultType.append("POLYLINE WITH (STRAIGHTS,ARCS) VERTEX ");
+				}else if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
 					resultType.append("SURFACE WITH (STRAIGHTS,ARCS) VERTEX ");
 				}
 				String coordDefinition=getCoordDefinition(coordDimension, epsg);
@@ -370,30 +320,26 @@ public class Db2Ili{
 			}else if(dataType.equals(Types.BINARY)) {
 				resultType.append("BLACKBOX BINARY");
 			}else if(dataType.equals(Types.NUMERIC)) {
-				resultType.append("-131072.16383 .. 131072.16383");
+				resultType.append("-"+precision+" .. "+precision);
 			}else if(dataType.equals(Types.SMALLINT)) {
 				resultType.append("-32768 .. 32767");
 			}else if(dataType.equals(Types.INTEGER)) {
 				resultType.append("-2147483648 .. 2147483647");
 			}else if(dataType.equals(Types.BIGINT)) {
 				resultType.append("-9223372036854775808 .. 9223372036854775807");
-			}else if(dataType.equals(Types.FLOAT)) {
-				resultType.append("-131072.16383 .. 131072.16383");
-			}else if(dataType.equals(Types.DOUBLE)) {
-				resultType.append("-131072.16383 .. 131072.16383");
+			}else if(dataType.equals(Types.FLOAT) || dataTypeName.equals("float4")) {
+				resultType.append("-"+String.format("%.6f",Float.MAX_VALUE)+" .. "+String.format("%.6f",Float.MAX_VALUE));
+			}else if(dataType.equals(Types.DOUBLE) || dataTypeName.equals("float8")) {
+				resultType.append("-"+String.format("%.15f",Double.MAX_VALUE)+" .. "+String.format("%.15f",Double.MAX_VALUE));
 			}else if(dataType.equals(Types.REAL)) {
-				resultType.append("-131072.163830 .. 131072.163830");
-			}else if(dataType.equals(Types.LONGNVARCHAR)) {
-				resultType.append("TEXT");
+				resultType.append("-"+String.format("%.6f",Double.MAX_VALUE)+" .. "+String.format("%.6f",Double.MAX_VALUE));
+			}else if(dataType.equals(Types.LONGVARCHAR)) {
+				resultType.append("TEXT*"+precision);
 			}else if(dataType.equals(Types.DECIMAL)) {
-				resultType.append("-131072.163830000000000 .. 131072.16383000000000");
+				resultType.append("-"+precision+" .. "+precision);
 			}else if(dataType.equals(Types.CHAR)) {
-				resultType.append("TEXT");
-			}else if(dataType.equals(Types.NCHAR)) {
 				resultType.append("TEXT*"+precision);
 			}else if(dataType.equals(Types.VARCHAR)) {
-				resultType.append("TEXT");
-			}else if(dataType.equals(Types.NVARCHAR)) {
 				resultType.append("TEXT*"+precision);
 			}else if(dataType.equals(Types.DATE)) {
 				resultType.append("INTERLIS.XMLDate");
@@ -412,37 +358,108 @@ public class Db2Ili{
 		return resultType.toString();
 	}
 	
-	private String getCoordDefinition(Integer coordDimension, Integer epsg) {
-		String coordDefinition=null;
-		// epsg: CHLV95
-		if(epsg!=null && epsg==2056) {
-			if(coordDimension==1) {
-				coordDefinition="scoord2056";
-			}else if(coordDimension==2) {
-				coordDefinition="hcoord2056";
-			}else if(coordDimension==3) {
-				coordDefinition="lcoord2056";
-			}
-		// epsg: CHLV03
-		}else if(epsg!=null && epsg==21781) {
-			if(coordDimension==1) {
-				coordDefinition="scoord21781";
-			}else if(coordDimension==2) {
-				coordDefinition="hcoord21781";
-			}else if(coordDimension==3) {
-				coordDefinition="lcoord21781";
-			}
-		// epsg: other or null
-		}else {
-			if(coordDimension==1) {
-				coordDefinition="scoordOther";
-			}else if(coordDimension==2) {
-				coordDefinition="hcoordOther";
-			}else if(coordDimension==3) {
-				coordDefinition="lcoordOther";
+	private void writeCoordDefinition(AttributeDescriptor[] attributes, FileWriter writer) throws IOException {
+		List<String> coordDimList=new ArrayList<String>();
+		for(AttributeDescriptor attribute:attributes) {
+			if(attribute.isGeometry()) {
+				Integer epsg=attribute.getSrId();
+				Integer coordDimension=attribute.getCoordDimension();
+				if(epsg==null) {
+					continue;
+				}else {
+					// epsg: CHLV95
+					if(epsg==2056) {
+						if(coordDimension==2) {
+							String lcoord="lcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],\r\n" + 
+									"	            1045000.000 .. 1310000.000 [INTERLIS.m],\r\n" + 
+									"	            ROTATION 2 -> 1;";
+							if(!coordDimList.contains(lcoord)) {
+								coordDimList.add(lcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(lcoord);
+							}
+						}else if(coordDimension==3) {
+							String hcoord="hcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],\r\n" + 
+									"	            1045000.000 .. 1310000.000 [INTERLIS.m],\r\n" + 
+									"	            -200.000 .. 5000.000 [INTERLIS.m],\r\n" + 
+									"	            ROTATION 2 -> 1;";
+							if(!coordDimList.contains(hcoord)) {
+								coordDimList.add(hcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(hcoord);
+							}
+						}
+					// epsg: CHLV03
+					}else if(epsg==21781) {
+						if(coordDimension==2) {
+							String lcoord="lcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m],\r\n" + 
+										"	        45000.000 .. 310000.000 [INTERLIS.m],\r\n" + 
+										"	        ROTATION 2 -> 1;";
+							if(!coordDimList.contains(lcoord)) {
+								coordDimList.add(lcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(lcoord);
+							}
+						}else if(coordDimension==3) {
+							String hcoord="hcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m],\r\n" + 
+									"	            45000.000 .. 310000.000 [INTERLIS.m],\r\n" + 
+									"	            -200.000 .. 5000.000 [INTERLIS.m],\r\n" + 
+									"	            ROTATION 2 -> 1;";
+							if(!coordDimList.contains(hcoord)) {
+								coordDimList.add(hcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(hcoord);
+							}
+						}
+					// epsg: other or null
+					}else if(epsg!=21781 && epsg!=2056){
+						if(coordDimension==2) {
+							String lcoord="lcoord"+epsg+" = COORD 0.000 .. 999999.999 [INTERLIS.m],\r\n" +
+									"	            0.000 .. 999999.999 [INTERLIS.m],\r\n" +
+									"	            ROTATION 2 -> 1;";
+							if(!coordDimList.contains(lcoord)) {
+								coordDimList.add(lcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(lcoord);
+							}
+						}else if(coordDimension==3) {
+							String hcoord="hcoord"+epsg+" = COORD 0.000 .. 999999.999 [INTERLIS.m],\r\n" +
+									"	            0.000 .. 999999.999 [INTERLIS.m],\r\n" +
+									"	            -999.999 .. 9999.999 [INTERLIS.m],\r\n" + 
+									"	            ROTATION 2 -> 1;";
+							if(!coordDimList.contains(hcoord)) {
+								coordDimList.add(hcoord);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(hcoord);
+							}
+						}
+					}
+					writer.write(NEWLINE);
+				}
 			}
 		}
-		return coordDefinition;
+	}
+	
+	private String getCoordDefinition(Integer coordDimension, Integer epsg){
+		String coordDomainName=null;
+		if(coordDimension==2) {
+			coordDomainName="lcoord"+epsg;
+		}else if(coordDimension==3) {
+			coordDomainName="hcoord"+epsg;
+		}
+		return coordDomainName;
 	}
 	
 	private String getOverlapDefinition() {
