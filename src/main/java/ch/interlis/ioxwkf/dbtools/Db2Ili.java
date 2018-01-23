@@ -30,11 +30,17 @@ public class Db2Ili{
 	private static final String DEFINEDOVERLAB="0.01";
 	private static final String INDENT="  ";
 	
+	// coordnames of coorddefinitions
+	public static final String LCOORD2056="lcoord2056";
+	public static final String HCOORD2056="hcoord2056";
+	public static final String LCOORD21781="lcoord21781";
+	public static final String HCOORD21781="hcoord21781";
+	
 	/** export tablestructure to ili-model.
 	 * {@link IoxWkfConfig#SETTING_DBSCHEMA} DB-Schema includes all tables to export.
 	 * @throws IOException 
 	 */
-	public void exportData(File ilifile,Connection db,Settings config) throws IoxException {
+	public void exportData(File ilifile,Connection db,Settings config) throws IoxException, SQLException {
 		// mandatory: file to write to has not to be null.
 		if(ilifile!=null) {
 			EhiLogger.logState("file to write to: <"+ilifile.getName()+">");
@@ -73,8 +79,6 @@ public class Db2Ili{
 			throw new IoxException(e);
 		}
 		
-		// get the list of attributeDescriptors of each DB-Table
-		List<AttributeDescriptor> attrDesc=null;
 		try {
 			writer.write("INTERLIS "+ILIFILE_VERSION+";");
 			writer.write(NEWLINE);
@@ -97,17 +101,12 @@ public class Db2Ili{
 		} catch (IOException e) {
 			throw new IoxException(e);
 		}
+		
 		try {
 			for(String dbTableName : dbTableNames) {
-				attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, dbTableName, db);
+				List<AttributeDescriptor> attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, dbTableName, db);
 				if(attrDesc!=null) {
-					try {
-						AttributeDescriptor.addGeomDataToAttributeDescriptors(dbSchemaName, dbTableName, attrDesc, db);
-					} catch (SQLException e) {
-						throw new IoxException(e);
-					}
 					writeCoordDefinition(attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]), writer);
-					// write to class
 					writeClass(writer, dbTableName, attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]));
 				}else {
 					throw new IoxException("no attributes found.");
@@ -281,12 +280,17 @@ public class Db2Ili{
 			Integer coordDimension=attribute.getCoordDimension();
 			Integer epsg=attribute.getSrId();
 			String geoColumnTypeName=attribute.getDbColumnGeomTypeName();
-			if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
+			if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
 				resultType.append(getCoordDefinition(coordDimension, epsg));
 			}else {
-				if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
+				if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
+					resultType.append("POLYLINE WITH (STRAIGHTS) VERTEX ");
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
+					resultType.append("SURFACE WITH (STRAIGHTS) VERTEX ");
+				// curve/circular
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_COMPOUNDCURVE)) {
 					resultType.append("POLYLINE WITH (STRAIGHTS,ARCS) VERTEX ");
-				}else if(geoColumnTypeName!=null && geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
+				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_CURVEPOLYGON)) {
 					resultType.append("SURFACE WITH (STRAIGHTS,ARCS) VERTEX ");
 				}
 				String coordDefinition=getCoordDefinition(coordDimension, epsg);

@@ -122,11 +122,6 @@ public abstract class AbstractImport2db {
 		List<AttributeDescriptor> attrDescriptors=null;
 		if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
 			attrDescriptors=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
-			try {
-				AttributeDescriptor.addGeomDataToAttributeDescriptors(definedSchemaName, definedTableName, attrDescriptors, db);
-			} catch (SQLException e) {
-				throw new IoxException(e);
-			}
 		}else {
 			throw new IoxException("expected tablename");
 		}

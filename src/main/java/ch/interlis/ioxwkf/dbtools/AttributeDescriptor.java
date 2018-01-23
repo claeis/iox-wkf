@@ -257,6 +257,9 @@ public class AttributeDescriptor {
 	 */
 	public final static String GEOMETRYTYPE_POINT="POINT";
 	
+	public final static String GEOMETRYTYPE_COMPOUNDCURVE = "COMPOUNDCURVE";
+	public final static String GEOMETRYTYPE_CURVEPOLYGON = "CURVEPOLYGON";
+	
 	private final static String GEOMCOLUMNS_COLUMN_TYPE="type";
 	private final static String GEOMCOLUMNS_COLUMN_SRID="srid";
 	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
@@ -602,6 +605,11 @@ public class AttributeDescriptor {
 				attrs.add(attr);
 			}
 		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		try {
+			addGeomDataToAttributeDescriptors(schemaName, tableName, attrs, db);
+		}catch(SQLException e) {
 			throw new IoxException(e);
 		}
 		return attrs;
