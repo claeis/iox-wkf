@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -36,6 +35,9 @@ public class Db2Ili{
 	public static final String LCOORD21781="lcoord21781";
 	public static final String HCOORD21781="hcoord21781";
 	
+	// tablename
+	private static final String JDBC_GETCOLUMNS_TABLENAME="TABLE_NAME";
+	
 	/** export tablestructure to ili-model.
 	 * {@link IoxWkfConfig#SETTING_DBSCHEMA} DB-Schema includes all tables to export.
 	 * @throws IOException 
@@ -64,9 +66,9 @@ public class Db2Ili{
 		}
 		
 		// get all DB-Table names inside target DB-Schema.
-		List<String> dbTableNames=null;
+		List<TableDescription> tableDescs=null;
 		try {
-			dbTableNames=getTables(db, dbSchemaName);
+			tableDescs=getTables(db, dbSchemaName);
 		} catch (IoxException e) {
 			throw new IoxException(e);
 		}
@@ -103,11 +105,11 @@ public class Db2Ili{
 		}
 		
 		try {
-			for(String dbTableName : dbTableNames) {
-				List<AttributeDescriptor> attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, dbTableName, db);
+			for(TableDescription tableDesc : tableDescs) {
+				List<AttributeDescriptor> attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, tableDesc.getName(), db);
 				if(attrDesc!=null) {
 					writeCoordDefinition(attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]), writer);
-					writeClass(writer, dbTableName, attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]));
+					writeClass(writer, tableDesc, attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]));
 				}else {
 					throw new IoxException("no attributes found.");
 				}
@@ -144,15 +146,13 @@ public class Db2Ili{
 	 * @return list of all tablenames.
 	 * @throws IoxException 
 	 */
-	private List<String> getTables(Connection db, String schema) throws IoxException {
-		PreparedStatement ps=null;
+	private List<TableDescription> getTables(Connection db, String schema) throws IoxException {
 		DatabaseMetaData md;
 		try {
 			md = db.getMetaData();
 		} catch (SQLException e2) {
 			throw new IoxException(e2);
 		}
-		
 		ResultSet rs;
 		try {
 			// get all tables of defined schema.
@@ -161,12 +161,15 @@ public class Db2Ili{
 			throw new IoxException(e1);
 		}
 		try {
-			List<String> dbTableNames=new ArrayList<String>();
+			List<TableDescription> dbTableDescriptions=new ArrayList<TableDescription>();
 			while (rs.next()) {
-				dbTableNames.add(rs.getString(3));
+				TableDescription tableDesc=new TableDescription(rs.getString(JDBC_GETCOLUMNS_TABLENAME),rs.getString(AttributeDescriptor.JDBC_GETCOLUMNS_REMARKS));
+				if(tableDesc!=null) {
+					dbTableDescriptions.add(tableDesc);
+				}
 			}
-			if(dbTableNames.size()>0) {
-				return dbTableNames;
+			if(dbTableDescriptions.size()>0) {
+				return dbTableDescriptions;
 			}else {
 				throw new IoxException("no table found in schema");
 			}
@@ -181,14 +184,6 @@ public class Db2Ili{
 				}
 				rs=null;
 			}
-			if(ps!=null) {
-				try {
-					ps.close();
-				} catch (SQLException e) {
-					throw new IoxException(e);
-				}
-				ps=null;
-			}
 		}
 	}
 	
@@ -199,14 +194,22 @@ public class Db2Ili{
 	 * @param attributes of table
 	 * @throws IoxException
 	 */
-	private void writeClass(Writer writer,String tablename,AttributeDescriptor attributes[]) throws IoxException{
+	private void writeClass(Writer writer,TableDescription tableDesc,AttributeDescriptor attributes[]) throws IoxException{
 		try {
 			// create Class.
 			writer.write(NEWLINE);
 			writer.write(INDENT);
 			writer.write(INDENT);
+			if(tableDesc.getDescription()!=null) {
+				writer.write("/** ");
+				writer.write(tableDesc.getDescription());
+				writer.write(" */");
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+			}
 			writer.write("CLASS ");
-			writer.write(tablename);
+			writer.write(tableDesc.getName());
 			writer.write(" =");
 			writer.write(NEWLINE);
 			for(AttributeDescriptor attribute:attributes) {
@@ -223,7 +226,7 @@ public class Db2Ili{
 			writer.write(INDENT);
 			writer.write(INDENT);
 			writer.write("END ");
-			writer.write(tablename);
+			writer.write(tableDesc.getName());
 			writer.write(";");
 			writer.write(NEWLINE);
 		} catch (IOException e) {
@@ -240,6 +243,19 @@ public class Db2Ili{
 	private void writeAttribute(Writer writer,AttributeDescriptor attribute) throws IoxException{
 		Boolean isMandatory=false;
 		try {
+			if(attribute.getColumnRemarks()!=null) {
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write("/** ");
+				writer.write(attribute.getColumnRemarks());
+				writer.write(" */");
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write(INDENT);
+			}
 			String attrName=attribute.getIomAttributeName();
 			if(attrName!=null) {
 				// attrname

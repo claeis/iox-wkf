@@ -2,6 +2,7 @@ package ch.interlis.ioxwkf.dbtools;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -158,6 +159,7 @@ public class AttributeDescriptor {
 	private Integer srId=null;
 	private Integer precision=null;
 	private Boolean mandatory=null;
+	private String columnRemarks=null;
 	
 	/** The typeName bool is an alias of boolean type.
 	 * <p>
@@ -263,6 +265,18 @@ public class AttributeDescriptor {
 	private final static String GEOMCOLUMNS_COLUMN_TYPE="type";
 	private final static String GEOMCOLUMNS_COLUMN_SRID="srid";
 	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
+	
+	public final static String JDBC_GETCOLUMNS_REMARKS="REMARKS";
+	public final static String JDBC_GETCOLUMNS_COLUMNNAME="COLUMN_NAME";
+	public final static String JDBC_GETCOLUMNS_DATATYPE="DATA_TYPE";
+	public final static String JDBC_GETCOLUMNS_TYPENAME="TYPE_NAME";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE="IS_NULLABLE";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE_YES="YES";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE_NO="NO";
+	
+	/** CHAR_OCTET_LENGTH for char types the maximum number of bytes in the column
+	 */
+	public final static String JDBC_GETCOLUMNS_PRECISION="CHAR_OCTET_LENGTH";
 	
 	/**  <td>The name (String) of the column in the data base table</td>
 	 *   <p>
@@ -568,7 +582,8 @@ public class AttributeDescriptor {
 	 */
 	protected static List<AttributeDescriptor> getAttributeDescriptors(String schemaName, String tableName, Connection db) throws IoxException {
 		List<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
-		ResultSet tableInDb =null;
+		PreparedStatement ps=null;
+		ResultSet rs =null;
 		StringBuilder queryBuild=new StringBuilder();
 		queryBuild.append("SELECT * FROM ");
 		if(schemaName!=null) {
@@ -576,32 +591,40 @@ public class AttributeDescriptor {
 		}
 		queryBuild.append(tableName+" WHERE 1<>1;");
 		try {
-			Statement stmt = db.createStatement();
-			tableInDb=stmt.executeQuery(queryBuild.toString());
-			if(tableInDb==null) {
+			ps=db.prepareStatement(queryBuild.toString());
+			ps.clearParameters();
+			rs = ps.executeQuery();
+			if(rs==null) {
 				throw new IoxException("table "+schemaName+"."+tableName+" not found");
 			}
 		} catch (SQLException e) {
 			throw new IoxException(e);
 		}
-		ResultSetMetaData rsmd;
+		DatabaseMetaData md;
 		try {
-			rsmd = tableInDb.getMetaData();
+			md = db.getMetaData();
+		} catch (SQLException e2) {
+			throw new IoxException(e2);
+		}
+		try {
+			ResultSetMetaData rsmd = rs.getMetaData();
+			rs = md.getColumns(null, schemaName, tableName, "%");
 			for(int k=1;k<rsmd.getColumnCount()+1;k++) {
-				tableInDb.next();
+				rs.next();
 				// create attr descriptor
 				AttributeDescriptor attr=new AttributeDescriptor();
-				attr.setPrecision(rsmd.getPrecision(k));
-				attr.setDbColumnName(rsmd.getColumnName(k));
-				attr.setDbColumnType(rsmd.getColumnType(k));
-				attr.setDbColumnTypeName(rsmd.getColumnTypeName(k));
-				int nullable = rsmd.isNullable(k);
-				if(nullable == ResultSetMetaData.columnNullable) {
+				attr.setColumnRemarks(rs.getString(JDBC_GETCOLUMNS_REMARKS));
+				attr.setPrecision(rs.getInt(JDBC_GETCOLUMNS_PRECISION));
+				attr.setDbColumnName(rs.getString(JDBC_GETCOLUMNS_COLUMNNAME));
+				attr.setDbColumnType(rs.getInt(JDBC_GETCOLUMNS_DATATYPE));
+				attr.setDbColumnTypeName(rs.getString(JDBC_GETCOLUMNS_TYPENAME));
+				// YES: can include NULLs, else NO.
+				String nullable = rs.getString(JDBC_GETCOLUMNS_ISNULLABLE);
+				if(nullable.equals(JDBC_GETCOLUMNS_ISNULLABLE_YES)) {
 					attr.setMandatory(false);
 				}else {
 					attr.setMandatory(true);
 				}
-				
 				attrs.add(attr);
 			}
 		} catch (SQLException e) {
@@ -625,12 +648,28 @@ public class AttributeDescriptor {
 	public boolean isGeometry() {
 		return attributeType==Types.OTHER && attributeTypeName!=null && attributeTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_GEOMETRY);
 	}
-	
+	/** an attribute is mandatory if the column is defined as not null.
+	 * @return true if attribute is mandatory, else false.
+	 */
 	public Boolean isMandatory() {
 		return mandatory;
 	}
-	
+	/** an attribute is mandatory if the column is defined as not null.
+	 * @param mandatory true if attribute is mandatory, else false.
+	 */
 	public void setMandatory(Boolean mandatory) {
 		this.mandatory = mandatory;
+	}
+	/** is the documentation of this attribute.
+	 * @return the columnRemarks
+	 */
+	public String getColumnRemarks() {
+		return columnRemarks;
+	}
+	/** is the documentation of this attribute.
+	 * @param columnRemarks the documentation to set
+	 */
+	public void setColumnRemarks(String columnRemarks) {
+		this.columnRemarks = columnRemarks;
 	}
 }

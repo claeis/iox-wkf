@@ -113,6 +113,77 @@ public class Db2IliTest {
 		}
 	}
 	
+	// Es werden 3 Tabellen mit je einem Tabellenkommentar innerhalb des definierten Schemas erstellt.
+	// Die Tabellenkommentare werden als ili Kommentare in die ili Datei exportiert.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// --
+	// Erwartung: oberhalb jeder Tabelle wird eine Beschreibung mit "/** text */" eingefuegt.
+	@Test
+	public void export_TableDescriptionsInDefinedSchema_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String TABLE2="table2";
+		final String TABLE3="table3";
+		final String TABLE1DESCRIPTION="This is table1.";
+		final String TABLE2DESCRIPTION="This is table2.";
+		final String TABLE3DESCRIPTION="This is table3.";
+		final File iliFile=new File(TEST_OUT+"export_TableDescriptionsInDefinedSchema_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
+	        	preStmt.execute("COMMENT ON TABLE "+SCHEMANAME+"."+TABLE1+" IS '"+TABLE1DESCRIPTION+"';");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"();");
+	        	preStmt.execute("COMMENT ON TABLE "+SCHEMANAME+"."+TABLE2+" IS '"+TABLE2DESCRIPTION+"';");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE3+"();");
+	        	preStmt.execute("COMMENT ON TABLE "+SCHEMANAME+"."+TABLE3+" IS '"+TABLE3DESCRIPTION+"';");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+	    String query="SELECT obj_description('"+SCHEMANAME+"."+TABLE1+"'::regclass);";		
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_TableDescriptionsInDefinedSchema_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertEquals(TABLE1DESCRIPTION, table1.getDocumentation());
+			assertNotNull(table1);
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertEquals(TABLE2DESCRIPTION, table2.getDocumentation());
+			assertNotNull(table2);
+			Table table3=(Table) topic.getElement(Table.class, TABLE3);
+			assertEquals(TABLE3DESCRIPTION, table3.getDocumentation());
+			assertNotNull(table3);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
 	// Es wird 1 Tabelle innerhalb des definierten Schemas erstellt.
 	// Innerhalb dieser Tabellen sollen alle AttributeTypen erstellt werden.
 	// Die Tabelle wird mit den DatenTypen in die ili Datei exportiert.
@@ -673,6 +744,142 @@ public class Db2IliTest {
 				Domain controlPointType=surfaceType.getControlPointDomain();
 				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
 				assertEquals(0,surfaceType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Es wird 1 Tabelle mit einem Tabellenkommentar innerhalb des definierten Schemas erstellt.
+	// Innerhalb dieser Tabelle sollen alle Attribute einen Kommentar enthalten.
+	// Der Tabellenkommentar wird mit den Attributekommentaren als ili Kommentare in die ili Datei exportiert.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// --
+	// Erwartung: Alle Attributekommentare sollen als ili Kommentar erstellt werden.
+	@Test
+	public void export_AttributeDescriptionIliFile_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final File iliFile=new File(TEST_OUT+"export_AttributeDescriptionIliFile_Ok.ili");
+		final String TABLE1DESCRIPTION="This is table1.";
+		final String ATTRIBUTE1DESCRIPTION="This is attribute1.";
+		final String ATTRIBUTE2DESCRIPTION="This is attribute2.";
+		final String ATTRIBUTE3DESCRIPTION="This is attribute3.";
+		final String ATTRIBUTE4DESCRIPTION="This is attribute4.";
+		final String ATTRIBUTE5DESCRIPTION="This is attribute5.";
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoilischema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	// create dbtoilischema
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	// create table in dbtoilischema
+	        	try {
+		        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+		        			+ "attr1 smallint NOT NULL,"
+		        			+ "attr2 integer,"
+		        			+ "attr3 bigint,"
+		        			+ "attr4 decimal(10),"
+		        			+ "attr5 numeric(20)"
+							+ ")WITH (OIDS=FALSE);");
+		        	preStmt.execute("COMMENT ON TABLE "+SCHEMANAME+"."+TABLE1+" IS '"+TABLE1DESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+".attr1 is '"+ATTRIBUTE1DESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+".attr2 is '"+ATTRIBUTE2DESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+".attr3 is '"+ATTRIBUTE3DESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+".attr4 is '"+ATTRIBUTE4DESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+".attr5 is '"+ATTRIBUTE5DESCRIPTION+"';");
+		        	preStmt.close();
+	        	}catch(Exception e) {
+	        		throw new IoxException(e);
+	        	}
+	        }
+	        {
+				// delete file if already exist
+				if(iliFile.exists()) {
+					iliFile.delete();
+				}
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+				Db2Ili db2Ili=new Db2Ili();
+				db2Ili.exportData(iliFile, jdbcConnection, config);
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_AttributeDescriptionIliFile_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertEquals(TABLE1DESCRIPTION, table1.getDocumentation());
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, "attr1");
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				assertEquals(ATTRIBUTE1DESCRIPTION, attribute.getDocumentation());
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-32768)));
+				assertEquals(0, numType.getMaximum().compareTo(new PrecisionDecimal(32767)));
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, "attr2");
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				assertEquals(ATTRIBUTE2DESCRIPTION, attribute.getDocumentation());
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-2147483648)));
+				assertEquals(0, numType.getMaximum().compareTo(new PrecisionDecimal(2147483647)));
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, "attr3");
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				assertEquals(ATTRIBUTE3DESCRIPTION, attribute.getDocumentation());
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal("-9223372036854775808")));
+				assertEquals(0, numType.getMaximum().compareTo(new PrecisionDecimal("9223372036854775807")));
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, "attr4");
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				assertEquals(ATTRIBUTE4DESCRIPTION, attribute.getDocumentation());
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-10)));
+				assertEquals(0, numType.getMaximum().compareTo(new PrecisionDecimal(10)));
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, "attr5");
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				assertEquals(ATTRIBUTE5DESCRIPTION, attribute.getDocumentation());
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-20)));
+				assertEquals(0, numType.getMaximum().compareTo(new PrecisionDecimal(20)));
 			}
 		}catch(Exception e) {
 			throw new IoxException(e);
