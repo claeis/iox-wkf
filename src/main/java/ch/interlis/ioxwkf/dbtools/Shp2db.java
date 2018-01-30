@@ -95,7 +95,7 @@ public class Shp2db extends AbstractImport2db {
 	 * @param missingAttributes
 	 */
 	@Override
-	protected void setIomAttrNames(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+	protected void assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
 		ShapeReader reader=(ShapeReader)ioxReader;
 		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
 		AttributeDescriptor geomAttr=null;

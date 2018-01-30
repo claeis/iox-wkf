@@ -160,7 +160,7 @@ public abstract class AbstractImport2db {
 				}
 			}else if(event instanceof StartBasketEvent) {
 				ArrayList<String> missingAttributes=new ArrayList<String>();
-				setIomAttrNames(reader,attrDescriptors,missingAttributes);
+				assignIomAttr2DbColumn(reader,attrDescriptors,missingAttributes);
 			}
 			event=reader.read();
 		}
@@ -175,26 +175,13 @@ public abstract class AbstractImport2db {
 		event=null;
 	}
 
-	/** setIomAttrNames<br>
-	 * set attribute names to attribute descriptor.<br>
-	 * <p>
-	 * 
-	 * IoxReader:<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AbstractImport2db#createReader()}
-	 * <p>
-	 * 
-	 * AttributeDescriptor possibilities<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
-	 * <p>
-	 * 
-	 * Missing Attributes:<br>
-	 * Set iom attribute names to attribute descriptor.
-	 * 
-	 * @param reader
-	 * @param attrDescriptors
-	 * @param missingAttributes
+	/** assigns the attributes (from the reader) to a db column.
+	 * Set the attribute name as read by the reader in the column descriptors of the target table of the import.
+	 * @param reader 
+	 * @param dbColumns 
+	 * @param missingDbColumns attributes from the reader, that are not assigned to a column in the database target table
 	 */
-	protected abstract void setIomAttrNames(IoxReader reader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes);
+	protected abstract void assignIomAttr2DbColumn(IoxReader reader, List<AttributeDescriptor> dbColumns,List<String> missingDbColumns);
 	
 	/** convertObject<br>
 	 * convert attributes of IomObject to PostGis dataTypes.<br>
