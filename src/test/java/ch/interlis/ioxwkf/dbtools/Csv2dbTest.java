@@ -1125,48 +1125,7 @@ public class Csv2dbTest {
 			}
 		}
 	}
-	
-	// Wenn alle Parameter nicht gesetzt werden, muss die Fehlermeldung
-	// table not found ausgegeben werden.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - NOT SET: header not set
-	// - NOT SET: database-schema not set
-	// - NOT SET: database-table not set
-	// --
-	// Erwartung: FEHLER: table ... not found.
-	@Test
-	public void import_AllNotSet_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
-	        	preStmt.close();
-	        }
-	        // csv
-			File data=new File(TEST_IN, "AttributesHeader.csv");
-			// HEADER: HEADERPRESENT, HEADERABSENT not set
-			// DBSCHEMA: "csvtodbschema" not set
-			// TABLE: "csvimportwithheader" not set
-			AbstractImport2db csv2db=new Csv2db();
-			csv2db.importData(data, jdbcConnection, config);
-			fail();
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("database table==null."));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
+		
 	// Wenn der Parameter database-table nicht gesetzt wird, muss die Fehlermeldung
 	// table not found ausgegeben werden.
 	// --
