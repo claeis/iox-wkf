@@ -1,6 +1,7 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -61,7 +62,8 @@ public class Csv2db extends AbstractImport2db {
 
 	
 	@Override
-	protected void assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+	protected List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+	    List<AttributeDescriptor> ret=new ArrayList<AttributeDescriptor>();
 		CsvReader reader=(CsvReader)ioxReader;
 		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
 		for(AttributeDescriptor attrDesc:attrDescriptors) {
@@ -72,9 +74,11 @@ public class Csv2db extends AbstractImport2db {
 			AttributeDescriptor attrDesc=attrs.get(csvAttr.toLowerCase());
 			if(attrDesc!=null) {
 				attrDesc.setIomAttributeName(csvAttr);			
+				ret.add(attrDesc);
 			}else {
 				missingAttributes.add(csvAttr);
 			}
 		}
+		return ret;
 	}
 }

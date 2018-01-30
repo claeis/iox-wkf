@@ -1,6 +1,7 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -75,27 +76,9 @@ public class Shp2db extends AbstractImport2db {
 		return new ShapeReader(file,config);
 	}
 	
-	/** setIomAttrNames<br>
-	 * set attribute names to attribute descriptor.<br>
-	 * <p>
-	 * 
-	 * IoxReader:<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AbstractImport2db#createReader()}
-	 * <p>
-	 * 
-	 * AttributeDescriptor possibilities<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
-	 * <p>
-	 * 
-	 * Missing Attributes:<br>
-	 * Set iom attribute names to attribute descriptor.
-	 * 
-	 * @param ioxReader
-	 * @param attrDescriptors
-	 * @param missingAttributes
-	 */
 	@Override
-	protected void assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+	protected  List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes) {
+        List<AttributeDescriptor> ret=new ArrayList<AttributeDescriptor>();
 		ShapeReader reader=(ShapeReader)ioxReader;
 		HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
 		AttributeDescriptor geomAttr=null;
@@ -116,9 +99,11 @@ public class Shp2db extends AbstractImport2db {
 			}
 			if(attrDesc!=null) {
 				attrDesc.setIomAttributeName(shpAttr);			
+				ret.add(attrDesc);
 			}else {
 				missingAttributes.add(shpAttr);
 			}
 		}
+		return ret;
 	}
 }

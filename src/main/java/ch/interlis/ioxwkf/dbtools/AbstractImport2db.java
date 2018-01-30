@@ -126,13 +126,7 @@ public abstract class AbstractImport2db {
 			throw new IoxException("expected tablename");
 		}
 		// insert statement to insert data to db.
-		String insertQuery=getInsertStatement(definedSchemaName, definedTableName, attrDescriptors, db);
 		PreparedStatement ps=null;
-		try {
-			ps = db.prepareStatement(insertQuery);
-		}catch(Exception e) {
-			throw new IoxException(e);
-		}
 		
 		// read IoxEvents
 		IoxEvent event=reader.read();
@@ -160,7 +154,13 @@ public abstract class AbstractImport2db {
 				}
 			}else if(event instanceof StartBasketEvent) {
 				ArrayList<String> missingAttributes=new ArrayList<String>();
-				assignIomAttr2DbColumn(reader,attrDescriptors,missingAttributes);
+				attrDescriptors=assignIomAttr2DbColumn(reader,attrDescriptors,missingAttributes);
+		        try {
+		            String insertQuery=getInsertStatement(definedSchemaName, definedTableName, attrDescriptors, db);
+		            ps = db.prepareStatement(insertQuery);
+		        }catch(Exception e) {
+		            throw new IoxException(e);
+		        }
 			}
 			event=reader.read();
 		}
@@ -180,8 +180,9 @@ public abstract class AbstractImport2db {
 	 * @param reader 
 	 * @param dbColumns 
 	 * @param missingDbColumns attributes from the reader, that are not assigned to a column in the database target table
+	 * @return the list of columns for which the reader has attributes
 	 */
-	protected abstract void assignIomAttr2DbColumn(IoxReader reader, List<AttributeDescriptor> dbColumns,List<String> missingDbColumns);
+	protected abstract List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader reader, List<AttributeDescriptor> dbColumns,List<String> missingDbColumns);
 	
 	/** convertObject<br>
 	 * convert attributes of IomObject to PostGis dataTypes.<br>
