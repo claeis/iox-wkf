@@ -6,15 +6,21 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
+import ch.interlis.ili2c.metamodel.AbstractClassDef;
+import ch.interlis.ili2c.metamodel.AssociationDef;
 import ch.interlis.ili2c.metamodel.AttributeDef;
 import ch.interlis.ili2c.metamodel.BlackboxType;
+import ch.interlis.ili2c.metamodel.Cardinality;
 import ch.interlis.ili2c.metamodel.Container;
 import ch.interlis.ili2c.metamodel.Domain;
 import ch.interlis.ili2c.metamodel.Element;
@@ -23,6 +29,7 @@ import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.ili2c.metamodel.NumericType;
 import ch.interlis.ili2c.metamodel.PolylineType;
 import ch.interlis.ili2c.metamodel.PrecisionDecimal;
+import ch.interlis.ili2c.metamodel.RoleDef;
 import ch.interlis.ili2c.metamodel.SurfaceType;
 import ch.interlis.ili2c.metamodel.Table;
 import ch.interlis.ili2c.metamodel.TextType;
@@ -520,7 +527,7 @@ public class Db2IliTest {
 				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.TypeAlias);
 				Type domainType=attribute.getDomain();
 				TypeAlias typeAlias=(TypeAlias) domainType;
-				assertEquals(Db2Ili.LCOORD2056, typeAlias.getAliasing().getName());
+				assertEquals("lcoord2056", typeAlias.getAliasing().getName());
 				
 			}
 			// attribute28
@@ -534,7 +541,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(1,lineForm.length);
 				Domain controlPointType=lineType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
+				assertEquals("lcoord2056",controlPointType.getName());
 				assertEquals(0,lineType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 			// attribute29
@@ -548,7 +555,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(1,lineForm.length);
 				Domain controlPointType=surfaceType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
+				assertEquals("lcoord2056",controlPointType.getName());
 				assertEquals(0,surfaceType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 		}catch(Exception e) {
@@ -633,7 +640,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(1,lineForm.length);
 				Domain controlPointType=lineType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
+				assertEquals("lcoord2056",controlPointType.getName());
 				assertEquals(0,lineType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 			// attribute4
@@ -647,7 +654,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(1,lineForm.length);
 				Domain controlPointType=lineType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD21781,controlPointType.getName());
+				assertEquals("lcoord21781",controlPointType.getName());
 				assertEquals(0,lineType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 			// attribute7
@@ -728,7 +735,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(td.INTERLIS.ARCS.getName(),lineForm[1].getName());
 				Domain controlPointType=lineType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
+				assertEquals("lcoord2056",controlPointType.getName());
 				assertEquals(0,lineType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 			// attribute2
@@ -742,7 +749,7 @@ public class Db2IliTest {
 				assertEquals(td.INTERLIS.STRAIGHTS.getName(),lineForm[0].getName());
 				assertEquals(td.INTERLIS.ARCS.getName(),lineForm[1].getName());
 				Domain controlPointType=surfaceType.getControlPointDomain();
-				assertEquals(Db2Ili.LCOORD2056,controlPointType.getName());
+				assertEquals("lcoord2056",controlPointType.getName());
 				assertEquals(0,surfaceType.getMaxOverlap().compareTo(new PrecisionDecimal(0.01)));
 			}
 		}catch(Exception e) {
@@ -886,6 +893,193 @@ public class Db2IliTest {
 		}
 	}
 	
+	// Es werden 2 Tabellen innerhalb des definierten Schemas erstellt.
+	// Innerhalb der 2.ten Tabelle wird 1 Attribute mit einer Reference die 1.te Tabelle erstellt.
+	// Beim Export in die ili Datei, wird eine 3.te Tabelle: ASSOCIATION mit der richtigen Kardinalitaet erstellt.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// --
+	// Erwartung: Die Association Klasse und die Referencen sollen nach der ili-Syntax erstellt werden.
+	// Erwartung: Die Minimum-Kardinalitaet betraegt: 0..* zu 0..1.
+	@Test
+	public void export_Association_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema1";
+		final String TABLE1="schueler";
+		final String TABLE2="lehrer";
+		final String ATTRIBUTEPKDESCRIPTION="This attribute is a primary key.";
+		final String ATTRPK="id";
+		final String ATTRIBUTEFKDESCRIPTION="This attribute is a foreign key.";
+		final String ATTRFK="schueler";
+		final File iliFile=new File(TEST_OUT+"export_Association_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoilischema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	// create dbtoilischema
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	// create table in dbtoilischema
+	        	try {
+		        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+		        			+ATTRPK+" int4 NOT NULL,PRIMARY KEY ("+ATTRPK+")) WITH (OIDS=FALSE);");
+		        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"("+ATTRFK+" int4,"
+		        			+ "FOREIGN KEY ("+ATTRFK+") REFERENCES "+SCHEMANAME+"."+TABLE1+" ("+ATTRPK+")) WITH (OIDS=FALSE);");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+"."+ATTRPK+" is '"+ATTRIBUTEPKDESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE2+"."+ATTRFK+" is '"+ATTRIBUTEFKDESCRIPTION+"';");
+		        	preStmt.close();
+	        	}catch(Exception e) {
+	        		throw new IoxException(e);
+	        	}
+	        }
+	        {
+				// delete file if already exist
+				if(iliFile.exists()) {
+					iliFile.delete();
+				}
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+				Db2Ili db2Ili=new Db2Ili();
+				db2Ili.exportData(iliFile, jdbcConnection, config);
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_Association_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTRPK);
+				assertEquals(ATTRIBUTEPKDESCRIPTION, attribute.getDocumentation());
+				assertNotNull(attribute);
+			}
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertNotNull(table2);
+			AssociationDef modelAssociationDef = (AssociationDef) topic.getElement(AssociationDef.class, TABLE2+ATTRFK);
+			RoleDef role1=(RoleDef) modelAssociationDef.getElement(RoleDef.class, "object");
+			assertNotNull(role1);
+			RoleDef role2=(RoleDef) modelAssociationDef.getElement(RoleDef.class, ATTRFK);
+			assertNotNull(role2);
+			// cardinality 0..*
+			assertEquals(0,role1.getCardinality().getMinimum());
+			assertEquals(Cardinality.UNBOUND,role1.getCardinality().getMaximum());
+			// cardinality 0..1
+			assertEquals(0,role2.getCardinality().getMinimum());
+			assertEquals(1,role2.getCardinality().getMaximum());
+			assertEquals(TABLE2,role1.getDestination().getName());
+			assertEquals(TABLE1,role2.getDestination().getName());
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Es werden 2 Tabellen innerhalb des definierten Schemas erstellt.
+	// Innerhalb der 2.ten Tabelle wird 1 Attribute mit einer Reference die 1.te Tabelle erstellt.
+	// Beim Export in die ili Datei, wird eine 3.te Tabelle: ASSOCIATION mit der richtigen Kardinalitaet 1..1 zu 0..* erstellt.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// --
+	// Erwartung: Die Kardinalitaet betraegt: 1..1 zu 0..*;.
+	@Test
+	public void export_Association_fkNotNull_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema1";
+		final String TABLE1="schueler";
+		final String TABLE2="lehrer";
+		final String ATTRIBUTEPKDESCRIPTION="This attribute is a primary key.";
+		final String ATTRPK="id";
+		final String ATTRIBUTEFKDESCRIPTION="This attribute is a foreign key.";
+		final String ATTRFK="schueler";
+		final File iliFile=new File(TEST_OUT+"export_Association_fkNotNull_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoilischema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	// create dbtoilischema
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	// create table in dbtoilischema
+	        	try {
+		        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+		        			+ATTRPK+" int4 NOT NULL,PRIMARY KEY ("+ATTRPK+")) WITH (OIDS=FALSE);");
+		        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"("+ATTRFK+" int4 NOT NULL,"
+		        			+ "FOREIGN KEY ("+ATTRFK+") REFERENCES "+SCHEMANAME+"."+TABLE1+" ("+ATTRPK+")) WITH (OIDS=FALSE);");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE1+"."+ATTRPK+" is '"+ATTRIBUTEPKDESCRIPTION+"';");
+		        	preStmt.execute("COMMENT ON COLUMN "+SCHEMANAME+"."+TABLE2+"."+ATTRFK+" is '"+ATTRIBUTEFKDESCRIPTION+"';");
+		        	preStmt.close();
+	        	}catch(Exception e) {
+	        		throw new IoxException(e);
+	        	}
+	        }
+	        {
+				// delete file if already exist
+				if(iliFile.exists()) {
+					iliFile.delete();
+				}
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+				Db2Ili db2Ili=new Db2Ili();
+				db2Ili.exportData(iliFile, jdbcConnection, config);
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_Association_fkNotNull_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTRPK);
+				assertEquals(ATTRIBUTEPKDESCRIPTION, attribute.getDocumentation());
+				assertNotNull(attribute);
+			}
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertNotNull(table2);
+			AssociationDef modelAssociationDef = (AssociationDef) topic.getElement(AssociationDef.class, TABLE2+ATTRFK);
+			RoleDef role1=(RoleDef) modelAssociationDef.getElement(RoleDef.class, "object");
+			assertNotNull(role1);
+			RoleDef role2=(RoleDef) modelAssociationDef.getElement(RoleDef.class, ATTRFK);
+			assertNotNull(role2);
+			// cardinality 1..1
+			assertEquals(0,role1.getCardinality().getMinimum());
+			assertEquals(Cardinality.UNBOUND,role1.getCardinality().getMaximum());
+			// cardinality 0..*
+			assertEquals(1,role2.getCardinality().getMinimum());
+			assertEquals(1,role2.getCardinality().getMaximum());
+			assertEquals(TABLE2,role1.getDestination().getName());
+			assertEquals(TABLE1,role2.getDestination().getName());
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+
 	// Die ili-Datei wird fuer den Export nicht angegeben.
 	// Eine Fehlermeldung muss ausgegeben werden.
 	// Test-Konfiguration:
@@ -945,7 +1139,7 @@ public class Db2IliTest {
 	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
 	        	preStmt.close();
 	        }
-	        File data=new File(TEST_OUT+"export_RecognizeAllDataTypesInClass_Ok.ili");
+	        File data=new File(TEST_OUT+"export_ConnectionFailed_Fail.ili");
 			// delete file if already exist
 			if(data.exists()) {
 				data.delete();
@@ -986,7 +1180,7 @@ public class Db2IliTest {
 	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
 	        	preStmt.close();
 	        }
-	        File data=new File(TEST_OUT+"export_RecognizeAllDataTypesInClass_Ok.ili");
+	        File data=new File(TEST_OUT+"export_DbSchemaNotDefined_Fail.ili");
 			// delete file if already exist
 			if(data.exists()) {
 				data.delete();

@@ -12,10 +12,17 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
+import ch.interlis.ili2c.metamodel.Cardinality;
 import ch.interlis.iox.IoxException;
 
 /** export all DB-Tables, inside defined DB-Schema, as INTERLIS 2.3 classes.
@@ -25,18 +32,11 @@ public class Db2Ili{
 	private static final String ILIFILE_VERSION="2.3";
 	private static final String ILIFILE_MAILTO=System.getProperties().getProperty("user.name")+"@localhost.ch";
 	public static final String TOPICNAME="topic1";
-    private static final char NEWLINE='\n';
+    private static final String NEWLINE=System.getProperty("line.separator");
 	private static final String DEFINEDOVERLAB="0.01";
 	private static final String INDENT="  ";
-	
-	// coordnames of coorddefinitions
-	public static final String LCOORD2056="lcoord2056";
-	public static final String HCOORD2056="hcoord2056";
-	public static final String LCOORD21781="lcoord21781";
-	public static final String HCOORD21781="hcoord21781";
-	
-	// tablename
-	private static final String JDBC_GETCOLUMNS_TABLENAME="TABLE_NAME";
+	private static final String TABLE_ROLE1_NAME="object";
+	private static final String DOMAIN="DOMAIN";
 	
 	/** export tablestructure to ili-model.
 	 * {@link IoxWkfConfig#SETTING_DBSCHEMA} DB-Schema includes all tables to export.
@@ -93,27 +93,57 @@ public class Db2Ili{
 			writer.write(INDENT);
 			writer.write("TOPIC "+TOPICNAME+" =");
 			writer.write(NEWLINE);
-			writer.write(NEWLINE);
-			// domain
-			writer.write(INDENT);
-			writer.write(INDENT);
-			writer.write("DOMAIN");
-			writer.write(NEWLINE);
-			
 		} catch (IOException e) {
 			throw new IoxException(e);
 		}
 		
 		try {
 			for(TableDescription tableDesc : tableDescs) {
-				List<AttributeDescriptor> attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, tableDesc.getName(), db);
+				List<AttributeDescriptor> attrDesc=null;
+				attrDesc=AttributeDescriptor.getAttributeDescriptors(dbSchemaName, tableDesc.getName(), db);
 				if(attrDesc!=null) {
-					writeCoordDefinition(attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]), writer);
-					writeClass(writer, tableDesc, attrDesc.toArray(new AttributeDescriptor[attrDesc.size()]));
+					tableDesc.setAttrDesc( attrDesc);
 				}else {
 					throw new IoxException("no attributes found.");
 				}
 			}
+			// association
+			addReferenceDetails(db, dbSchemaName, tableDescs);
+			
+			boolean domainNotDefined=true;
+			List<String> coordDimList=new ArrayList<String>();
+			for(TableDescription tableDesc : tableDescs) {
+				List<AttributeDescriptor> attrDescList=tableDesc.getAttrDesc();
+				for(AttributeDescriptor attribute:attrDescList) {
+					if(attribute.isGeometry()) {
+						Integer epsg=attribute.getSrId();
+						if(epsg==null) {
+							continue;
+						}else {
+							if(domainNotDefined) {
+								domainNotDefined=false;
+								// domain
+								writer.write(NEWLINE);
+								writer.write(INDENT);
+								writer.write(INDENT);
+								writer.write(DOMAIN);
+								writer.write(NEWLINE);
+							}
+							writeCoordValue(writer, attribute, coordDimList);
+						}
+					}
+				}
+				writeClass(writer, tableDesc, attrDescList);
+			}
+			
+			// write association
+			for(TableDescription tableDesc : tableDescs) {
+				List<AttributeDescriptor> attrDescs=tableDesc.getAttrDesc();
+				for(AttributeDescriptor attrDesc : attrDescs) {
+					writeAssociation(writer, tableDesc.getName(), attrDesc);
+				}
+			}
+			
 			writer.write(NEWLINE);
 			// end Topic.
 			writer.write(INDENT);
@@ -133,7 +163,7 @@ public class Db2Ili{
 			throw new IoxException(e);
 		}
 	}
-
+	
 	private String getCurrentDate() {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 		Date date = new Date();
@@ -155,15 +185,23 @@ public class Db2Ili{
 		}
 		ResultSet rs;
 		try {
+			String[] tableTypes=new String[7];
+			tableTypes[0]="TABLE";
+			tableTypes[1]="VIEW";
+			tableTypes[2]="SYSTEM TABLE";
+			tableTypes[3]="GLOBAL TEMPORARY";
+			tableTypes[4]="LOCAL TEMPORARY";
+			tableTypes[5]="ALIAS";
+			tableTypes[6]="SYNONYM";
 			// get all tables of defined schema.
-			rs = md.getTables(null, schema, "%", null);
+			rs = md.getTables(null, schema, "%", tableTypes);
 		} catch (SQLException e1) {
 			throw new IoxException(e1);
 		}
 		try {
 			List<TableDescription> dbTableDescriptions=new ArrayList<TableDescription>();
 			while (rs.next()) {
-				TableDescription tableDesc=new TableDescription(rs.getString(JDBC_GETCOLUMNS_TABLENAME),rs.getString(AttributeDescriptor.JDBC_GETCOLUMNS_REMARKS));
+				TableDescription tableDesc=new TableDescription(rs.getString(TableDescription.JDBC_GETCOLUMNS_TABLENAME),rs.getString(AttributeDescriptor.JDBC_GETCOLUMNS_REMARKS));
 				if(tableDesc!=null) {
 					dbTableDescriptions.add(tableDesc);
 				}
@@ -194,7 +232,7 @@ public class Db2Ili{
 	 * @param attributes of table
 	 * @throws IoxException
 	 */
-	private void writeClass(Writer writer,TableDescription tableDesc,AttributeDescriptor attributes[]) throws IoxException{
+	private void writeClass(Writer writer,TableDescription tableDesc,List<AttributeDescriptor> attributes) throws IoxException{
 		try {
 			// create Class.
 			writer.write(NEWLINE);
@@ -214,10 +252,9 @@ public class Db2Ili{
 			writer.write(NEWLINE);
 			for(AttributeDescriptor attribute:attributes) {
 				try {
-					writer.write(INDENT);
-					writer.write(INDENT);
-					writer.write(INDENT);
-					writeAttribute(writer, attribute);
+					if(!attribute.isReference()) {
+						writeAttribute(writer, attribute);
+					}
 				} catch (IoxException e) {
 					throw new IoxException(e);
 				}
@@ -235,19 +272,18 @@ public class Db2Ili{
 	}
 	
 	/** write a DB-Column as an ili-type.
-	 * 
 	 * @param writer ili-file
 	 * @param attribute write in Interlis-Syntax.
 	 * @throws IoxException
+	 * @throws IOException 
 	 */
-	private void writeAttribute(Writer writer,AttributeDescriptor attribute) throws IoxException{
+	private void writeAttribute(Writer writer,AttributeDescriptor attribute) throws IoxException, IOException {
 		Boolean isMandatory=false;
+		writer.write(INDENT);
+		writer.write(INDENT);
+		writer.write(INDENT);
 		try {
 			if(attribute.getColumnRemarks()!=null) {
-				writer.write(NEWLINE);
-				writer.write(INDENT);
-				writer.write(INDENT);
-				writer.write(INDENT);
 				writer.write("/** ");
 				writer.write(attribute.getColumnRemarks());
 				writer.write(" */");
@@ -378,96 +414,159 @@ public class Db2Ili{
 		return resultType.toString();
 	}
 	
-	private void writeCoordDefinition(AttributeDescriptor[] attributes, FileWriter writer) throws IOException {
-		List<String> coordDimList=new ArrayList<String>();
-		for(AttributeDescriptor attribute:attributes) {
-			if(attribute.isGeometry()) {
-				Integer epsg=attribute.getSrId();
-				Integer coordDimension=attribute.getCoordDimension();
-				if(epsg==null) {
-					continue;
-				}else {
-					// epsg: CHLV95
-					if(epsg==2056) {
-						if(coordDimension==2) {
-							String lcoord="lcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],\r\n" + 
-									"	            1045000.000 .. 1310000.000 [INTERLIS.m],\r\n" + 
-									"	            ROTATION 2 -> 1;";
-							if(!coordDimList.contains(lcoord)) {
-								coordDimList.add(lcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(lcoord);
-							}
-						}else if(coordDimension==3) {
-							String hcoord="hcoord2056 = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],\r\n" + 
-									"	            1045000.000 .. 1310000.000 [INTERLIS.m],\r\n" + 
-									"	            -200.000 .. 5000.000 [INTERLIS.m],\r\n" + 
-									"	            ROTATION 2 -> 1;";
-							if(!coordDimList.contains(hcoord)) {
-								coordDimList.add(hcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(hcoord);
-							}
-						}
-					// epsg: CHLV03
-					}else if(epsg==21781) {
-						if(coordDimension==2) {
-							String lcoord="lcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m],\r\n" + 
-										"	        45000.000 .. 310000.000 [INTERLIS.m],\r\n" + 
-										"	        ROTATION 2 -> 1;";
-							if(!coordDimList.contains(lcoord)) {
-								coordDimList.add(lcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(lcoord);
-							}
-						}else if(coordDimension==3) {
-							String hcoord="hcoord21781 = COORD 460000.000 .. 870000.000 [INTERLIS.m],\r\n" + 
-									"	            45000.000 .. 310000.000 [INTERLIS.m],\r\n" + 
-									"	            -200.000 .. 5000.000 [INTERLIS.m],\r\n" + 
-									"	            ROTATION 2 -> 1;";
-							if(!coordDimList.contains(hcoord)) {
-								coordDimList.add(hcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(hcoord);
-							}
-						}
-					// epsg: other or null
-					}else if(epsg!=21781 && epsg!=2056){
-						if(coordDimension==2) {
-							String lcoord="lcoord"+epsg+" = COORD 0.000 .. 999999.999 [INTERLIS.m],\r\n" +
-									"	            0.000 .. 999999.999 [INTERLIS.m],\r\n" +
-									"	            ROTATION 2 -> 1;";
-							if(!coordDimList.contains(lcoord)) {
-								coordDimList.add(lcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(lcoord);
-							}
-						}else if(coordDimension==3) {
-							String hcoord="hcoord"+epsg+" = COORD 0.000 .. 999999.999 [INTERLIS.m],\r\n" +
-									"	            0.000 .. 999999.999 [INTERLIS.m],\r\n" +
-									"	            -999.999 .. 9999.999 [INTERLIS.m],\r\n" + 
-									"	            ROTATION 2 -> 1;";
-							if(!coordDimList.contains(hcoord)) {
-								coordDimList.add(hcoord);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(INDENT);
-								writer.write(hcoord);
-							}
+	private void addReferenceDetails(Connection db, String schema,  List<TableDescription> tableDescs) throws IoxException {
+		DatabaseMetaData md;
+		try {
+			md = db.getMetaData();
+		} catch (SQLException e2) {
+			throw new IoxException(e2);
+		}
+		ResultSet refResult;
+		try {
+			refResult = md.getCrossReference(null, schema, null, null, schema, null);
+			while (refResult.next()) {
+				for(TableDescription tableDesc:tableDescs) {
+					List<AttributeDescriptor> attrDescs=tableDesc.getAttrDesc();
+					for(AttributeDescriptor attrDesc : attrDescs) {
+						String columnname=attrDesc.getDbColumnName();
+						if(columnname!=null && columnname.equals(refResult.getString(AttributeDescriptor.JDBC_GETCOLUMNS_FKCOLUMNNAME))) {
+							attrDesc.setTargetTableName(refResult.getString(AttributeDescriptor.JDBC_GETCOLUMNS_PKTABLENAME));
+							attrDesc.setReferenceColumnName(refResult.getString(AttributeDescriptor.JDBC_GETCOLUMNS_FKCOLUMNNAME));
 						}
 					}
-					writer.write(NEWLINE);
 				}
+			}
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	private void writeCoordValue(FileWriter writer, AttributeDescriptor attribute, List<String> coordDimList) throws IOException {
+		Integer coordDimension=attribute.getCoordDimension();
+		Integer epsg=attribute.getSrId();
+		writer.write(INDENT);
+		writer.write(INDENT);
+		writer.write(INDENT);
+		// epsg: CHLV95
+		if(epsg==2056) {
+			if(coordDimension==2) {
+				String lcoord="lcoord"+epsg;
+				if(!coordDimList.contains(lcoord)) {
+					coordDimList.add(lcoord);
+					writer.write(lcoord);
+					writer.write(" = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],"+NEWLINE+ 
+							"	            1045000.000 .. 1310000.000 [INTERLIS.m],"+NEWLINE+ 
+							"	            ROTATION 2 -> 1;");
+				}
+			}else if(coordDimension==3) {
+				String hcoord="hcoord"+epsg;
+				if(!coordDimList.contains(hcoord)) {
+					coordDimList.add(hcoord);
+					writer.write(hcoord);
+					writer.write(" = COORD 2460000.000 .. 2870000.000 [INTERLIS.m],"+NEWLINE+
+							"	            1045000.000 .. 1310000.000 [INTERLIS.m],"+NEWLINE+  
+							"	            -200.000 .. 5000.000 [INTERLIS.m],"+NEWLINE+ 
+							"	            ROTATION 2 -> 1;");
+				}
+			}
+		// epsg: CHLV03
+		}else if(epsg==21781) {
+			if(coordDimension==2) {
+				String lcoord="lcoord"+epsg;
+				if(!coordDimList.contains(lcoord)) {
+					coordDimList.add(lcoord);
+					writer.write(lcoord);
+					writer.write(" = COORD 460000.000 .. 870000.000 [INTERLIS.m],"+NEWLINE+ 
+							"	        45000.000 .. 310000.000 [INTERLIS.m],"+NEWLINE+ 
+							"	        ROTATION 2 -> 1;");
+				}
+			}else if(coordDimension==3) {
+				String hcoord="hcoord"+epsg;
+				if(!coordDimList.contains(hcoord)) {
+					coordDimList.add(hcoord);
+					writer.write(hcoord);
+					writer.write(" = COORD 460000.000 .. 870000.000 [INTERLIS.m],"+NEWLINE+
+							"	            45000.000 .. 310000.000 [INTERLIS.m],"+NEWLINE+
+							"	            -200.000 .. 5000.000 [INTERLIS.m],"+NEWLINE+
+							"	            ROTATION 2 -> 1;");
+				}
+			}
+		// epsg: other or null
+		}else if(epsg!=21781 && epsg!=2056){
+			if(coordDimension==2) {
+				String lcoord="lcoord"+epsg;
+				if(!coordDimList.contains(lcoord)) {
+					coordDimList.add(lcoord);
+					writer.write(lcoord);
+					writer.write(" = COORD -999999.999 .. 999999.999,"+NEWLINE+ 
+							"	            -999999.999 .. 999999.999,"+NEWLINE+ 
+							"	            ROTATION 2 -> 1;");
+				}
+			}else if(coordDimension==3) {
+				String hcoord="hcoord"+epsg;
+				if(!coordDimList.contains(hcoord)) {
+					coordDimList.add(hcoord);
+					writer.write(hcoord);
+					writer.write(" = COORD -999999.999 .. 999999.999,"+NEWLINE+ 
+							"	            -999999.999 .. 999999.999,"+NEWLINE+ 
+							"	            -9999.999 .. 9999.999,"+NEWLINE+ 
+							"	            ROTATION 2 -> 1;");
+				}
+			}
+		}
+		writer.write(NEWLINE);
+	}
+	
+	private void writeAssociation(FileWriter writer, String sourceTableName,AttributeDescriptor referenceColumn) throws IoxException {
+		String fkColumn=referenceColumn.getReferenceColumnName();
+		String refTableName=referenceColumn.getTargetTableName();
+		Boolean mandatory = referenceColumn.isMandatory();
+		String refMinCard="0";
+		if(mandatory) {
+			refMinCard="1";
+		}
+		String refMaxCard="1";
+		
+		String sourceMinCard="0";
+		// card==Cardinality.UNBOUND
+		String sourceMaxCard="*";
+		
+		if(refTableName!=null && fkColumn!=null){
+			try {
+				// create Association.
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write("ASSOCIATION ");
+				writer.write(sourceTableName+fkColumn);
+				writer.write(" =");
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write(Db2Ili.TABLE_ROLE1_NAME+" -- {"+sourceMinCard+".."+sourceMaxCard+"} "+sourceTableName+";");
+				writer.write(NEWLINE);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write(INDENT);
+				if(referenceColumn.getColumnRemarks()!=null) {
+					writer.write("/** "+referenceColumn.getColumnRemarks()+" */");
+					writer.write(NEWLINE);
+					writer.write(INDENT);
+					writer.write(INDENT);
+					writer.write(INDENT);
+				}
+				writer.write(fkColumn+" -- {"+refMinCard+".."+refMaxCard+"} "+refTableName+";");
+				writer.write(NEWLINE);
+				// end Association.
+				writer.write(INDENT);
+				writer.write(INDENT);
+				writer.write("END ");
+				writer.write(sourceTableName+fkColumn);
+				writer.write(";");
+				writer.write(NEWLINE);
+			} catch (IOException e) {
+				throw new IoxException(e);
 			}
 		}
 	}

@@ -1,13 +1,16 @@
 package ch.interlis.ioxwkf.dbtools;
 
-/** contains the information about the table.<br>
- * constructor:<br>
- * <li>the name of the table.</li>
- * <li>the description of the table.</li>
+import java.util.List;
+
+/** contains the information about the table.
  */
 public class TableDescription {
+	public static final String JDBC_GETCOLUMNS_TABLENAME="TABLE_NAME";
+	
+	// table descriptions
 	private String name;
 	private String description;
+	private List<AttributeDescriptor> attrDesc=null;
 	
 	private TableDescription() {}
 	
@@ -30,5 +33,19 @@ public class TableDescription {
 	 */
 	public String getDescription() {
 		return description;
+	}
+
+	/** these are the attributes of this table.
+	 * @return attrDesc, which contains all attributes of this table.
+	 */
+	public List<AttributeDescriptor> getAttrDesc() {
+		return attrDesc;
+	}
+
+	/** these are the attributes of this table.
+	 * @param attrDesc, the list of all attributes in the table.
+	 */
+	public void setAttrDesc(List<AttributeDescriptor> attrDesc) {
+		this.attrDesc = attrDesc;
 	}
 }
