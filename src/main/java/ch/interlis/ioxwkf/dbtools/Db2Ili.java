@@ -12,17 +12,10 @@ import java.sql.Types;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.metamodel.Cardinality;
 import ch.interlis.iox.IoxException;
 
 /** export all DB-Tables, inside defined DB-Schema, as INTERLIS 2.3 classes.

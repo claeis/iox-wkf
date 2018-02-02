@@ -10,9 +10,6 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.postgresql.jdbc.PgDatabaseMetaData;
-
 import ch.interlis.iox.IoxException;
 
 /**<b>AttributeDescriptor</b>
