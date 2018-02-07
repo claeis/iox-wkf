@@ -22,6 +22,14 @@ public class IoxWkfConfig {
 	/** the data base table name.
 	 */
 	public final static String SETTING_DBTABLE=PREFIX+".dbTable";
+	/** only the listed tables from the database should be exported to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_INCLUDETABLES=PREFIX+".includeTables";
+	/** the listed tables should not be exported from the database to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_EXCLUDETABLES=PREFIX+".excludeTables";
 	/** model names. Multiple model names are separated by semicolon (';'). 
 	 */
 	public final static String SETTING_MODELNAMES=PREFIX+".modelNames";

@@ -2,6 +2,7 @@ package ch.interlis.ioxwkf.dbtools;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
@@ -36,11 +37,11 @@ import ch.interlis.ili2c.metamodel.TypeAlias;
 import ch.interlis.iox.IoxException;
 
 public class Db2IliTest {
-
 	private String dburl=System.getProperty("dburl");
 	private String dbuser=System.getProperty("dbusr");
 	private String dbpwd=System.getProperty("dbpwd");
-	private static final String TEST_OUT="src/test/data/Db2Ili/";
+	private static final String TEST_OUT="build/test/data/DB2Ili/";
+	private static final String TOPICNAME="topic1";
 	
 	@BeforeClass
 	public static void setup() throws Ili2cFailure
@@ -100,7 +101,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			Table table2=(Table) topic.getElement(Table.class, TABLE2);
@@ -172,7 +173,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertEquals(TABLE1DESCRIPTION, table1.getDocumentation());
 			assertNotNull(table1);
@@ -271,7 +272,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			// attribute1
@@ -622,7 +623,7 @@ public class Db2IliTest {
 			ArrayList ilifiles=new ArrayList();
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			// attribute1
@@ -717,7 +718,7 @@ public class Db2IliTest {
 			ArrayList ilifiles=new ArrayList();
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			// attribute1
@@ -825,7 +826,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertEquals(TABLE1DESCRIPTION, table1.getDocumentation());
 			assertNotNull(table1);
@@ -954,7 +955,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			// attribute1
@@ -1047,7 +1048,7 @@ public class Db2IliTest {
 			ilifiles.add(iliFilename);
 			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
 			assertNotNull(td);
-			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, Db2Ili.TOPICNAME);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
 			Table table1=(Table) topic.getElement(Table.class, TABLE1);
 			assertNotNull(table1);
 			// attribute1
@@ -1190,6 +1191,219 @@ public class Db2IliTest {
 			if(jdbcConnection!=null){
 				jdbcConnection.close();
 			}
+		}
+	}
+	
+	// Alle Tabellen innerhalb der includeTables Option, sollen gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: includeTables.
+	// --
+	// Erwartung: Die Tabelle: 1, 3 und 5 werden gefunden.
+	@Test
+	public void export_IncludeTables_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String TABLE2="table2";
+		final String TABLE3="table3";
+		final String TABLE4="table4";
+		final String TABLE5="table5";
+		final File iliFile=new File(TEST_OUT+"export_IncludeTables_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE3+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE4+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE5+"();");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_INCLUDETABLES, "table1;table3;table5");
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_IncludeTables_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertNull(table2);
+			Table table3=(Table) topic.getElement(Table.class, TABLE3);
+			assertNotNull(table3);
+			Table table4=(Table) topic.getElement(Table.class, TABLE4);
+			assertNull(table4);
+			Table table5=(Table) topic.getElement(Table.class, TABLE5);
+			assertNotNull(table5);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Alle Tabellen innerhalb der excludeTables Option, duerfen nicht gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: excludeTables.
+	// --
+	// Erwartung: Die Tabelle: 1, 3 und 5 duerfen nicht gefunden werden.
+	@Test
+	public void export_ExcludeTables_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String TABLE2="table2";
+		final String TABLE3="table3";
+		final String TABLE4="table4";
+		final String TABLE5="table5";
+		final File iliFile=new File(TEST_OUT+"export_ExcludeTables_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE3+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE4+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE5+"();");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_EXCLUDETABLES, "table1;table3;table5");
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ExcludeTables_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNull(table1);
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertNotNull(table2);
+			Table table3=(Table) topic.getElement(Table.class, TABLE3);
+			assertNull(table3);
+			Table table4=(Table) topic.getElement(Table.class, TABLE4);
+			assertNotNull(table4);
+			Table table5=(Table) topic.getElement(Table.class, TABLE5);
+			assertNull(table5);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Alle Tabellen innerhalb der excludeTables Option, duerfen nicht gefunden werden.
+	// Alle Tabellen innerhalb der includeTables Option, muessen gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: excludeTables.
+	// - set: includeTables.
+	// --
+	// Erwartung: Die Tabelle: 1, 3 muessen gefunden werden.
+	@Test
+	public void export_ExcludeAndIncludeTables_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String TABLE2="table2";
+		final String TABLE3="table3";
+		final String TABLE4="table4";
+		final String TABLE5="table5";
+		final File iliFile=new File(TEST_OUT+"export_ExcludeAndIncludeTables_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE2+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE3+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE4+"();");
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE5+"();");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_EXCLUDETABLES, "table1;table3;table5");
+			config.setValue(IoxWkfConfig.SETTING_INCLUDETABLES, "table1;table3");
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ExcludeAndIncludeTables_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			Table table2=(Table) topic.getElement(Table.class, TABLE2);
+			assertNull(table2);
+			Table table3=(Table) topic.getElement(Table.class, TABLE3);
+			assertNotNull(table3);
+			Table table4=(Table) topic.getElement(Table.class, TABLE4);
+			assertNull(table4);
+			Table table5=(Table) topic.getElement(Table.class, TABLE5);
+			assertNull(table5);
+		}catch(Exception e) {
+			throw new IoxException(e);
 		}
 	}
 }

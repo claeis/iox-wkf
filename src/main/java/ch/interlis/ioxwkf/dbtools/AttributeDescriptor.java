@@ -162,6 +162,7 @@ public class AttributeDescriptor {
 	private String columnRemarks=null;
 	private String targetTableName=null;
 	private String referenceColumnName=null;
+	private String attributeDefinition=null;
 	
 	public static final String JDBC_GETCOLUMNS_FKCOLUMNNAME="FKCOLUMN_NAME";
 	public static final String JDBC_GETCOLUMNS_PKTABLENAME="PKTABLE_NAME";
@@ -717,5 +718,17 @@ public class AttributeDescriptor {
 	 */
 	public void setReferenceColumnName(String referenceColumnName) {
 		this.referenceColumnName = referenceColumnName;
+	}
+	/** the definition of the attribute.
+	 * @return the attributeDefinition.
+	 */
+	public String getAttributeTypeDefinition() {
+		return attributeDefinition;
+	}
+	/** the definition of the attribute.
+	 * @param attributeDefinition the attributeDefinition to set.
+	 */
+	public void setAttributeTypeDefinition(String attributeDefinition) {
+		this.attributeDefinition = attributeDefinition;
 	}
 }

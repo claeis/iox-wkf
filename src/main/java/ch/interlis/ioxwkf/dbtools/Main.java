@@ -58,6 +58,12 @@ public class Main {
 			}else if(arg.equals("--dbschema")) {
 				argi++;
 				settings.setValue(IoxWkfConfig.SETTING_DBSCHEMA, args[argi]);
+			}else if(arg.equals("--includeTables")) {
+				argi++;
+				settings.setValue(IoxWkfConfig.SETTING_INCLUDETABLES, args[argi]);
+			}else if(arg.equals("--excludeTables")) {
+				argi++;
+				settings.setValue(IoxWkfConfig.SETTING_EXCLUDETABLES, args[argi]);
 			}else if(arg.equals("--version")){
 				printVersion();
 				return;
@@ -72,6 +78,8 @@ public class Main {
 				System.err.println("OPTIONS");
 				System.err.println("--trace            	enable trace messages.");
 				System.err.println("--dbschema schema       the name of the schema in the database. Defaults to not set.");
+				System.err.println("--includeTables table 	export only listed tables from db to ili. table names separated by a semicolon.");
+				System.err.println("--excludeTables table 	do not export the listed tables from db to ili. table names separated by a semicolon.");
 				System.err.println("--help            	display this help text.");
 				System.err.println("--version               display the version of "+APP_NAME+".");
 				System.err.println();
