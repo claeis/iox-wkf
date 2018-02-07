@@ -70,6 +70,8 @@ public class Main {
 			}else if(arg.equals("--excludeAttributes")) {
 				argi++;
 				settings.setValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES, args[argi]);
+			}else if(arg.equals("--scanNumberRange")) {
+				settings.setValue(IoxWkfConfig.SETTING_SCANNUMBERRANGE, IoxWkfConfig.SETTING_SCANNUMBERRANGE_ON);
 			}else if(arg.equals("--version")){
 				printVersion();
 				return;
@@ -88,6 +90,7 @@ public class Main {
 				System.err.println("--excludeTables table 	do not export the listed tables from db to ili. table names separated by a semicolon.");
 				System.err.println("--includeAttributes attribute 	export only listed attributes from db to ili. separated by a semicolon.");
 				System.err.println("--excludeAttributes attribute 	do not export the listed attributes from db to ili. separated by a semicolon.");
+				System.err.println("--scanNumberRange 	the range of the numeric attributes will be define by the value length in db column.");
 				System.err.println("--help            	display this help text.");
 				System.err.println("--version               display the version of "+APP_NAME+".");
 				System.err.println();

@@ -41,6 +41,12 @@ public class IoxWkfConfig {
 	/** model names. Multiple model names are separated by semicolon (';'). 
 	 */
 	public final static String SETTING_MODELNAMES=PREFIX+".modelNames";
+	/** set the range of numeric attributes.
+	 */
+	public final static String SETTING_SCANNUMBERRANGE=PREFIX+".scanNumberRange";
+	/** set the range of numeric attributes to on.
+	 */
+	public final static String SETTING_SCANNUMBERRANGE_ON=SETTING_SCANNUMBERRANGE+".on";
 	/** Path with folders of Interlis model files.
 	 * decide between:<br>
 	 * <li>set default model directory: SETTING_ILIDIRS_DEFAULT.</li>

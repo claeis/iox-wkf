@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.DateFormat;
@@ -84,6 +86,12 @@ public class Db2Ili{
 			EhiLogger.logState("excludeAttributes: <"+excludeAttributes+">.");
 		}
 		
+		// optional: set the range of numeric attributes.
+		String scanNumberRange=config.getValue(IoxWkfConfig.SETTING_SCANNUMBERRANGE);
+		if(scanNumberRange!=null) {
+			EhiLogger.logState("scanNumberRange: <"+scanNumberRange+">.");
+		}
+		
 		// get all DB-Table names inside target DB-Schema.
 		List<TableDescription> tableDescs = getTables(db, dbSchemaName);
 		
@@ -154,6 +162,7 @@ public class Db2Ili{
 		String excludeTables=config.getValue(IoxWkfConfig.SETTING_EXCLUDETABLES);
 		String includeAttributes=config.getValue(IoxWkfConfig.SETTING_INCLUDEATTRIBUTES);
 		String excludeAttributes=config.getValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES);
+		String scanNumberRange=config.getValue(IoxWkfConfig.SETTING_SCANNUMBERRANGE);
 		
 		int position=0;
 		while(position<tableDescs.size()){
@@ -263,7 +272,13 @@ public class Db2Ili{
 							}
 						}
 					}
-					tableDesc.setAttrDesc(attrDescList);
+					// scan number range.
+					if(scanNumberRange!=null) {
+						List<AttributeDescriptor> scannedAttrDescs=addScannedNumberRange(dbSchemaName, tableDesc.getName(), attrDescList, db);
+						tableDesc.setAttrDesc(scannedAttrDescs);
+					}else {
+						tableDesc.setAttrDesc(attrDescList);
+					}
 				}else {
 					throw new IoxException("no attributes found.");
 				}
@@ -289,6 +304,79 @@ public class Db2Ili{
 			throw new IoxException(e);
 		}
 		return tableDescs;
+	}
+
+	private List<AttributeDescriptor> addScannedNumberRange(String dbSchemaName, String tableName, List<AttributeDescriptor> attrDescList, Connection db) throws IoxException {
+		PreparedStatement ps=null;
+		ResultSet rs=null;
+		try {
+			String selectQuery = getSelectAttributeRange(dbSchemaName, tableName, attrDescList, db);
+			ps = db.prepareStatement(selectQuery);
+			ps.clearParameters();
+			rs = ps.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
+			int position=1;
+			while(rs.next()) {
+				for(AttributeDescriptor attr:attrDescList) {
+					String attrColumnName = rsmd.getColumnLabel(position);
+					Long attrValue=rs.getLong(attrColumnName);
+					if(attr.getDbColumnName().equals(attrColumnName)) {
+						attr.setAttributeTypeDefinition("-"+attrValue+" .. "+attrValue);
+						position+=1;
+					}
+				}
+			}
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}finally{
+			if(rs!=null) {
+				try {
+					rs.close();
+				} catch (SQLException e) {
+					throw new IoxException(e);
+				}
+				rs=null;
+			}
+			if(ps!=null) {
+				try {
+					ps.close();
+				} catch (SQLException e) {
+					throw new IoxException(e);
+				}
+				ps=null;
+			}
+		}
+		return attrDescList;
+	}
+	
+	private String getSelectAttributeRange(String dbSchemaName, String tableName, List<AttributeDescriptor> attrDescList,Connection db) {
+		StringBuilder selectionQueryBuild=new StringBuilder();
+		String comma="";
+		selectionQueryBuild.append("SELECT ");
+		for(AttributeDescriptor attrDesc:attrDescList) {
+			String dbColName="\""+attrDesc.getDbColumnName()+"\"";
+			Integer dataType=attrDesc.getDbColumnType();
+			if(
+				dataType.equals(Types.NUMERIC) ||
+				dataType.equals(Types.SMALLINT) ||
+				dataType.equals(Types.REAL) ||
+				dataType.equals(Types.INTEGER) ||
+				dataType.equals(Types.BIGINT) ||
+				dataType.equals(Types.FLOAT) ||
+				dataType.equals(Types.DOUBLE) ||
+				dataType.equals(Types.DECIMAL)
+			){
+				selectionQueryBuild.append(comma);
+				selectionQueryBuild.append(dbColName);
+			}
+			comma=",";
+		}
+		selectionQueryBuild.append(" FROM ");
+		if(dbSchemaName!=null) {
+			selectionQueryBuild.append("\""+dbSchemaName+"\""+".");
+		}
+		selectionQueryBuild.append("\""+tableName+"\""+";");
+		return selectionQueryBuild.toString();
 	}
 
 	private void writeModel(String dbSchemaName, List<TableDescription> tableDescs, File ilifile) throws IoxException {

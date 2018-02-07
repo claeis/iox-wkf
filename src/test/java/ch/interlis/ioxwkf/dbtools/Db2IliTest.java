@@ -1676,4 +1676,291 @@ public class Db2IliTest {
 			throw new IoxException(e);
 		}
 	}
+	
+	// Die Attribute Definitionen der numerischen Typen werden anhand der Datenbank Werte in die ili Datei geschrieben.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: scanNumberRange.
+	// --
+	// Erwartung: Alle numerischen Attribute-Typ Definitionen werden anhand der Datenbank Werte in die ili Datei geschrieben.
+	@Test
+	public void export_ScanNumberRange_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final File iliFile=new File(TEST_OUT+"export_ScanNumberRange_Ok.ili");
+		final String ATTR1="attr1";
+		final String ATTR2="attr2";
+		final String ATTR3="attr3";
+		final String ATTR4="attr4";
+		final String ATTR5="attr5";
+		final String ATTR6="attr6";
+		final String ATTR7="attr7";
+		final String ATTR8="attr8";
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoilischema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	// create dbtoilischema
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	// create table in dbtoilischema
+	        	try {
+	        		preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+		        			+ ATTR1+" smallint,"
+		        			+ ATTR2+" integer,"
+		        			+ ATTR3+" bigint,"
+		        			+ ATTR4+" decimal,"
+		        			+ ATTR5+" double precision,"
+		        			+ ATTR6+" real,"
+		        			+ ATTR7+" float,"
+		        			+ ATTR8+" numeric) WITH (OIDS = FALSE);");
+		        	preStmt.execute("INSERT INTO "+SCHEMANAME+"."+TABLE1
+		        			+ "("+ ATTR1+", "+ ATTR2+", "+ ATTR3+", "+ ATTR4+", "+ ATTR5+", "+ ATTR6+", "+ ATTR7+", "+ ATTR8+")"
+		        			+ "VALUES"
+		        			+ "(10, 20, 30, 40, 50, 60, 70, 80);");
+		        	preStmt.close();
+	        	}catch(Exception e) {
+	        		throw new IoxException(e);
+	        	}
+	        }
+	        {
+				// delete file if already exist
+				if(iliFile.exists()) {
+					iliFile.delete();
+				}
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+				config.setValue(IoxWkfConfig.SETTING_SCANNUMBERRANGE, IoxWkfConfig.SETTING_SCANNUMBERRANGE_ON);
+				Db2Ili db2Ili=new Db2Ili();
+				db2Ili.exportData(iliFile, jdbcConnection, config);
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ScanNumberRange_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR1);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-10)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(10)));
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR2);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-20)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(20)));
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR3);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-30)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(30)));
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR4);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-40)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(40)));
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR5);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-50)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(50)));
+			}
+			// attribute6
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR6);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-60)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(60)));
+			}
+			// attribute7
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR7);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-70)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(70)));
+			}
+			// attribute8
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR8);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-80)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(80)));
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Nur die Attribute Definitionen der numerischen Typen werden anhand der Datenbank Werte in die ili Datei geschrieben.
+	// Es werden 3 numerische und 2 text Typen erstellt.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: scanNumberRange.
+	// --
+	// Erwartung: Alle numerischen Attribute-Typ Definitionen werden anhand der Datenbank Werte in die ili Datei geschrieben.
+	@Test
+	public void export_ScanNumberRange_differentDataTypes_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final File iliFile=new File(TEST_OUT+"export_ScanNumberRange_differentDataTypes_Ok.ili");
+		final String ATTR1="attr1";
+		final String ATTR2="attr2";
+		final String ATTR3="attr3";
+		final String ATTR4="attr4";
+		final String ATTR5="attr5";
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	// drop dbtoilischema
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	// create dbtoilischema
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	// create table in dbtoilischema
+	        	try {
+	        		preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+		        			+ ATTR1+" integer,"
+		        			+ ATTR2+" varchar,"
+		        			+ ATTR3+" integer,"
+		        			+ ATTR4+" varchar,"
+		        			+ ATTR5+" integer) WITH (OIDS = FALSE);");
+		        	preStmt.execute("INSERT INTO "+SCHEMANAME+"."+TABLE1
+		        			+ "("+ ATTR1+", "+ ATTR2+", "+ ATTR3+", "+ ATTR4+", "+ ATTR5+")"
+		        			+ "VALUES"
+		        			+ "(10, '20', 30, '40', 50);");
+		        	preStmt.close();
+	        	}catch(Exception e) {
+	        		throw new IoxException(e);
+	        	}
+	        }
+	        {
+				// delete file if already exist
+				if(iliFile.exists()) {
+					iliFile.delete();
+				}
+				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+				config.setValue(IoxWkfConfig.SETTING_SCANNUMBERRANGE, IoxWkfConfig.SETTING_SCANNUMBERRANGE_ON);
+				Db2Ili db2Ili=new Db2Ili();
+				db2Ili.exportData(iliFile, jdbcConnection, config);
+			}
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ScanNumberRange_differentDataTypes_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR1);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-10)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(10)));
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR2);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.TextType);
+				Type domainType=attribute.getDomain();
+				TextType textType=(TextType) domainType;
+				assertEquals(2147483647, textType.getMaxLength());
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR3);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-30)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(30)));
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR4);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.TextType);
+				Type domainType=attribute.getDomain();
+				TextType textType=(TextType) domainType;
+				assertEquals(2147483647, textType.getMaxLength());
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR5);
+				assertNotNull(attribute);
+				assertTrue(attribute.getDomain() instanceof ch.interlis.ili2c.metamodel.NumericType);
+				Type domainType=attribute.getDomain();
+				NumericType numType=(NumericType) domainType;
+				assertEquals(0,numType.getMinimum().compareTo(new PrecisionDecimal(-50)));
+				assertEquals(0,numType.getMaximum().compareTo(new PrecisionDecimal(50)));
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
 }
