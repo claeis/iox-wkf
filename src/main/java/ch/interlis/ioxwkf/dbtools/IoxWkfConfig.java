@@ -30,6 +30,14 @@ public class IoxWkfConfig {
 	 * multiple tables are separated by semicolon (';').
 	 */
 	public final static String SETTING_EXCLUDETABLES=PREFIX+".excludeTables";
+	/** only the listed attributes from the database should be exported to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_INCLUDEATTRIBUTES=PREFIX+".includeAttributes";
+	/** the listed attributes should not be exported from the database to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_EXCLUDEATTRIBUTES=PREFIX+".excludeAttributes";
 	/** model names. Multiple model names are separated by semicolon (';'). 
 	 */
 	public final static String SETTING_MODELNAMES=PREFIX+".modelNames";

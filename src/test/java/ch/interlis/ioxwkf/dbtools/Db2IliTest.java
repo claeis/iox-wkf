@@ -1406,4 +1406,274 @@ public class Db2IliTest {
 			throw new IoxException(e);
 		}
 	}
+	
+	// Alle Attribute innerhalb der includeAttributeNames Option, sollen gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: includeAttributeNames.
+	// --
+	// Erwartung: Die Attribute: 1, 3 und 5 werden gefunden.
+	@Test
+	public void export_IncludeAttributeNames_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String ATTR1="attr1";
+		final String ATTR2="attr2";
+		final String ATTR3="attr3";
+		final String ATTR4="attr4";
+		final String ATTR5="attr5";
+		final File iliFile=new File(TEST_OUT+"export_IncludeAttributeNames_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+	        			+ ATTR1+" integer,"
+	        			+ ATTR2+" integer,"
+	        			+ ATTR3+" integer,"
+	        			+ ATTR4+" integer,"
+	        			+ ATTR5+" integer) WITH (OIDS = FALSE);");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_INCLUDEATTRIBUTES, ATTR1+";"+ATTR3+";"+ATTR5);
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_IncludeAttributeNames_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR1);
+				assertNotNull(attribute);
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR2);
+				assertNull(attribute);
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR3);
+				assertNotNull(attribute);
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR4);
+				assertNull(attribute);
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR5);
+				assertNotNull(attribute);
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Alle Attribute innerhalb der excludeAttributeNames Option, duerfen nicht gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: excludeAttributeNames.
+	// --
+	// Erwartung: Die Attribute: 1, 3 und 5 duerfen nicht gefunden werden.
+	@Test
+	public void export_ExcludeAttributeNames_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String ATTR1="attr1";
+		final String ATTR2="attr2";
+		final String ATTR3="attr3";
+		final String ATTR4="attr4";
+		final String ATTR5="attr5";
+		final File iliFile=new File(TEST_OUT+"export_ExcludeAttributeNames_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+	        			+ ATTR1+" integer,"
+	        			+ ATTR2+" integer,"
+	        			+ ATTR3+" integer,"
+	        			+ ATTR4+" integer,"
+	        			+ ATTR5+" integer) WITH (OIDS = FALSE);");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES, ATTR1+";"+ATTR3+";"+ATTR5);
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ExcludeAttributeNames_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR1);
+				assertNull(attribute);
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR2);
+				assertNotNull(attribute);
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR3);
+				assertNull(attribute);
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR4);
+				assertNotNull(attribute);
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR5);
+				assertNull(attribute);
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
+	
+	// Alle Attribute innerhalb der excludeAttributeNames Option, duerfen nicht gefunden werden.
+	// Alle Attribute innerhalb der includeAttributeNames Option, muessen gefunden werden.
+	// Dabei darf keine Fehlermeldung ausgegeben werden.
+	// Test-Konfiguration:
+	// - set: dbtoilischema.
+	// - set: excludeAttributeNames.
+	// - set: includeAttributeNames.
+	// --
+	// Erwartung: Die Attributes: 1, 3 muessen gefunden werden.
+	@Test
+	public void export_ExcludeAndIncludeAttributeNames_Ok() throws Exception
+	{
+		final String SCHEMANAME="dbtoilischema";
+		final String TABLE1="table1";
+		final String ATTR1="attr1";
+		final String ATTR2="attr2";
+		final String ATTR3="attr3";
+		final String ATTR4="attr4";
+		final String ATTR5="attr5";
+		final File iliFile=new File(TEST_OUT+"export_ExcludeAndIncludeAttributeNames_Ok.ili");
+		Settings config=new Settings();
+		Connection jdbcConnection=null;
+		try{
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=jdbcConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
+	        	preStmt.execute("CREATE SCHEMA "+SCHEMANAME);
+	        	preStmt.execute("CREATE TABLE "+SCHEMANAME+"."+TABLE1+"("
+	        			+ ATTR1+" integer,"
+	        			+ ATTR2+" integer,"
+	        			+ ATTR3+" integer,"
+	        			+ ATTR4+" integer,"
+	        			+ ATTR5+" integer) WITH (OIDS = FALSE);");
+	        	preStmt.close();
+	        }
+			if(iliFile.exists()) {
+				iliFile.delete();
+			}
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, SCHEMANAME);
+			config.setValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES, ATTR2+";"+ATTR4+";"+ATTR5);
+			config.setValue(IoxWkfConfig.SETTING_INCLUDEATTRIBUTES, ATTR1+";"+ATTR3);
+			Db2Ili db2Ili=new Db2Ili();
+			db2Ili.exportData(iliFile, jdbcConnection, config);
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}finally{
+			if(jdbcConnection!=null){
+				jdbcConnection.close();
+			}
+		}
+		try{
+			// model compile test
+			String iliFilename=TEST_OUT+"export_ExcludeAndIncludeAttributeNames_Ok.ili";
+			ArrayList ilifiles=new ArrayList();
+			ilifiles.add(iliFilename);
+			TransferDescription td=ch.interlis.ili2c.Main.compileIliFiles(ilifiles, null, null);
+			assertNotNull(td);
+			Topic topic = (Topic) ((Container<Element>) td.getElement(Model.class, SCHEMANAME)).getElement(Topic.class, TOPICNAME);
+			Table table1=(Table) topic.getElement(Table.class, TABLE1);
+			assertNotNull(table1);
+			// attribute1
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR1);
+				assertNotNull(attribute);
+			}
+			// attribute2
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR2);
+				assertNull(attribute);
+			}
+			// attribute3
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR3);
+				assertNotNull(attribute);
+			}
+			// attribute4
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR4);
+				assertNull(attribute);
+			}
+			// attribute5
+			{
+				AttributeDef attribute=(AttributeDef) table1.getElement(AttributeDef.class, ATTR5);
+				assertNull(attribute);
+			}
+		}catch(Exception e) {
+			throw new IoxException(e);
+		}
+	}
 }

@@ -72,6 +72,18 @@ public class Db2Ili{
 			EhiLogger.logState("excludeTables: <"+excludeTables+">.");
 		}
 		
+		// optional: set the attributes from the database which only have to be exported to the ili file.
+		String includeAttributes=config.getValue(IoxWkfConfig.SETTING_INCLUDEATTRIBUTES);
+		if(includeAttributes!=null) {
+			EhiLogger.logState("includeAttributes: <"+includeAttributes+">.");
+		}
+		
+		// optional: set the attributes from the database which not have to be exported to the ili file.
+		String excludeAttributes=config.getValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES);
+		if(excludeAttributes!=null) {
+			EhiLogger.logState("excludeAttributes: <"+excludeAttributes+">.");
+		}
+		
 		// get all DB-Table names inside target DB-Schema.
 		List<TableDescription> tableDescs = getTables(db, dbSchemaName);
 		
@@ -140,6 +152,8 @@ public class Db2Ili{
 	private List<TableDescription> getEditedTables(Connection db, String dbSchemaName, List<TableDescription> tableDescs, Settings config) throws IoxException {
 		String includeTables=config.getValue(IoxWkfConfig.SETTING_INCLUDETABLES);
 		String excludeTables=config.getValue(IoxWkfConfig.SETTING_EXCLUDETABLES);
+		String includeAttributes=config.getValue(IoxWkfConfig.SETTING_INCLUDEATTRIBUTES);
+		String excludeAttributes=config.getValue(IoxWkfConfig.SETTING_EXCLUDEATTRIBUTES);
 		
 		int position=0;
 		while(position<tableDescs.size()){
@@ -199,12 +213,54 @@ public class Db2Ili{
 					int attrPosition=0;
 					while(attrPosition<attrDescList.size()){
 						AttributeDescriptor attribute=attrDescList.get(attrPosition);
+						int attrIndex=attrDescList.indexOf(attribute);
 						attrPosition+=1;
 						
 						// add attribute type definition.
 						String iliType=getIliTypeDefinition(attribute);
 						if(iliType!=null) {
 							attribute.setAttributeTypeDefinition(iliType);
+						}
+						
+						boolean isPartOfIncludeAttributes=false;
+						if(includeAttributes!=null) {
+							isPartOfIncludeAttributes=enumerationContainsTargetName(attribute.getDbColumnName(), includeAttributes);
+						}
+						boolean isPartOfExcludeAttributes=false;
+						if(excludeAttributes!=null) {
+							isPartOfExcludeAttributes=enumerationContainsTargetName(attribute.getDbColumnName(), excludeAttributes);
+						}
+							
+						if(includeAttributes!=null && excludeAttributes==null) {
+							if(isPartOfIncludeAttributes) {
+								// include attribute
+							}else {
+								attrDescList.remove(attrIndex);
+								attrPosition=0;
+							}
+						}else if(includeAttributes==null && excludeAttributes!=null){
+							if(isPartOfExcludeAttributes) {
+								attrDescList.remove(attrIndex);
+								attrPosition=0;
+							}else {
+								// do nothing
+							}
+						}else if(includeAttributes!=null && excludeAttributes!=null){
+							if(isPartOfExcludeAttributes) {
+								if(isPartOfIncludeAttributes) {
+									// include attribute
+								}else {
+									attrDescList.remove(attrIndex);
+									attrPosition=0;
+								}
+							}else {
+								if(isPartOfIncludeAttributes) {
+									// include attribute
+								}else {
+									attrDescList.remove(attrIndex);
+									attrPosition=0;
+								}
+							}
 						}
 					}
 					tableDesc.setAttrDesc(attrDescList);
