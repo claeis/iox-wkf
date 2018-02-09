@@ -339,13 +339,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 					dataStore.createSchema(featureType);
 					
 					String typeName = dataStore.getTypeNames()[0];
-//					featureStore = (SimpleFeatureStore) dataStore
-//					        .getFeatureSource(typeName);
 					
 					transaction = new DefaultTransaction(
 					        "create");
 
-//					featureStore.setTransaction(transaction);
 				    writer = dataStore.getFeatureWriter(typeName, transaction);
 				} catch (IOException e) {
 			        throw new IoxException(e);
