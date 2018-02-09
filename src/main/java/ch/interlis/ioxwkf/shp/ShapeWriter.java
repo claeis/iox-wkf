@@ -25,6 +25,7 @@ package ch.interlis.ioxwkf.shp;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.DefaultTransaction;
+import org.geotools.data.FeatureWriter;
 import org.geotools.data.Transaction;
 import org.geotools.data.collection.ListFeatureCollection;
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -166,6 +167,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private String iliGeomAttrName=null;
 	private Name featureTypeName=new NameImpl("http://www.geotools.org/","shpType");
 	private SimpleFeatureStore featureStore=null;
+	private FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
 	private Transaction transaction=null;
 	
     public ShapeWriter(java.io.File file) throws IoxException {
@@ -337,13 +339,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 					dataStore.createSchema(featureType);
 					
 					String typeName = dataStore.getTypeNames()[0];
-					featureStore = (SimpleFeatureStore) dataStore
-					        .getFeatureSource(typeName);
 					
 					transaction = new DefaultTransaction(
 					        "create");
 
-					featureStore.setTransaction(transaction);
+				    writer = dataStore.getFeatureWriter(typeName, transaction);
 				} catch (IOException e) {
 			        throw new IoxException(e);
 				}
@@ -385,6 +385,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 					transaction.commit();
 		            transaction.close();
 		            transaction=null;
+		            writer.close();
 				} catch (IOException e) {
 			        throw new IoxException(e);
 				}
@@ -562,8 +563,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	}
     
 	/** 
-	 * Add feature to ListFeatureCollection.<br>
-	 * Add all features inside ListFeatureCollection to the SimpleFeatureStore, alias featureStore.
+	 * Add feature to FeatureWriter.<br>
 	 * @param features
 	 * @throws IoxException
 	 */
@@ -571,12 +571,24 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    if (dataStore == null) {
 	        throw new IoxException("datastore null");
 	    }
-		ListFeatureCollection features = new ListFeatureCollection(featureType);
-		features.add(feature);
+	    List <AttributeDescriptor> attrDescs = feature.getFeatureType().getAttributeDescriptors();
 	    try {
-	        featureStore.addFeatures(features);
-	    } catch (IOException e) {
-	        throw new IoxException("no data written to shapefile",e);
+	        SimpleFeature newFeature = (SimpleFeature) writer.next();
+
+	        // newFeature.setAttributes(feature.getAttributes()) does not work
+	        // since the two AttributeDescriptor have not the same order of attributes.
+	        for (AttributeDescriptor attrDesc : attrDescs) {
+	        		newFeature.setAttribute(attrDesc.getLocalName(), feature.getAttribute(attrDesc.getLocalName()));	
+	        }
+	        writer.write();
+	    }
+	    catch (IOException e) {
+	    		try {
+	    			transaction.rollback();
+	    		} catch (IOException ee) {
+	    			throw new IoxException("no data written to shapefile",e);
+	    		}
+	    		throw new IoxException("no data written to shapefile",e);
 	    }
 	}
 
@@ -588,6 +600,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				transaction.rollback();
 				transaction.close();
 				transaction=null;
+				writer.close();
 			} catch (IOException e) {
 				throw new IoxException(e);
 			}
