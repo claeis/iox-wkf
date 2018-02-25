@@ -141,4 +141,10 @@ public class IoxWkfConfig {
 	/** the default time stamp format pattern.
 	 */
 	public final static String SETTING_DEFAULTFORMAT_TIMESTAMP="yyyy-MM-dd'T'HH:mm:ss.SSS";
+	/** the jdbc batch size.
+	 */
+	public final static String SETTING_BATCHSIZE=PREFIX+".batchSize";
+	/** the default batch size.
+	 */
+	public final static int SETTING_BATCHSIZE_DEFAULT=5000;
 }

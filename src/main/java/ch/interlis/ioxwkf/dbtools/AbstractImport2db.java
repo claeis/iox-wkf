@@ -38,6 +38,7 @@ public abstract class AbstractImport2db {
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
 	private SimpleDateFormat timeStampFormat;
+	private int batchSize;
 	
 	/** Create the IoxReader. 
 	 * @param file 
@@ -115,6 +116,14 @@ public abstract class AbstractImport2db {
 		}
 		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
+		// optional: set batch size.
+		String batchSizeString=config.getValue(IoxWkfConfig.SETTING_BATCHSIZE);
+		if(batchSizeString==null) {
+			batchSize = IoxWkfConfig.SETTING_BATCHSIZE_DEFAULT;
+		} else {
+			batchSize = Integer.valueOf(batchSizeString);
+		}
+		
 		// create appropriate IoxReader.
 		IoxReader reader=createReader(file, config);
 		
@@ -131,6 +140,7 @@ public abstract class AbstractImport2db {
 		// read IoxEvents
 		IoxEvent event=reader.read();
 		EhiLogger.logState("start import");
+		int k = 0;
 		while(event instanceof IoxEvent){
 			if(event instanceof ObjectEvent) {
 				IomObject iomObj=((ObjectEvent)event).getIomObject();
@@ -139,18 +149,17 @@ public abstract class AbstractImport2db {
 					ps.clearParameters();
 					// convert data to import data type.
 					convertObject(attrDescriptors, iomObj, ps, db, config, dateFormatPattern);
-					rs = ps.executeUpdate();
+					ps.addBatch();
+					
+					if (k % batchSize == 0) {
+						ps.executeBatch();
+						ps.clearBatch();
+		            }
+					k+=1;
 				} catch (SQLException e) {
 					throw new IoxException(e);
 				} catch (ConverterException e) {
 					throw new IoxException(e);
-				}
-				if(rs==0) {
-					if(definedSchemaName!=null) {
-						throw new IoxException("import of "+iomObj.getobjecttag()+" to "+definedSchemaName+"."+definedTableName+" failed");
-					}else {
-						throw new IoxException("import of "+iomObj.getobjecttag()+" to "+definedTableName+" failed");
-					}
 				}
 			}else if(event instanceof StartBasketEvent) {
 				ArrayList<String> missingAttributes=new ArrayList<String>();
@@ -164,6 +173,12 @@ public abstract class AbstractImport2db {
 			}
 			event=reader.read();
 		}
+		try {
+			ps.executeBatch();
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		
 		EhiLogger.logState("end of import");
 		EhiLogger.logState("import successful");
 		
