@@ -12,15 +12,11 @@ import java.util.Map;
 
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
-import org.geotools.data.DefaultQuery;
-import org.geotools.data.FeatureSource;
 import org.geotools.data.FileDataStore;
 import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.Query;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.factory.Hints;
 import org.geotools.feature.type.AttributeTypeImpl;
 import org.geotools.feature.type.BasicFeatureTypes;
 import org.geotools.feature.type.GeometryTypeImpl;
@@ -28,8 +24,6 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
@@ -202,23 +196,6 @@ public class ShapeReader implements IoxReader{
 			if(dataStore==null) {
 				throw new IoxException("expected shape file");
 			}
-			
-//			DataStore shapefile = new ShapefileDataStore(  shapeFile.toURL());
-//
-//			System.out.println(shapefile.getTypeNames()[0]);
-//			FeatureType schema = shapefile.getSchema( "ebene_daten_dhm" ); 
-//
-//			FeatureSource contents = shapefile.getFeatureSource( "ebene_daten_dhm" );
-//			int count = contents.getCount( Query.ALL );
-//			System.out.println( "Connected to xxxx with " + count );
-//			
-//			   DefaultQuery q = new DefaultQuery("my3dType");
-//			   q.setHints(new Hints(Hints.FEATURE_2D, false));
-//
-//
-//			System.out.println(contents.getFeatures(q).features().next().getDefaultGeometryProperty().toString());
-			
-			
 		}catch(IOException e) {
 			throw new IoxException(e);
 		}
@@ -265,27 +242,13 @@ public class ShapeReader implements IoxReader{
 		if(state==INSIDE_BASKET){
 			String featureTypeName=null;
 			try {
-				
-
-				
-				
-				   DefaultQuery q = new DefaultQuery("my3dType");
-				   q.setHints(new Hints(Hints.FEATURE_2D, false));
-
-				featureCollectionIter=dataStore.getFeatureSource().getFeatures(q).features();
-				
-				System.out.println(dataStore.getFeatureSource().getSchema().getGeometryDescriptor());
-
-				
+				featureCollectionIter=dataStore.getFeatureSource().getFeatures().features();
 				if(featureCollectionIter.hasNext()) {
 					// feature object
 					pendingShapeObj=(SimpleFeature) featureCollectionIter.next();	
 					//simple feature type
 					SimpleFeatureType featureType=pendingShapeObj.getFeatureType();
 					shapeAttributes = featureType.getAttributeDescriptors();
-					
-					System.out.println(shapeAttributes.toString());
-					
 					featureTypeName=featureType.getName().getLocalPart();
 				}
 			} catch (IOException e) {
@@ -326,9 +289,6 @@ public class ShapeReader implements IoxReader{
 				boolean foundAttrInModel=false;
 				int attrc=shapeAttributes.size();
 	        	for(int attri=0;attri<attrc;attri++) {
-	        		
-	        		System.out.println("***");
-	        		
 	        		AttributeDescriptor shapeAttribute=shapeAttributes.get(attri);
 	        		IomObject subIomObj=null;
 	        		// attribute name
@@ -338,10 +298,6 @@ public class ShapeReader implements IoxReader{
 	        		AttributeType shapeAttrType=shapeAttribute.getType();
 	        		Object shapeAttrValue=shapeObj.getAttribute(shapeAttrName);
 	        		if(shapeAttrValue!=null) {
-	        			
-	        			System.out.println(shapeAttrValue.toString());
-	        			System.out.println(shapeAttrValue.getClass());
-	        			
 		        		if(shapeAttrValue instanceof MultiLineString) {
 	    					// multiLineString
 	        				MultiLineString multiLineString=(MultiLineString)shapeAttrValue;
@@ -384,10 +340,6 @@ public class ShapeReader implements IoxReader{
 							}
 	    				}else if(shapeAttrValue instanceof MultiPolygon) {
 	        				// multiPolygon
-	    					
-	        				System.out.println("MultiPolygon");
-
-	    					
 	        				MultiPolygon multiPolygon=(MultiPolygon)shapeAttrValue;
 	        				if(multiPolygon.getNumGeometries()==1) {
 	        					try {
@@ -413,9 +365,6 @@ public class ShapeReader implements IoxReader{
 							iomObj.addattrobj(iliAttrName, subIomObj);
 	        			}else if(shapeAttrValue instanceof Polygon) {
 	        				// polygon
-	        				
-	        				System.out.println("Polygon");
-	        				
 	        				Polygon polygonObj=(Polygon)shapeAttrValue;
 							subIomObj=Jts2iox.JTS2surface(polygonObj);
 	        				iomObj.addattrobj(iliAttrName, subIomObj);
