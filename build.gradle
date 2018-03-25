@@ -14,11 +14,11 @@ configurations {
 //    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 //}
 
-sourceCompatibility = "1.6" 
-targetCompatibility = "1.6"
+sourceCompatibility = "1.8" 
+targetCompatibility = "1.8"
 
 dependencies {
-    compile(group: 'org.geotools', name: 'gt-shapefile', version: '10.8')
+    compile(group: 'org.geotools', name: 'gt-shapefile', version: '18.1')
     {
         exclude group: 'com.vividsolutions', module: 'jts' // use version that iox-ili depends on
     }
@@ -35,6 +35,7 @@ dependencies {
 
 repositories {
     mavenLocal()
+    jcenter()
     maven {
         url "http://jars.interlis.ch"
     }
