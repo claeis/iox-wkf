@@ -14,8 +14,8 @@ configurations {
 //    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
 //}
 
-sourceCompatibility = "1.6" 
-targetCompatibility = "1.6"
+sourceCompatibility = "1.8" 
+targetCompatibility = "1.8"
 
 dependencies {
     compile(group: 'org.geotools', name: 'gt-shapefile', version: '10.8')
