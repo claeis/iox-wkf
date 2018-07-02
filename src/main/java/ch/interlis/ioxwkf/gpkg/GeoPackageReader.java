@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,12 @@ import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 
 import ch.ehi.basics.settings.Settings;
+import ch.interlis.ili2c.metamodel.Model;
+import ch.interlis.ili2c.metamodel.PredefinedModel;
+import ch.interlis.ili2c.metamodel.Table;
+import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
+import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
@@ -220,7 +226,7 @@ public class GeoPackageReader implements IoxReader {
   
           
             if (td != null) {
-                
+                Viewable viewable=getViewableByGpkgAttributes(gpkgAttributes, iliAttributes);
             } else {
                 topicIliQName=getNameOfDataFile()+".Topic";
                 classIliQName=topicIliQName+".Class"+getNextId();
@@ -305,6 +311,118 @@ public class GeoPackageReader implements IoxReader {
         return null;
     }
 
+    private Viewable getViewableByGpkgAttributes(Map<String, String> gpkgAttrs, Map<String, String> iliAttrs) throws IoxException {
+        Viewable viewable=null;
+        ArrayList<ArrayList<Viewable>> models=setupNameMapping();
+        System.out.println(models);
+        // first last model file.
+        for(int modeli=models.size()-1;modeli>=0;modeli--){
+            ArrayList<Viewable> classes=models.get(modeli);
+            for(int classi=classes.size()-1;classi>=0;classi--){
+                Viewable iliViewable=classes.get(classi);
+                Map<String,ch.interlis.ili2c.metamodel.AttributeDef> iliAttrMap=new HashMap<String,ch.interlis.ili2c.metamodel.AttributeDef>();
+                Iterator attrIter=iliViewable.getAttributes();
+                ArrayList<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs=new ArrayList<ch.interlis.ili2c.metamodel.AttributeDef>();
+                while(attrIter.hasNext()){
+                    ch.interlis.ili2c.metamodel.AttributeDef attribute=(ch.interlis.ili2c.metamodel.AttributeDef) attrIter.next();
+                    String attrName=attribute.getName();
+//                    System.out.println(attrName);
+                    ch.interlis.ili2c.metamodel.Type type=attribute.getDomainResolvingAliases();
+                    if(type instanceof ch.interlis.ili2c.metamodel.CoordType || type instanceof ch.interlis.ili2c.metamodel.LineType) {
+                        geomAttrs.add(attribute);
+                    }else {
+                        iliAttrMap.put(attrName.toLowerCase(),attribute);
+                    }
+                }
+                // check if ili model attributes are the same as the attributes in the gpkg file
+                equalAttrs(iliAttrMap, geomAttrs, gpkgAttrs);
+//                if(equalAttrs(iliAttrMap, geomAttrs,shapeAttrs)){
+//                    viewable=iliViewable;
+//                    iliAttrs.clear();
+//                    theGeomAttr=geomAttrs.get(0).getName();
+//                    for(AttributeDescriptor shapeAttr:shapeAttrs) {
+//                        if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
+//                            iliAttrs.add(theGeomAttr);
+//                        }else {
+//                            iliAttrs.add(iliAttrMap.get(shapeAttr.getLocalName().toLowerCase()).getName());
+//                        }
+//                    }
+//                    return viewable;
+//                }
+            }
+        }
+        return null;
+    }
+
+    private ArrayList<ArrayList<Viewable>> setupNameMapping(){
+        ArrayList<ArrayList<Viewable>> models=new ArrayList<ArrayList<Viewable>>();
+        Iterator tdIterator = td.iterator();
+        while(tdIterator.hasNext()){
+            Object modelObj = tdIterator.next();
+            if(!(modelObj instanceof Model)){
+                continue;
+            }
+            if(modelObj instanceof PredefinedModel) {
+                continue;
+            }
+            // iliModel
+            Model model = (Model) modelObj;
+            ArrayList<Viewable> classes=new ArrayList<Viewable>();
+            Iterator modelIterator = model.iterator();
+            while(modelIterator.hasNext()){
+                Object topicObj = modelIterator.next();
+                if(!(topicObj instanceof Topic)){
+                    continue;
+                }
+                // iliTopic
+                Topic topic = (Topic) topicObj;
+                // iliClass
+                Iterator classIter=topic.iterator();
+                while(classIter.hasNext()){
+                    Object classObj=classIter.next();
+                    if(!(classObj instanceof Table)){
+                        continue;
+                    }
+                    Table viewable = (Table) classObj;
+                    if(viewable.isAbstract() || !viewable.isIdentifiable()) {
+                        continue;
+                    }
+                    classes.add(viewable);
+                }
+            }
+            models.add(classes);
+        }
+        return models;
+    }
+ 
+    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs,Map<String,String> gpkgAttrs) {
+        System.out.println(iliAttrs.size());
+        System.out.println(gpkgAttrs.size());
+        
+//        for (Map.Entry<String, ch.interlis.ili2c.metamodel.AttributeDef> entry : iliAttrs.entrySet())
+//        {
+//            System.out.println(entry.getKey() + "/" + entry.getValue());
+//        }
+//    
+        for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
+            System.out.println(entry.getKey() + "/" + entry.getValue());
+        }
+        
+        
+        // TODO: erstes if nicht mehr nötig? dafür testen, ob in sach- oder geometrieattribut-map
+//        if(iliAttrs.size() + geomAttrs.size() != gpkgAttrs.size()) {
+//            return false;
+//        }
+//        for(AttributeDescriptor shapeAttr:shapeAttrs) {
+//            if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
+//                // ignore it
+//            } else if(!iliAttrs.containsKey(shapeAttr.getLocalName().toLowerCase())) {
+//                return false;
+//            }
+//        }
+        return true;
+    }
+    
     @Override
     public void close() throws IoxException {
         if (conn != null) {
