@@ -182,7 +182,7 @@ public class GeoPackageReader implements IoxReader {
                 rs = stmt.executeQuery("SELECT * FROM " + tableName);
                 ResultSetMetaData md = rs.getMetaData();
                 for (int i=1; i<=md.getColumnCount(); i++) {
-                    gpkgAttributes.put(md.getColumnLabel(i), md.getColumnTypeName(i));
+                    gpkgAttributes.put(md.getColumnLabel(i).toLowerCase(), md.getColumnTypeName(i).toLowerCase());
                 }
                 rs.close();
                 
@@ -190,7 +190,7 @@ public class GeoPackageReader implements IoxReader {
                         + " '" + tableName + "';";
                 rs = stmt.executeQuery(sql);
                 while(rs.next()) {
-                    theGeomAttrs.put(rs.getObject(GEOM_COLUMN_NAME).toString(), rs.getObject(GEOM_TYPE_COLUMN_NAME).toString());
+                    theGeomAttrs.put(rs.getObject(GEOM_COLUMN_NAME).toString().toLowerCase(), rs.getObject(GEOM_TYPE_COLUMN_NAME).toString().toLowerCase());
                 }
                 rs.close();
             } catch (SQLException e) {
@@ -226,9 +226,17 @@ public class GeoPackageReader implements IoxReader {
   
           
             if (td != null) {
+                iliAttributes=new HashMap<String, String>();
                 Viewable viewable=getViewableByGpkgAttributes(gpkgAttributes, iliAttributes);
+                if(viewable==null){
+                    throw new IoxException("attributes '"+getNameList(gpkgAttributes)+"' not found in model: '"+td.getLastModel().getName()+"'.");
+                }
+                // get model data
+                topicIliQName=viewable.getContainer().getScopedName();
+                classIliQName=viewable.getScopedName();
             } else {
-                topicIliQName=getNameOfDataFile()+".Topic";
+                // if no model is set, the table name must be equal to the model name
+                topicIliQName=tableName+".Topic";
                 classIliQName=topicIliQName+".Class"+getNextId();
                 iliAttributes=new HashMap<String, String>();
                 for(String gpkgAttribute:gpkgAttributes.keySet()) {
@@ -311,10 +319,20 @@ public class GeoPackageReader implements IoxReader {
         return null;
     }
 
+    private String getNameList(Map<String, String> attrs) {
+        StringBuffer ret=new StringBuffer();
+        String sep="";
+        for (Map.Entry<String, String> entry : attrs.entrySet()) {
+            ret.append(sep);
+            ret.append(entry.getKey());
+            sep=",";
+        }
+        return ret.toString();
+    }
+
     private Viewable getViewableByGpkgAttributes(Map<String, String> gpkgAttrs, Map<String, String> iliAttrs) throws IoxException {
         Viewable viewable=null;
         ArrayList<ArrayList<Viewable>> models=setupNameMapping();
-        System.out.println(models);
         // first last model file.
         for(int modeli=models.size()-1;modeli>=0;modeli--){
             ArrayList<Viewable> classes=models.get(modeli);
@@ -322,33 +340,30 @@ public class GeoPackageReader implements IoxReader {
                 Viewable iliViewable=classes.get(classi);
                 Map<String,ch.interlis.ili2c.metamodel.AttributeDef> iliAttrMap=new HashMap<String,ch.interlis.ili2c.metamodel.AttributeDef>();
                 Iterator attrIter=iliViewable.getAttributes();
-                ArrayList<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs=new ArrayList<ch.interlis.ili2c.metamodel.AttributeDef>();
+                ArrayList<String> geomAttrs=new ArrayList<String>();
                 while(attrIter.hasNext()){
                     ch.interlis.ili2c.metamodel.AttributeDef attribute=(ch.interlis.ili2c.metamodel.AttributeDef) attrIter.next();
                     String attrName=attribute.getName();
-//                    System.out.println(attrName);
                     ch.interlis.ili2c.metamodel.Type type=attribute.getDomainResolvingAliases();
                     if(type instanceof ch.interlis.ili2c.metamodel.CoordType || type instanceof ch.interlis.ili2c.metamodel.LineType) {
-                        geomAttrs.add(attribute);
-                    }else {
+                        geomAttrs.add(attrName.toLowerCase());
+                    } else {
                         iliAttrMap.put(attrName.toLowerCase(),attribute);
                     }
                 }
                 // check if ili model attributes are the same as the attributes in the gpkg file
-                equalAttrs(iliAttrMap, geomAttrs, gpkgAttrs);
-//                if(equalAttrs(iliAttrMap, geomAttrs,shapeAttrs)){
-//                    viewable=iliViewable;
-//                    iliAttrs.clear();
-//                    theGeomAttr=geomAttrs.get(0).getName();
-//                    for(AttributeDescriptor shapeAttr:shapeAttrs) {
-//                        if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
-//                            iliAttrs.add(theGeomAttr);
-//                        }else {
-//                            iliAttrs.add(iliAttrMap.get(shapeAttr.getLocalName().toLowerCase()).getName());
-//                        }
-//                    }
-//                    return viewable;
-//                }
+                if(equalAttrs(iliAttrMap, geomAttrs, gpkgAttrs)) {
+                    viewable=iliViewable;
+                    iliAttrs.clear();
+                    for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
+                        if (geomAttrs.contains(entry.getKey())) {
+                            iliAttrs.put(entry.getKey(), entry.getKey());
+                        } else {
+                            iliAttrs.put(iliAttrMap.get(entry.getKey()).getName(), iliAttrMap.get(entry.getKey()).getName());
+                        }
+                    }
+                    return viewable;
+                }
             }
         }
         return null;
@@ -395,31 +410,16 @@ public class GeoPackageReader implements IoxReader {
         return models;
     }
  
-    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<ch.interlis.ili2c.metamodel.AttributeDef> geomAttrs,Map<String,String> gpkgAttrs) {
-        System.out.println(iliAttrs.size());
-        System.out.println(gpkgAttrs.size());
-        
-//        for (Map.Entry<String, ch.interlis.ili2c.metamodel.AttributeDef> entry : iliAttrs.entrySet())
-//        {
-//            System.out.println(entry.getKey() + "/" + entry.getValue());
-//        }
-//    
-        for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
-            System.out.println(entry.getKey() + "/" + entry.getValue());
+    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<String> geomAttrs,Map<String,String> gpkgAttrs) {
+        if (iliAttrs.size() + geomAttrs.size() != gpkgAttrs.size()) {
+            return false;
         }
         
-        
-        // TODO: erstes if nicht mehr nötig? dafür testen, ob in sach- oder geometrieattribut-map
-//        if(iliAttrs.size() + geomAttrs.size() != gpkgAttrs.size()) {
-//            return false;
-//        }
-//        for(AttributeDescriptor shapeAttr:shapeAttrs) {
-//            if(shapeAttr.getLocalName().equals(GEOTOOLS_THE_GEOM)) {
-//                // ignore it
-//            } else if(!iliAttrs.containsKey(shapeAttr.getLocalName().toLowerCase())) {
-//                return false;
-//            }
-//        }
+        for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
+            if (!iliAttrs.containsKey(entry.getKey()) && !geomAttrs.contains(entry.getKey())) {
+                return false;
+            }  
+        }
         return true;
     }
     
