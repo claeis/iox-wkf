@@ -33,10 +33,52 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
+import ch.interlis.ioxwkf.shp.ShapeReader;
 
-/** Read data from a GeoPackage.
+/** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
+ * <p>
+ * <b>Interlis model</b><p>
+ * <ul>
+ * <li>If a model is set, make sure that the file contents matches a class in the model. 
+ * The attribute names (ignoring case) are used to search the class. 
+ * If no class can be found, an exception will be thrown.</li>
+ * <li>If no model is set, the table definition will be used to define a reader internal model.</li>
+ * </ul>
+ * <p>
+ * example:<br>
+ * File file = new File("file.gpkg");<br>
+ * GpkgReader reader = new GpkgReader(file);<br>
+ * reader.setModel(td);<br>
+ * <p>
+ * 
+ * <b>IomObject</b><p>
+ * IomObject iomObj=createIomObject(type,oid);<br>
+ * <br>
+ * If the model is set:
+ * <li>type==according to found class</li>
+ * <li>oid==Start counting by 1</li>
+ * <p>
+ * If there is no model set:
+ * <li>type==modelname.topicname.classname</li>
+ * <li>The modelname is the name of the table name.</li>
+ * <li>The topicname is 'Topic'</li>
+ * <li>The classname is: 'Class1'</li>
+ * <li>oid==Start counting by 1</li>
+ * <p>
+ * 
+ * <b>Data type mapping</b><br>
+ * If a text attribute from the table is mapped to a non TEXT attribute according to the given Interlis class,
+ * it is expected that the value is encoded according to Interlis 2.3 encoding rules.<p>
+ * <b>Not supported INTERLIS data types</b><p>
+ * <li>StructureType</li>
+ * <li>ReferenceType</li>
+ * <p>
+ * <b>Attachement</b><p>
+ * <li><a href="http://www.geopackage.org/spec/">GeoPackage specification</a></li>
+ * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlis specification</a></li>
  */
+
 public class GeoPackageReader implements IoxReader {
 
     // the name of the geometry columns table in the geopackage database
@@ -249,7 +291,7 @@ public class GeoPackageReader implements IoxReader {
         }
         if(state==INSIDE_OBJECT) {
             System.out.println("********* INSIDE_OBJECT");
-            Gpkg2iox gpkg2iox = new Gpkg2iox();
+            Gpkg2iox gpkg2iox = new Gpkg2iox(); // TODO: use mapper instead?
             try {
                 while(featureSet.next()) {
                     // feature object
@@ -414,7 +456,6 @@ public class GeoPackageReader implements IoxReader {
         if (iliAttrs.size() + geomAttrs.size() != gpkgAttrs.size()) {
             return false;
         }
-        
         for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
             if (!iliAttrs.containsKey(entry.getKey()) && !geomAttrs.contains(entry.getKey())) {
                 return false;
