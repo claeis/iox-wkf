@@ -2,9 +2,11 @@ package ch.interlis.ioxwkf.gpkg;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -23,6 +25,7 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.gpkg.GeoPackageReader;
+import ch.interlis.ioxwkf.shp.ShapeReader;
 
 public class GeoPackageReaderTest {
     
@@ -241,6 +244,178 @@ public class GeoPackageReaderTest {
             assertTrue(event instanceof EndTransferEvent);
         } finally {
             if(reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+
+    // Es wird getestet, ob die OID der Objekte unterschiedlich sind.
+    @Test
+    public void oidsAreUnique_Ok() throws IoxException, IOException {
+        HashSet<String> objectIds=new HashSet<String>();
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"MultiPoint/MultiPoint2d.gpkg"), "MultiPoint2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            IoxEvent event=reader.read();
+            while(!(event instanceof EndBasketEvent)) {
+                IomObject iomObj=((ObjectEvent)event).getIomObject();
+                if (!objectIds.contains(iomObj.getobjectoid())){
+                    objectIds.add(iomObj.getobjectoid());
+                    event=reader.read();
+                } else {
+                    fail();
+                }
+            }
+            assertTrue(event instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);
+        } catch(Exception ex) {
+            ex.getMessage().contains("expected unique object id.");
+        } finally {
+            if(reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+
+    // Es wird getestet, ob ein MultiPoint Element in ein Interlis IomObject convertiert werden kann.
+    @Test
+    public void multiPoint_Ok() throws IoxException, IOException {
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"MultiPoint/MultiPoint2d.gpkg"), "MultiPoint2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            IoxEvent event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            IomObject iomObj=((ObjectEvent)event).getIomObject();
+            IomObject attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607657.233"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228644.403"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607630.91"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228592.976"));
+            
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607666.468"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228543.775"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607673.552"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228625.437"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607627.238"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228642.533"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607565.879"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228555.122"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607593.004"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228552.176"));
+
+            assertTrue(reader.read() instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);            
+        } finally {
+            if (reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+
+    // Es wird getestet, ob ein MultiPoint Element in ein Interlis IomObject konvertiert werden kann.
+    // Model wurde gesetzt.
+    @Test
+    public void setModel_MultiPoint_Ok() throws IoxException, IOException, Ili2cFailure {
+        // compile model
+        Configuration ili2cConfig=new Configuration();
+        FileEntry fileEntry=new FileEntry(TEST_IN+"MultiPoint/GpkgModel.ili", FileEntryKind.ILIMODELFILE);
+        ili2cConfig.addFileEntry(fileEntry);
+        TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"MultiPoint/MultiPoint2d.gpkg"), "MultiPoint2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            reader.setModel(td2);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            IoxEvent event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            IomObject iomObj=((ObjectEvent)event).getIomObject();
+            IomObject attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607657.233"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228644.403"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607630.91"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228592.976"));
+            
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607666.468"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228543.775"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607673.552"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228625.437"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607627.238"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228642.533"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607565.879"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228555.122"));
+
+            event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            iomObj=((ObjectEvent)event).getIomObject();
+            attrObj=iomObj.getattrobj("geom", 0);
+            assertTrue(attrObj.getattrvalue("C1").equals("2607593.004"));
+            assertTrue(attrObj.getattrvalue("C2").equals("1228552.176"));
+
+            assertTrue(reader.read() instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);            
+        } finally {
+            if (reader!=null) {
                 reader.close();
                 reader=null;
             }

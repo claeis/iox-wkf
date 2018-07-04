@@ -296,7 +296,6 @@ public class GeoPackageReader implements IoxReader {
                 while(featureSet.next()) {
                     // feature object
                     iomObj=createIomObject(classIliQName, null);
-
                     for (Map.Entry<String, String> entry : gpkgAttributes.entrySet()) {
                         IomObject subIomObj=null;
                         
@@ -332,22 +331,21 @@ public class GeoPackageReader implements IoxReader {
                 }
             } catch (SQLException e) {
                 throw new IoxException(e);
-            } finally {
-                try { 
-                    if (featureSet != null) {
-                        featureSet.close(); 
-                    }
-                } catch (Exception e) {
-                    throw new IoxException(e);
-                };
-                try { 
-                    if (featureStatement != null) {
-                        featureStatement.close(); 
-                    }
-                } catch (Exception e) {
-                    throw new IoxException(e);
-                };
-            }
+            } 
+            try { 
+                if (featureSet != null) {
+                    featureSet.close(); 
+                }
+            } catch (Exception e) {
+                throw new IoxException(e);
+            };
+            try { 
+                if (featureStatement != null) {
+                    featureStatement.close(); 
+                }
+            } catch (Exception e) {
+                throw new IoxException(e);
+            };
             state=END_BASKET;            
         }
         if(state==END_BASKET){
