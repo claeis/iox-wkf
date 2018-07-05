@@ -422,5 +422,106 @@ public class GeoPackageReaderTest {
         }
     }
 
+    // Es wird getestet, ob ein LineString Element in ein Interlis IomObject konvertiert werden kann.
+    @Test
+    public void singleLineString_Ok() throws IoxException, IOException {
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"LineString/LineString2d.gpkg"), "LineString2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            
+            IoxEvent event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            IomObject iomObj=((ObjectEvent)event).getIomObject();
+            IomObject multiPolylineObj=iomObj.getattrobj("geom", 0);
+            IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
+            IomObject segment=sequence.getattrobj("segment", 0);
+            assertTrue(segment.getattrvalue("C1").equals("2605938.955"));
+            assertTrue(segment.getattrvalue("C2").equals("1229215.481"));
+            IomObject segment2=sequence.getattrobj("segment", 1);
+            assertTrue(segment2.getattrvalue("C1").equals("2605931.098"));
+            assertTrue(segment2.getattrvalue("C2").equals("1229295.039"));
+            
+            assertTrue(reader.read() instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);
+        } finally {
+            if (reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+
+    // Es wird getestet, ob ein LineString Element in ein Interlis IomObject konvertiert werden kann.
+    // Model wurde gesetzt.
+    @Test
+    public void setModel_SingleLineString_Ok() throws IoxException, IOException, Ili2cFailure {
+        Configuration ili2cConfig=new Configuration();
+        FileEntry fileEntry=new FileEntry(TEST_IN+"LineString/GpkgModel.ili", FileEntryKind.ILIMODELFILE);
+        ili2cConfig.addFileEntry(fileEntry);
+        TransferDescription td2=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"LineString/LineString2d.gpkg"), "LineString2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            reader.setModel(td2);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            
+            IoxEvent event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            IomObject iomObj=((ObjectEvent)event).getIomObject();
+            IomObject multiPolylineObj=iomObj.getattrobj("geom", 0);
+            IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
+            System.out.println(sequence);
+            IomObject segment=sequence.getattrobj("segment", 0);
+            assertTrue(segment.getattrvalue("C1").equals("2605938.955"));
+            assertTrue(segment.getattrvalue("C2").equals("1229215.481"));
+            IomObject segment2=sequence.getattrobj("segment", 1);
+            assertTrue(segment2.getattrvalue("C1").equals("2605931.098"));
+            assertTrue(segment2.getattrvalue("C2").equals("1229295.039"));
+            
+            assertTrue(reader.read() instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);
+        } finally {
+            if (reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+    
+    // Es wird getestet, ob ein LineString Element in ein Interlis IomObject konvertiert werden kann.
+    @Test
+    public void singleParallelLineString_Ok() throws IoxException, IOException {
+        GeoPackageReader reader=null;
+        try {
+            reader=new GeoPackageReader(new File(TEST_IN+"LineString2/LineString2d.gpkg"), "LineString2d");
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            assertTrue(reader.read() instanceof StartBasketEvent);
+            
+            IoxEvent event=reader.read();
+            assertTrue(event instanceof ObjectEvent);
+            IomObject iomObj=((ObjectEvent)event).getIomObject();
+            IomObject multiPolylineObj=iomObj.getattrobj("geom", 0);
+            IomObject sequence=multiPolylineObj.getattrobj("sequence", 0);
+            IomObject segment=sequence.getattrobj("segment", 0);
+            assertTrue(segment.getattrvalue("C1").equals("2605938.955"));
+            assertTrue(segment.getattrvalue("C2").equals("1229215.481"));
+            IomObject segment2=sequence.getattrobj("segment", 1);
+            assertTrue(segment2.getattrvalue("C1").equals("2605931.098"));
+            assertTrue(segment2.getattrvalue("C2").equals("1229295.039"));
+            
+            assertTrue(reader.read() instanceof ObjectEvent);
+            assertTrue(reader.read() instanceof EndBasketEvent);
+            assertTrue(reader.read() instanceof EndTransferEvent);
+        } finally {
+            if (reader!=null) {
+                reader.close();
+                reader=null;
+            }
+        }
+    }
+
 
 }
