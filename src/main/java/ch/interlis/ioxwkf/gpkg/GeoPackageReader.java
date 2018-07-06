@@ -6,19 +6,13 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.opengis.feature.type.AttributeDescriptor;
-
-import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.io.ParseException;
 
 import ch.ehi.basics.settings.Settings;
@@ -33,7 +27,6 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-import ch.interlis.ioxwkf.shp.ShapeReader;
 
 /** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
@@ -122,9 +115,6 @@ public class GeoPackageReader implements IoxReader {
     // List is in the same order as gpkgAttributes, but case of attribute name might be different.
     private Map<String, String> iliAttributes=null;
 
-//    private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
-//    private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
-
     /** Creates a new geopackage reader.
      * @param gpkgFile to read from
      * @throws IoxException
@@ -156,13 +146,8 @@ public class GeoPackageReader implements IoxReader {
     
         try {
             conn = DriverManager.getConnection("jdbc:sqlite:" + gpkgFile);
-//            Statement statement = conn.createStatement();
-//            ResultSet rs = statement.executeQuery("SELECT * FROM point;");
-//            while(rs.next())
-//            {
-//                // read the result set
-//                System.out.println(rs.getString("foo").toString());
-//            }
+            Statement statement = conn.createStatement();
+            ResultSet rs = statement.executeQuery("SELECT * FROM gpkg_contents;"); // TODO: better handling of GeoPackage check?  
         } catch (SQLException e) {
             if (conn != null) {
                 try {
@@ -170,7 +155,7 @@ public class GeoPackageReader implements IoxReader {
                     conn.close();
                     conn = null;
                 } catch (SQLException f) {
-                    throw new IoxException(f);
+                    throw new IoxException("expected valid geopackage file");
                 }
             }
             throw new IoxException(e);
@@ -182,25 +167,6 @@ public class GeoPackageReader implements IoxReader {
      */
     public void setModel(TransferDescription td){
         this.td = td;
-    }
-
-    /** read the path of input geopackage file and return the single name of geopackage file.
-     * @return file path to read from.
-     * @throws IoxException
-     */
-    private String getNameOfDataFile() throws IoxException {
-        // get path of the shp file
-        String path=inputFile.getPath();
-        if(path!=null) {
-            String[] pathParts=path.split("\\\\");
-            int partLength=pathParts.length;
-            String file=pathParts[partLength-1];
-            String[] fileParts=file.split(".gpkg"); // TODO: support more extensions
-            file=fileParts[0];
-            return file;
-        } else {
-            throw new IoxException("expected gpkg file");
-        }
     }
 
     @Override
@@ -216,7 +182,6 @@ public class GeoPackageReader implements IoxReader {
             state=INSIDE_BASKET;
         }
         if(state == INSIDE_BASKET) {
-            System.out.println("********* INSIDE_BASKET");
             Statement stmt = null;
             ResultSet rs = null;
             try {
@@ -259,7 +224,6 @@ public class GeoPackageReader implements IoxReader {
                 List<String> gpkgAttributeNames = new ArrayList<String>(gpkgAttributes.keySet());
                 String attrs = String.join(",", gpkgAttributeNames);
                 String sql = "SELECT " + attrs + " FROM " + tableName;
-                System.out.println(sql);
                 featureStatement = conn.createStatement();
                 featureSet = featureStatement.executeQuery(sql);
             } catch (SQLException e) {
@@ -290,7 +254,6 @@ public class GeoPackageReader implements IoxReader {
             return new ch.interlis.iox_j.StartBasketEvent(topicIliQName, bid);
         }
         if(state==INSIDE_OBJECT) {
-            System.out.println("********* INSIDE_OBJECT");
             Gpkg2iox gpkg2iox = new Gpkg2iox(); // TODO: use mapper instead?
             try {
                 while(featureSet.next()) {

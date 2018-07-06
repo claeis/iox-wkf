@@ -421,6 +421,7 @@ public class ShapeReader implements IoxReader{
     	// first last model file.
     	for(int modeli=models.size()-1;modeli>=0;modeli--){
     		ArrayList<Viewable> classes=models.get(modeli);
+    		System.out.println(classes);
     		for(int classi=classes.size()-1;classi>=0;classi--){
     			Viewable iliViewable=classes.get(classi);
     			Map<String,ch.interlis.ili2c.metamodel.AttributeDef> iliAttrMap=new HashMap<String,ch.interlis.ili2c.metamodel.AttributeDef>();
