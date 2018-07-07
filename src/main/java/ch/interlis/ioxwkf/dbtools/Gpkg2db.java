@@ -111,11 +111,3 @@ public class Gpkg2db extends AbstractImport2db {
         return ret;
     }
 }
-
-/**
- * AbstractImport2db shp2db=new Shp2db();
- * shp2db.importData(data, jdbcConnection, config);
- * importData:
- *     IoxReader reader=createReader(file, config);
- *     assignIomAttr2DbColumn()
-*/
