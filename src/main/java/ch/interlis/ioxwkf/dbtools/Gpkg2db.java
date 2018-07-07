@@ -1,8 +1,12 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxReader;
@@ -57,25 +61,61 @@ public class Gpkg2db extends AbstractImport2db {
      * @return IoxReader
      */
     @Override
-    protected IoxReader createReader(File file, Settings config) throws IoxException {
-        // TODO Auto-generated method stub
-        return null;
+    protected IoxReader createReader(Object obj, Settings config) throws IoxException {
+        File file = null;
+        String tableName = null;
+        if (obj != null) {
+            String[] splits = ((String)obj).split(";");
+            file = new File(splits[0]);
+            tableName = splits[1];
+            if (file.exists()) {
+                EhiLogger.logState("file to read from: <"+file.getName()+">");
+            } else {
+                throw new IoxException("file "+file.getAbsolutePath()+" not found.");
+            }
+        }  else {
+            throw new IoxException("obj==null.");
+        }
+        return new GeoPackageReader(file, tableName, config);
     }
 
     @Override
-    protected List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader reader, List<AttributeDescriptor> dbColumns,
-            List<String> missingDbColumns) {
-        // TODO Auto-generated method stub
-        return null;
+    protected List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader ioxReader, List<AttributeDescriptor> attrDescriptors, List<String> missingAttributes) {
+        List<AttributeDescriptor> ret=new ArrayList<AttributeDescriptor>();
+        GeoPackageReader reader = (GeoPackageReader)ioxReader;
+        HashMap<String,AttributeDescriptor> attrs=new HashMap<String,AttributeDescriptor>();
+        Map<String,AttributeDescriptor> geomAttrs=new HashMap<String,AttributeDescriptor>();
+        for(AttributeDescriptor attrDesc:attrDescriptors) {
+            if(attrDesc.getDbColumnGeomTypeName()!=null) {
+                geomAttrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
+            }
+            attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
+        }
+        String[] gpkgAttrs = reader.getAttributes();
+        Map<String, String> gpkgGeomAttrs = reader.getGeometryAttributes();
+        for (String gpkgAttr : gpkgAttrs) {
+            AttributeDescriptor attrDesc=null;
+            // geometry columns get some additional information hence the special treatment
+            if (gpkgGeomAttrs.containsKey(gpkgAttr)) {
+                attrDesc = geomAttrs.get(gpkgAttr.toLowerCase());
+            } else {
+                attrDesc = attrs.get(gpkgAttr.toLowerCase());
+            }
+            if (attrDesc != null) {
+                attrDesc.setIomAttributeName(gpkgAttr);
+                ret.add(attrDesc);
+            } else {
+                missingAttributes.add(gpkgAttr);
+            }
+        }
+        return ret;
     }
-
 }
-
-
 
 /**
  * AbstractImport2db shp2db=new Shp2db();
  * shp2db.importData(data, jdbcConnection, config);
  * importData:
- *     IoxReader reader=createReader(file, config); 
+ *     IoxReader reader=createReader(file, config);
+ *     assignIomAttr2DbColumn()
 */

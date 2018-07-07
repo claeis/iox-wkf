@@ -112,7 +112,6 @@ public class GeoPackageReader implements IoxReader {
     private Map<String, String> theGeomAttrs=new HashMap<String, String>();
     
     // attributes, as returned from this reader (as values of IomObjects).
-    // List is in the same order as gpkgAttributes, but case of attribute name might be different.
     private Map<String, String> iliAttributes=null;
 
     /** Creates a new geopackage reader.
@@ -161,7 +160,7 @@ public class GeoPackageReader implements IoxReader {
             throw new IoxException(e);
         } 
     }
-
+   
     /** The optional Interlis model.
      * @param td
      */
@@ -461,4 +460,21 @@ public class GeoPackageReader implements IoxReader {
         nextId+=1;
         return String.valueOf(count);
     }
+    
+    /** gets the list of all attribute names (incl. geometries) in the read/returned IomObjects.
+     * @return list of attribute names.
+     */
+    public String[] getAttributes() {
+//        return iliAttributes.toArray(new String[iliAttributes.size()]);
+        return (new ArrayList<String>(iliAttributes.keySet())).toArray(new String[iliAttributes.size()]);
+    }
+    
+    /**
+     * gets the map of geometry attributes in the geopackage table.
+     * @return map of geometry attribute names.
+     */
+    public Map<String, String> getGeometryAttributes() {
+        return this.theGeomAttrs;
+    }
+
 }
