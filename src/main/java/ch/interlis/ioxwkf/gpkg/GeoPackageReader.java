@@ -107,7 +107,6 @@ public class GeoPackageReader implements IoxReader {
     private String classIliQName = null;
 
     // attributes, as read from the sqlite database
-//    private Map<String, String> gpkgAttributes=new HashMap<String, String>();
     private List<AttributeDescriptor> gpkgAttributes = new ArrayList<AttributeDescriptor>();
 
     // Name of the geometry attributes in the geopackage database
