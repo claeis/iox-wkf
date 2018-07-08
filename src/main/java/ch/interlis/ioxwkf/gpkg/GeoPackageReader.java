@@ -28,6 +28,7 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
 import ch.interlis.ioxwkf.gpkg.AttributeDescriptor;
+import ch.ehi.ili2gpkg.Gpkg2iox;
 
 /** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
