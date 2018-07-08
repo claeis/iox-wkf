@@ -112,6 +112,12 @@ public class GeoPackageReader implements IoxReader {
     private Map<String, String> theGeomAttrs=new HashMap<String, String>();
     
     // attributes, as returned from this reader (as values of IomObjects).
+    // TODO: Check if a map is necessary. But since gpkgAttributes is a map too,
+    // it's easier to handle. In the ShapeReader both are Lists with the same order
+    // of the attributes. This assumption does not work well (?) if we mix maps with
+    // lists.
+    // Can we use List<ch.interlis.ioxwkf.dbtools.AttributeDescriptor> instead for
+    // gpkgAttributes?
     private Map<String, String> iliAttributes=null;
 
     /** Creates a new geopackage reader.
