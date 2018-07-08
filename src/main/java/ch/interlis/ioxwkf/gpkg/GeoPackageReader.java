@@ -27,6 +27,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
+import ch.interlis.ioxwkf.gpkg.AttributeDescriptor;
 
 /** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
@@ -106,19 +107,14 @@ public class GeoPackageReader implements IoxReader {
     private String classIliQName = null;
 
     // attributes, as read from the sqlite database
-    private Map<String, String> gpkgAttributes=new HashMap<String, String>();
+//    private Map<String, String> gpkgAttributes=new HashMap<String, String>();
+    private List<AttributeDescriptor> gpkgAttributes = new ArrayList<AttributeDescriptor>();
 
     // Name of the geometry attributes in the geopackage database
-    private Map<String, String> theGeomAttrs=new HashMap<String, String>();
+    private List<String> theGeomAttrs = new ArrayList<String>();
     
     // attributes, as returned from this reader (as values of IomObjects).
-    // TODO: Check if a map is necessary. But since gpkgAttributes is a map too,
-    // it's easier to handle. In the ShapeReader both are Lists with the same order
-    // of the attributes. This assumption does not work well (?) if we mix maps with
-    // lists.
-    // Can we use List<ch.interlis.ioxwkf.dbtools.AttributeDescriptor> instead for
-    // gpkgAttributes?
-    private Map<String, String> iliAttributes=null;
+    private List<String> iliAttributes=null;
 
     /** Creates a new geopackage reader.
      * @param gpkgFile to read from
@@ -191,19 +187,29 @@ public class GeoPackageReader implements IoxReader {
             ResultSet rs = null;
             try {
                 stmt = conn.createStatement();
-                rs = stmt.executeQuery("SELECT * FROM " + tableName);
-                ResultSetMetaData md = rs.getMetaData();
-                for (int i=1; i<=md.getColumnCount(); i++) {
-                    gpkgAttributes.put(md.getColumnLabel(i).toLowerCase(), md.getColumnTypeName(i).toLowerCase());
-                }
-                rs.close();
                 
+                // Figure out all geometry attributes in this table.
                 String sql = "SELECT "+GEOM_COLUMN_NAME+", "+GEOM_TYPE_COLUMN_NAME+" FROM "+GEOMETRY_COLUMNS_TABLE_NAME + " WHERE table_name = "
                         + " '" + tableName + "';";
                 rs = stmt.executeQuery(sql);
                 while(rs.next()) {
-                    theGeomAttrs.put(rs.getObject(GEOM_COLUMN_NAME).toString().toLowerCase(), rs.getObject(GEOM_TYPE_COLUMN_NAME).toString().toLowerCase());
+                    theGeomAttrs.add(rs.getObject(GEOM_COLUMN_NAME).toString().toLowerCase());
                 }
+                rs.close();
+
+                rs = stmt.executeQuery("SELECT * FROM " + tableName + " LIMIT 1");
+                ResultSetMetaData md = rs.getMetaData();
+                for (int i=1; i<=md.getColumnCount(); i++) {
+                    AttributeDescriptor attrDesc = new AttributeDescriptor();
+                    attrDesc.setDbColumnName(md.getColumnLabel(i).toLowerCase());
+                    attrDesc.setDbColumnTypeName(md.getColumnTypeName(i).toLowerCase());
+                    if (theGeomAttrs.contains(md.getColumnLabel(i).toLowerCase())) {
+                        attrDesc.setGeometry(true);
+                    }
+                    gpkgAttributes.add(attrDesc);
+                }
+                rs.close();
+                
                 rs.close();
             } catch (SQLException e) {
                 throw new IoxException(e);
@@ -226,7 +232,10 @@ public class GeoPackageReader implements IoxReader {
  
             // result set (iterator) for the features in the table
             try {
-                List<String> gpkgAttributeNames = new ArrayList<String>(gpkgAttributes.keySet());
+                List<String> gpkgAttributeNames = new ArrayList<String>();
+                for (AttributeDescriptor attr : gpkgAttributes) {
+                    gpkgAttributeNames.add(attr.getDbColumnName());
+                }
                 String attrs = String.join(",", gpkgAttributeNames);
                 String sql = "SELECT " + attrs + " FROM " + tableName;
                 featureStatement = conn.createStatement();
@@ -237,7 +246,7 @@ public class GeoPackageReader implements IoxReader {
   
           
             if (td != null) {
-                iliAttributes=new HashMap<String, String>();
+                iliAttributes=new ArrayList<String>();
                 Viewable viewable=getViewableByGpkgAttributes(gpkgAttributes, iliAttributes);
                 if(viewable==null){
                     throw new IoxException("attributes '"+getNameList(gpkgAttributes)+"' not found in model: '"+td.getLastModel().getName()+"'.");
@@ -249,9 +258,9 @@ public class GeoPackageReader implements IoxReader {
                 // if no model is set, the table name must be equal to the model name
                 topicIliQName=tableName+".Topic";
                 classIliQName=topicIliQName+".Class"+getNextId();
-                iliAttributes=new HashMap<String, String>();
-                for(String gpkgAttribute:gpkgAttributes.keySet()) {
-                    iliAttributes.put(gpkgAttribute, gpkgAttribute);
+                iliAttributes=new ArrayList<String>();
+                for(AttributeDescriptor gpkgAttribute : gpkgAttributes) {
+                    iliAttributes.add(gpkgAttribute.getDbColumnName());
                 }
             }
             String bid="b"+getNextId();
@@ -264,18 +273,23 @@ public class GeoPackageReader implements IoxReader {
                 while(featureSet.next()) {
                     // feature object
                     iomObj=createIomObject(classIliQName, null);
-                    for (Map.Entry<String, String> entry : gpkgAttributes.entrySet()) {
+                    int attrc=gpkgAttributes.size();
+                    for(int attri=0;attri<attrc;attri++) {
+//                    for (Map.Entry<String, String> entry : gpkgAttributes.entrySet()) {
+                        AttributeDescriptor gpkgAttribute = gpkgAttributes.get(attri);
                         IomObject subIomObj=null;
                         
                         // attribute name
-                        String gpkgAttrName = entry.getKey();
-                        String gpkgAttrType = entry.getValue();
-                        String iliAttrName=iliAttributes.get(gpkgAttrName);
+                        String gpkgAttrName = gpkgAttribute.getDbColumnName();
+                        String iliAttrName=iliAttributes.get(attri);
+
+                        // attribute type
+                        String gpkgAttrType = gpkgAttribute.getDbColumnTypeName();
 
                         // attribute value
                         Object gpkgAttrValue = featureSet.getObject(gpkgAttrName);
                         if (gpkgAttrValue!=null) {
-                            if (theGeomAttrs.containsKey(gpkgAttrName)) {
+                            if (theGeomAttrs.contains(gpkgAttrName)) {
                                 try {
                                     subIomObj = gpkg2iox.read((byte[])gpkgAttrValue);
                                     iomObj.addattrobj(iliAttrName, subIomObj);
@@ -327,18 +341,18 @@ public class GeoPackageReader implements IoxReader {
         return null;
     }
 
-    private String getNameList(Map<String, String> attrs) {
+    private String getNameList(List<AttributeDescriptor> attrs) {
         StringBuffer ret=new StringBuffer();
         String sep="";
-        for (Map.Entry<String, String> entry : attrs.entrySet()) {
+        for (AttributeDescriptor attr:attrs) {
             ret.append(sep);
-            ret.append(entry.getKey());
+            ret.append(attr.getDbColumnName());
             sep=",";
         }
         return ret.toString();
     }
 
-    private Viewable getViewableByGpkgAttributes(Map<String, String> gpkgAttrs, Map<String, String> iliAttrs) throws IoxException {
+    private Viewable getViewableByGpkgAttributes(List<AttributeDescriptor> gpkgAttrs, List<String> iliAttrs) throws IoxException {
         Viewable viewable=null;
         ArrayList<ArrayList<Viewable>> models=setupNameMapping();
         // first last model file.
@@ -363,11 +377,11 @@ public class GeoPackageReader implements IoxReader {
                 if(equalAttrs(iliAttrMap, geomAttrs, gpkgAttrs)) {
                     viewable=iliViewable;
                     iliAttrs.clear();
-                    for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
-                        if (geomAttrs.contains(entry.getKey())) {
-                            iliAttrs.put(entry.getKey(), entry.getKey());
+                    for (AttributeDescriptor gpkgAttr : gpkgAttrs) {
+                        if (geomAttrs.contains(gpkgAttr.getDbColumnName())) {
+                            iliAttrs.add(gpkgAttr.getDbColumnName());
                         } else {
-                            iliAttrs.put(iliAttrMap.get(entry.getKey()).getName(), iliAttrMap.get(entry.getKey()).getName());
+                            iliAttrs.add(iliAttrMap.get(gpkgAttr.getDbColumnName().toLowerCase()).getName());
                         }
                     }
                     return viewable;
@@ -418,14 +432,14 @@ public class GeoPackageReader implements IoxReader {
         return models;
     }
  
-    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<String> geomAttrs,Map<String,String> gpkgAttrs) {
+    private boolean equalAttrs(Map<String, ch.interlis.ili2c.metamodel.AttributeDef> iliAttrs, List<String> geomAttrs, List<AttributeDescriptor> gpkgAttrs) {
         if (iliAttrs.size() + geomAttrs.size() != gpkgAttrs.size()) {
             return false;
         }
-        for (Map.Entry<String, String> entry : gpkgAttrs.entrySet()) {
-            if (!iliAttrs.containsKey(entry.getKey()) && !geomAttrs.contains(entry.getKey())) {
+        for (AttributeDescriptor gpkgAttr : gpkgAttrs) {
+            if (!iliAttrs.containsKey(gpkgAttr.getDbColumnName()) && !geomAttrs.contains(gpkgAttr.getDbColumnName())) {
                 return false;
-            }  
+            }
         }
         return true;
     }
@@ -471,15 +485,14 @@ public class GeoPackageReader implements IoxReader {
      * @return list of attribute names.
      */
     public String[] getAttributes() {
-//        return iliAttributes.toArray(new String[iliAttributes.size()]);
-        return (new ArrayList<String>(iliAttributes.keySet())).toArray(new String[iliAttributes.size()]);
+        return iliAttributes.toArray(new String[iliAttributes.size()]);
     }
     
     /**
-     * gets the map of geometry attributes in the geopackage table.
+     * gets the list of geometry attributes in the geopackage table.
      * @return map of geometry attribute names.
      */
-    public Map<String, String> getGeometryAttributes() {
+    public List<String> getGeometryAttributes() {
         return this.theGeomAttrs;
     }
 

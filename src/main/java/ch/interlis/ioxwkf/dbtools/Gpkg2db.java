@@ -92,11 +92,11 @@ public class Gpkg2db extends AbstractImport2db {
             attrs.put(attrDesc.getDbColumnName().toLowerCase(), attrDesc);
         }
         String[] gpkgAttrs = reader.getAttributes();
-        Map<String, String> gpkgGeomAttrs = reader.getGeometryAttributes();
+        List<String> gpkgGeomAttrs = reader.getGeometryAttributes();
         for (String gpkgAttr : gpkgAttrs) {
             AttributeDescriptor attrDesc=null;
             // geometry columns get some additional information hence the special treatment
-            if (gpkgGeomAttrs.containsKey(gpkgAttr)) {
+            if (gpkgGeomAttrs.contains(gpkgAttr)) {
                 attrDesc = geomAttrs.get(gpkgAttr.toLowerCase());
             } else {
                 attrDesc = attrs.get(gpkgAttr.toLowerCase());
