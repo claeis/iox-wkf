@@ -1,0 +1,73 @@
+INTERLIS 2.3;
+
+MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -0.22857142857142854 .. 0.22857142857142854 [INTERLIS.m],
+				  0.5688311688311687 .. 1.5688311688311687 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+	
+	TOPIC Topic1 =
+	
+		CLASS Point =
+			attrPoint : Lkoord;
+		END Point;
+		
+		CLASS Point2 =
+			id1 : 0 .. 150;
+			Text : TEXT*100;
+			Double : 0 .. 60000;
+			attrPoint2 : Lkoord;
+		END Point2;
+		
+		CLASS MultiPoint =
+			attrMPoint : Lkoord;
+		END MultiPoint;
+		
+		CLASS MultiPoint2 =
+			textattr2 : TEXT*100;
+			multipoint2 : Lkoord;
+		END MultiPoint2;
+		
+		CLASS LineString =
+			attrLineString : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
+		END LineString;
+		
+		CLASS LineString2 =
+			attr1LS : TEXT*10;
+			attr2LS : 0 .. 10;
+			attrLineString2 : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
+		END LineString2;
+		
+		CLASS MultiLineString =
+			attrMLineString : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
+		END MultiLineString;
+		
+		CLASS MultiLineString2 =
+			attr1MLS : TEXT*10;
+			attr2MLS : 0 .. 10;
+			attrMLineString2 : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
+		END MultiLineString2;
+		
+		CLASS Polygon =
+			attrPolygon : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+		END Polygon;
+		
+		CLASS Polygon2 =
+			attr1PG : TEXT*10;
+			attr2PG : 0 .. 10;
+			attrPolygon2 : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+		END Polygon2;
+		
+		CLASS MultiPolygon =
+			attrMultiPolygon : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+		END MultiPolygon;
+		
+		CLASS MultiPolygon2 =
+			attr1MPG : TEXT*10;
+			attr2MPG : 0 .. 10;
+			attrMultiPolygon2 : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+		END MultiPolygon2;
+		
+	END Topic1;
+END Test1.

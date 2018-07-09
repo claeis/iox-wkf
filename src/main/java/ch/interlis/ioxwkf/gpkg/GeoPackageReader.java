@@ -1,5 +1,6 @@
 package ch.interlis.ioxwkf.gpkg;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -93,13 +94,13 @@ public class GeoPackageReader implements IoxReader {
 
     // geopackage reader
     private Connection conn = null;
-    private ResultSet featureSet = null;
+    private ResultSet featureResultSet = null;
     private Statement featureStatement = null;
 
     // iox
     private TransferDescription td;
     private IoxFactoryCollection factory = new ch.interlis.iox_j.DefaultIoxFactoryCollection();
-    private java.io.File inputFile = null;
+    private File inputFile = null;
     private String tableName = null;
     private int nextId = 1;
 
@@ -120,7 +121,7 @@ public class GeoPackageReader implements IoxReader {
      * @param gpkgFile to read from
      * @throws IoxException
      */
-    public GeoPackageReader(java.io.File gpkgFile, String tableName) throws IoxException {
+    public GeoPackageReader(File gpkgFile, String tableName) throws IoxException {
         this(gpkgFile, tableName, null);
     }
     
@@ -128,7 +129,7 @@ public class GeoPackageReader implements IoxReader {
      * @param gpkgFile to read from
      * @throws IoxException
      */
-    public GeoPackageReader(java.io.File gpkgFile, String tableName, Settings settings) throws IoxException{
+    public GeoPackageReader(File gpkgFile, String tableName, Settings settings) throws IoxException{
         state = START;
         td = null;
         inputFile = gpkgFile;
@@ -141,14 +142,13 @@ public class GeoPackageReader implements IoxReader {
      * @param settings
      * @throws IoxException
      */
-    private void init(java.io.File gpkgFile, Settings settings) throws IoxException {
+    private void init(File gpkgFile, Settings settings) throws IoxException {
         factory = new ch.interlis.iox_j.DefaultIoxFactoryCollection();
-        
-    
         try {
-            conn = DriverManager.getConnection("jdbc:sqlite:" + gpkgFile);
+            conn = DriverManager.getConnection("jdbc:sqlite:" + gpkgFile.getAbsolutePath());
             Statement statement = conn.createStatement();
             ResultSet rs = statement.executeQuery("SELECT * FROM gpkg_contents;"); // TODO: better handling of GeoPackage check?  
+            rs.close();
         } catch (SQLException e) {
             if (conn != null) {
                 try {
@@ -239,7 +239,7 @@ public class GeoPackageReader implements IoxReader {
                 String attrs = String.join(",", gpkgAttributeNames);
                 String sql = "SELECT " + attrs + " FROM " + tableName;
                 featureStatement = conn.createStatement();
-                featureSet = featureStatement.executeQuery(sql);
+                featureResultSet = featureStatement.executeQuery(sql);
             } catch (SQLException e) {
                 throw new IoxException(e);
             }
@@ -270,7 +270,7 @@ public class GeoPackageReader implements IoxReader {
         if(state==INSIDE_OBJECT) {
             Gpkg2iox gpkg2iox = new Gpkg2iox(); // TODO: use mapper instead?
             try {
-                while(featureSet.next()) {
+                while(featureResultSet.next()) {
                     // feature object
                     iomObj=createIomObject(classIliQName, null);
                     int attrc=gpkgAttributes.size();
@@ -287,7 +287,7 @@ public class GeoPackageReader implements IoxReader {
                         String gpkgAttrType = gpkgAttribute.getDbColumnTypeName();
 
                         // attribute value
-                        Object gpkgAttrValue = featureSet.getObject(gpkgAttrName);
+                        Object gpkgAttrValue = featureResultSet.getObject(gpkgAttrName);
                         if (gpkgAttrValue!=null) {
                             if (theGeomAttrs.contains(gpkgAttrName)) {
                                 try {
@@ -315,8 +315,8 @@ public class GeoPackageReader implements IoxReader {
                 throw new IoxException(e);
             } 
             try { 
-                if (featureSet != null) {
-                    featureSet.close(); 
+                if (featureResultSet != null) {
+                    featureResultSet.close(); 
                 }
             } catch (Exception e) {
                 throw new IoxException(e);
