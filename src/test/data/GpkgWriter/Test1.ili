@@ -11,6 +11,8 @@ MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 	
 		CLASS Point =
 			attrPoint : Lkoord;
+			/*aBoolean : BOOLEAN;
+			aDate : INTERLIS.XMLDate;*/
 		END Point;
 		
 		CLASS Point2 =

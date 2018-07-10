@@ -11,11 +11,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.Polygon;
 
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.generator.XSDGenerator;
@@ -45,7 +43,7 @@ import ch.interlis.iox_j.ObjectEvent;
  * </ul>
  * <p>
  * <b>Data type mapping</b><br>
- * Any attribute type that is not Numeric, BOOLEAN, BLACKBOX BINARY, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the shape file
+ * Any attribute type that is not Numeric, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the shape file
  * and its value is encoded according to Interlis 2.3 encoding rules.<p>
  * <b>Not supported INTERLIS data types</b><p>
  * <ul>
@@ -65,6 +63,20 @@ public class GeoPackageWriter implements IoxWriter {
 
     private List<AttributeDescriptor> attrDescs=null; // --> attribute type data
 
+    // gpkg geometry types
+    private static final String POINT="POINT";
+    private static final String LINESTRING="LINESTRING";
+    private static final String POLYGON="POLYGON";
+    private static final String MULTIPOINT="MULTIPOINT";
+    private static final String MULTILINESTRING="MULTILINESTRING";
+    private static final String MULTIPOLYGON="MULTIPOLYGON";
+    private static final String GEOMETRYCOLLECTION="GEOMETRYCOLLECTION";
+    private static final String CIRCULARSTRING="CIRCULARSTRING";
+    private static final String COMPOUNDCURVE="COMPOUNDCURVE";
+    private static final String CURVEPOLYGON="CURVEPOLYGON";
+    private static final String MULTICURVE="MULTICURVE";
+//    private static final String MULTISURFACE="MULTISURFACE";
+    
     // ili types
     private static final String COORD="COORD";
     private static final String MULTICOORD="MULTICOORD";
@@ -171,6 +183,10 @@ public class GeoPackageWriter implements IoxWriter {
         }
     }
     
+    //TODO: Notizen:
+    // BOOLEAN = ch.interlis.ili2c.metamodel.EnumerationType
+    // XMLDate = ch.interlis.ili2c.metamodel.FormattedType
+    
     @Override
     public void write(IoxEvent event) throws IoxException {
         if (event instanceof StartTransferEvent){
@@ -185,6 +201,11 @@ public class GeoPackageWriter implements IoxWriter {
             
             if (attrDescs == null) {
                 if (td != null) {
+                	
+                	StringBuffer createTable = new StringBuffer();
+                	List<String> attrList = new ArrayList<String>();
+                	
+                	
                     Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
                     if (aclass == null){
                         throw new IoxException("class "+iomObj.getobjecttag()+" not found in model");
@@ -198,10 +219,14 @@ public class GeoPackageWriter implements IoxWriter {
                             String attrName=localAttr.getName();
                             System.out.println(attrName);
                             
+                                                        
                             ch.interlis.ili2c.metamodel.Type iliType=localAttr.getDomainResolvingAliases();
+                            System.out.println(iliType);
                             System.out.println(iliType);
                             if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
                                 System.out.println("CoordType");
+                                attrList.add(attrName + " " + POINT);
+//                                createTable.append("POINT,");
                                 
                                 if (defaultSrsId != null) {
                                     // fubar
@@ -225,11 +250,15 @@ public class GeoPackageWriter implements IoxWriter {
                                 if (defaultSrsId != null) {
                                     // fubar
                                 }
-                            } else {
+                            } 
+                            
+                            else {
                                 System.out.println("String");
-                            }
+                                                            }
+                       
                         }
                     }
+                    System.out.println(String.join(",", attrList));
                 }
             }
             
