@@ -88,6 +88,8 @@ public class GeoPackageWriter implements IoxWriter {
     private Connection conn = null;
     private ResultSet featureSet = null;
     private Statement featureStatement = null;
+    private boolean tableExists = false;
+    private boolean append = false; // TODO
 
     private Integer srsId=null;
     private Integer defaultSrsId;
@@ -201,12 +203,12 @@ public class GeoPackageWriter implements IoxWriter {
             
             if (attrDescs == null) {
                 if (td != null) {
-                	
-                	StringBuffer createTable = new StringBuffer();
+                    
+                    // Doppelt gemoppelt -> attrDesc
                 	List<String> attrList = new ArrayList<String>();
+                    
                 	
-                	
-                    Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
+                	Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
                     if (aclass == null){
                         throw new IoxException("class "+iomObj.getobjecttag()+" not found in model");
                     }
@@ -217,16 +219,13 @@ public class GeoPackageWriter implements IoxWriter {
                         if(attrObj instanceof LocalAttribute) {
                             LocalAttribute localAttr= (LocalAttribute)attrObj;
                             String attrName=localAttr.getName();
-                            System.out.println(attrName);
-                            
-                                                        
+                            System.out.println(attrName);                
                             ch.interlis.ili2c.metamodel.Type iliType=localAttr.getDomainResolvingAliases();
                             System.out.println(iliType);
                             System.out.println(iliType);
                             if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
                                 System.out.println("CoordType");
                                 attrList.add(attrName + " " + POINT);
-//                                createTable.append("POINT,");
                                 
                                 if (defaultSrsId != null) {
                                     // fubar
@@ -254,7 +253,7 @@ public class GeoPackageWriter implements IoxWriter {
                             
                             else {
                                 System.out.println("String");
-                                                            }
+                            }
                        
                         }
                     }
@@ -262,7 +261,22 @@ public class GeoPackageWriter implements IoxWriter {
                 }
             }
             
-
+            // Tabelle erstellen, falls nicht vorhanden.
+            if (!tableExists) {
+                StringBuffer createSql = new StringBuffer();
+                createSql.append("CREATE TABLE (");
+                
+                
+                createSql.append(")");
+                
+                tableExists = true;
+                System.out.println(createSql.toString());
+            }
+            
+            
+            // Feature in Tabelle schreiben (commit aber erst in EndTransfer)
+            // hier wird das IomObj nach SQL geschrieben "convertObject"
+            
         } else if(event instanceof EndBasketEvent){
             // ignore
         } else if (event instanceof EndTransferEvent) {
