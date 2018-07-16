@@ -556,9 +556,6 @@ public class GeoPackageWriter implements IoxWriter {
     	    		System.out.println(obj.toString());
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomCoord(iomGeom, attrDesc.getSrsId(), attrDesc.is3D());
-
-//    	    		Object geom = iox2gpkg.coord2wkb(, 2056);
-
     	    		pstmt.setObject(i+1, geom);
     	    		System.out.println(geom);
     	    	} else if (attrDesc.getDbColumnTypeName().equalsIgnoreCase(POLYGON)) {
