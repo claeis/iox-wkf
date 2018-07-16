@@ -205,11 +205,7 @@ public class GeoPackageWriter implements IoxWriter {
             }
         }
     }
-    
-    //TODO: Notizen:
-    // BOOLEAN = ch.interlis.ili2c.metamodel.EnumerationType
-    // XMLDate = ch.interlis.ili2c.metamodel.FormattedType
-    
+        
     @Override
     public void write(IoxEvent event) throws IoxException {
         if (event instanceof StartTransferEvent){
@@ -393,7 +389,7 @@ public class GeoPackageWriter implements IoxWriter {
             } else {
             	if (attrDescs != null) {
                 	try {
-                		// create empty table
+                		// Create empty table.
                 		List<String> attrList = new ArrayList<String>();
                 		for (AttributeDescriptor attrDesc : attrDescs) {
                 			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnTypeName());
@@ -455,11 +451,9 @@ public class GeoPackageWriter implements IoxWriter {
                 			}
                 		}
                 		gpkgGeoColStmt.executeUpdate();
-
-
                 	} catch (SQLException e) {
-                		// TODO: rollback hier? Es gibt bereits eine journal-Datei.
                 		throw new IoxException(e.getMessage());
+                		// TODO: rollback hier? Es gibt bereits eine journal-Datei.
                 	}
                     tableExists = true;	
             	}

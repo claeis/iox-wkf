@@ -319,7 +319,7 @@ public class GeoPackageWriterTest {
                 writer=null;
             }
         }
-        // check if not table is in geopackage file
+        // check if there is no table in the geopackage file
         {
             Connection conn = null;
             Statement stmt = null;
