@@ -287,6 +287,8 @@ public class GeoPackageReader implements IoxReader {
                         String gpkgAttrType = gpkgAttribute.getDbColumnTypeName();
 
                         // attribute value
+                        // TODO: handle different date datetime stuff
+                        // see https://www.sqlite.org/datatype3.html
                         Object gpkgAttrValue = featureResultSet.getObject(gpkgAttrName);
                         if (gpkgAttrValue!=null) {
                             if (theGeomAttrs.contains(gpkgAttrName)) {
