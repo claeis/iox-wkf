@@ -249,20 +249,18 @@ public class GeoPackageWriter implements IoxWriter {
                                 }
                                 iliGeomAttrName = attrName;
                                 
-                                if (!tableExists) {
-                                    attrDesc.setDbColumnName(attrName.toLowerCase());
-                                    attrDesc.setDbColumnTypeName(POINT);
+                                attrDesc.setDbColumnName(attrName.toLowerCase());
+                                attrDesc.setDbColumnTypeName(POINT);
 
-                                    CoordType coordType = (CoordType)iliType;
-                                    if (coordType.getDimensions().length == 3) {
-                                    	attrDesc.set3D(true);
-                                    }
-                
-                                    BoundingBox bbox = getBoundingBoxFromIliGeomTyp(coordType);
-                                    attrDesc.setBbox(bbox);
-                                    
-                                    attrDescs.add(attrDesc);
+                                CoordType coordType = (CoordType)iliType;
+                                if (coordType.getDimensions().length == 3) {
+                                	attrDesc.set3D(true);
                                 }
+            
+                                BoundingBox bbox = getBoundingBoxFromIliGeomTyp(coordType);
+                                attrDesc.setBbox(bbox);
+                                
+                                attrDescs.add(attrDesc);
                                 
                                 
                                 
@@ -288,26 +286,24 @@ public class GeoPackageWriter implements IoxWriter {
                                 }
                                 iliGeomAttrName = attrName;
 
-                                if (!tableExists) {
-                                    attrDesc.setDbColumnName(attrName.toLowerCase());
-                                    attrDesc.setDbColumnTypeName(POLYGON);
+                                attrDesc.setDbColumnName(attrName.toLowerCase());
+                                attrDesc.setDbColumnTypeName(POLYGON);
 
-                                    Domain domain = ((SurfaceOrAreaType) iliType).getControlPointDomain();
-                                    CoordType coordType = (CoordType) domain.getType();
+                                Domain domain = ((SurfaceOrAreaType) iliType).getControlPointDomain();
+                                CoordType coordType = (CoordType) domain.getType();
 
-                                    if (coordType.getDimensions().length == 3) {
-                                    	attrDesc.set3D(true);
-                                    }
-                                    
-                                    BoundingBox bbox = getBoundingBoxFromIliGeomTyp(coordType);
-                                    attrDesc.setBbox(bbox);
-                                    
-                                    SurfaceOrAreaType surfaceOrAreaType = (SurfaceOrAreaType) iliType;
-                                    double maxOverlap = surfaceOrAreaType.getMaxOverlap().doubleValue();       
-                                    attrDesc.setMaxOverlap(maxOverlap);
-                                    
-                                    attrDescs.add(attrDesc);
-                                }                                
+                                if (coordType.getDimensions().length == 3) {
+                                	attrDesc.set3D(true);
+                                }
+                                
+                                BoundingBox bbox = getBoundingBoxFromIliGeomTyp(coordType);
+                                attrDesc.setBbox(bbox);
+                                
+                                SurfaceOrAreaType surfaceOrAreaType = (SurfaceOrAreaType) iliType;
+                                double maxOverlap = surfaceOrAreaType.getMaxOverlap().doubleValue();       
+                                attrDesc.setMaxOverlap(maxOverlap);
+                                
+                                attrDescs.add(attrDesc);
                             } else if (iliType instanceof ch.interlis.ili2c.metamodel.MultiSurfaceOrAreaType) {
                                 System.out.println("MultiSurfaceOrArea");        
                                 attrDesc.setGeometry(true);
@@ -319,7 +315,6 @@ public class GeoPackageWriter implements IoxWriter {
                                 }
                                 iliGeomAttrName = attrName;
                                 
-                                if (!tableExists) {
                                     attrDesc.setDbColumnName(attrName.toLowerCase());
                                     attrDesc.setDbColumnTypeName(MULTIPOLYGON);
 
@@ -338,11 +333,9 @@ public class GeoPackageWriter implements IoxWriter {
                                     attrDesc.setMaxOverlap(maxOverlap);
                                     
                                     attrDescs.add(attrDesc);
-                                }                                
                             } else if (iliType instanceof ch.interlis.ili2c.metamodel.NumericalType) {
                             	System.out.println("NumericalType");
                             	
-                                if (!tableExists) {
                                 	attrDesc.setDbColumnName(attrName.toLowerCase());
                                 	
                                 	NumericalType numericalType = (NumericalType)iliType;
@@ -355,20 +348,15 @@ public class GeoPackageWriter implements IoxWriter {
                                 	}
                                 	
                                     attrDescs.add(attrDesc);
-                                }
                             } else {
                             	System.out.println("String, Boolean, ");
                                 if (localAttr.isDomainBoolean()) {
-	                                if (!tableExists) {
 	                                    attrDesc.setDbColumnName(attrName.toLowerCase());
 	                                    attrDesc.setDbColumnTypeName(INTEGER);
-	                                }
                                 } else {
-                                    if (!tableExists) {
                                         attrDesc.setDbColumnName(attrName.toLowerCase());
                                         attrDesc.setDbColumnTypeName(TEXT);
                                         attrDescs.add(attrDesc);
-                                    }
                                 }
                             }         
                         }
