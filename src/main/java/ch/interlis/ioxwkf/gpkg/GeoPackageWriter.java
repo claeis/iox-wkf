@@ -218,6 +218,9 @@ public class GeoPackageWriter implements IoxWriter {
             System.out.println(iomObj.toString());
             String tag = iomObj.getobjecttag();
             
+            // Falls der Writer via Db2gpkg verwendet wird: In diesem Fall
+            // wird attrDescs aus den DB-Tabellen resp. -Spalten direkt abgefüllt und
+            // mittels public Methode 'setAttributeDescriptors' gesetzt.
             if (attrDescs == null) {
                 if (td != null) {
                 	attrDescs = new ArrayList<AttributeDescriptor>();
