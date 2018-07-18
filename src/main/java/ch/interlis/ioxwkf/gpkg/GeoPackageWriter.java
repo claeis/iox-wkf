@@ -321,7 +321,6 @@ public class GeoPackageWriter implements IoxWriter {
                                 CoordType coordType = (CoordType) domain.getType();
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
 
-                                                         
                                 attrDesc.setDbColumnGeomTypeName(POLYGON);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
@@ -537,7 +536,6 @@ public class GeoPackageWriter implements IoxWriter {
     }
     
     private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2wkbException, ConverterException, SQLException {
-    	
     	for (int i = 0; i < attrDescs.size(); i++) {
     		AttributeDescriptor attrDesc = attrDescs.get(i);
     		String attrName = attrDesc.getDbColumnName();
