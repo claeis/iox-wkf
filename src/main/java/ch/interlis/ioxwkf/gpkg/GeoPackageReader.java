@@ -28,8 +28,10 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-import ch.interlis.ioxwkf.gpkg.AttributeDescriptor;
+//import ch.interlis.ioxwkf.gpkg.AttributeDescriptor;
 import ch.ehi.ili2gpkg.Gpkg2iox;
+import ch.ehi.ili2gpkg.GpkgColumnConverter;
+import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 
 /** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
@@ -203,9 +205,6 @@ public class GeoPackageReader implements IoxReader {
                     AttributeDescriptor attrDesc = new AttributeDescriptor();
                     attrDesc.setDbColumnName(md.getColumnLabel(i).toLowerCase());
                     attrDesc.setDbColumnTypeName(md.getColumnTypeName(i).toLowerCase());
-                    if (theGeomAttrs.contains(md.getColumnLabel(i).toLowerCase())) {
-                        attrDesc.setGeometry(true);
-                    }
                     gpkgAttributes.add(attrDesc);
                 }
                 rs.close();
@@ -275,7 +274,6 @@ public class GeoPackageReader implements IoxReader {
                     iomObj=createIomObject(classIliQName, null);
                     int attrc=gpkgAttributes.size();
                     for(int attri=0;attri<attrc;attri++) {
-//                    for (Map.Entry<String, String> entry : gpkgAttributes.entrySet()) {
                         AttributeDescriptor gpkgAttribute = gpkgAttributes.get(attri);
                         IomObject subIomObj=null;
                         

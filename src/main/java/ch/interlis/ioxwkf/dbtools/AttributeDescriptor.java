@@ -296,7 +296,7 @@ public class AttributeDescriptor {
 	 *   <p>
 	 *   @return dbColumnName
 	 */
-	protected String getDbColumnName() {
+	public String getDbColumnName() {
 		return dbColumnName;
 	}
 	/**  <td>The name (String) of the column in the data base table</td>
@@ -308,7 +308,7 @@ public class AttributeDescriptor {
 	 *   <p>
 	 *   @param attributeName
 	 */
-	protected void setDbColumnName(String attributeName) {
+	public void setDbColumnName(String attributeName) {
 		this.dbColumnName = attributeName;
 	}
 	/**  <td>
@@ -330,7 +330,7 @@ public class AttributeDescriptor {
 	 *   </td>
 	 *   @return iomAttributeName if !=null or dbColumnName
 	 */
-	protected String getIomAttributeName() {
+	public String getIomAttributeName() {
 		return iomAttributeName==null? dbColumnName : iomAttributeName;
 	}
 	/**  <td>
@@ -352,7 +352,7 @@ public class AttributeDescriptor {
 	 *   </td>
 	 *   @param attributeName
 	 */
-	protected void setIomAttributeName(String attributeName) {
+	public void setIomAttributeName(String attributeName) {
 		this.iomAttributeName = attributeName;
 	}
 	/** get the type of JDBC/DB column.
@@ -362,7 +362,7 @@ public class AttributeDescriptor {
      * <p>
 	 * @return attributeType
 	 */
-	protected Integer getDbColumnType() {
+	public Integer getDbColumnType() {
 		return attributeType;
 	}
 	/** set data base column type.
@@ -372,7 +372,7 @@ public class AttributeDescriptor {
      * <p>
 	 * @param attributeType
 	 */
-	protected void setDbColumnType(Integer attributeType) {
+	public void setDbColumnType(Integer attributeType) {
 		this.attributeType = attributeType;
 	}
 	/** <td>The typeName (the name of the integer type) of the column in the data base table.<br>
@@ -396,7 +396,7 @@ public class AttributeDescriptor {
      *  <p>
 	 *  @return attributeTypeName
 	 */
-	protected String getDbColumnTypeName() {
+	public String getDbColumnTypeName() {
 		return attributeTypeName;
 	}
 	/** <td>The typeName (the name of the integer type) of the column in the data base table.<br>
@@ -420,7 +420,7 @@ public class AttributeDescriptor {
      *  <p>
 	 *  @param attributeTypeName
 	 */
-	protected void setDbColumnTypeName(String attributeTypeName) {
+	public void setDbColumnTypeName(String attributeTypeName) {
 		this.attributeTypeName = attributeTypeName;
 	}
 	/** <td>
@@ -445,7 +445,7 @@ public class AttributeDescriptor {
 	 *   </td>
      * 	 @return dbColumnGeomTypeName
 	 */
-	protected String getDbColumnGeomTypeName() {
+	public String getDbColumnGeomTypeName() {
 		return dbColumnGeomTypeName;
 	}
 	/**  <td>
@@ -471,7 +471,7 @@ public class AttributeDescriptor {
 	 *   <p>
      * 	 @param dbColumnGeomTypeName
 	 */
-	protected void setDbColumnGeomTypeName(String dbColumnGeomTypeName) {
+	public void setDbColumnGeomTypeName(String dbColumnGeomTypeName) {
 		this.dbColumnGeomTypeName = dbColumnGeomTypeName;
 	}
 	/** get the coordinate dimension.<br>
@@ -482,7 +482,7 @@ public class AttributeDescriptor {
      * coordDimenstion can be found in table geometry_columns.
      * @return coordDimension
 	 */
-	protected Integer getCoordDimension() {
+	public Integer getCoordDimension() {
 		return coordDimension;
 	}
 	/** set the coordinate dimension.<br>
@@ -493,7 +493,7 @@ public class AttributeDescriptor {
      * coordDimenstion can be found in table geometry_columns.
      * @param coordDimension
 	 */
-	protected void setCoordDimension(Integer coordDimension) {
+	public void setCoordDimension(Integer coordDimension) {
 		this.coordDimension = coordDimension;
 	}
 	/** get the srid.<br>
@@ -504,7 +504,7 @@ public class AttributeDescriptor {
      * srid can be found in table geometry_columns.
      * @return srId
 	 */
-	protected Integer getSrId() {
+	public Integer getSrId() {
 		return srId;
 	}
 	/** <td>The srId is an integer that uniquely identifies the Spatial Referencing System (SRS) within the database.
@@ -519,7 +519,7 @@ public class AttributeDescriptor {
 	 *  </td>
      * @param srId
 	 */
-	protected void setSrId(Integer srId) {
+	public void setSrId(Integer srId) {
 		this.srId = srId;
 	}
 	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
@@ -530,7 +530,7 @@ public class AttributeDescriptor {
 	 *   </td>
 	 * @return precision
 	 */
-	protected Integer getPrecision() {
+	public Integer getPrecision() {
 		return precision;
 	}
 	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
@@ -541,7 +541,7 @@ public class AttributeDescriptor {
 	 *   </td>
 	 * @param precision
 	 */
-	protected void setPrecision(Integer precision) {
+	public void setPrecision(Integer precision) {
 		this.precision = precision;
 	}
 	
@@ -554,7 +554,7 @@ public class AttributeDescriptor {
 	 * @throws SQLException 
 	 * @throws IoxException 
 	 */
-	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException, IoxException {
+	public static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException, IoxException {
 		for(AttributeDescriptor attr:attributeDesc) {
 			if(attr.getDbColumnTypeName().equals(DBCOLUMN_TYPENAME_GEOMETRY)) {
 				ResultSet tableInDb =null;
@@ -589,7 +589,7 @@ public class AttributeDescriptor {
 	 * @return list of attribute descriptors.
 	 * @throws IoxException
 	 */
-	protected static List<AttributeDescriptor> getAttributeDescriptors(String schemaName, String tableName, Connection db) throws IoxException {
+	public static List<AttributeDescriptor> getAttributeDescriptors(String schemaName, String tableName, Connection db) throws IoxException {
 		List<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
 		PreparedStatement ps=null;
 		ResultSet rs =null;
