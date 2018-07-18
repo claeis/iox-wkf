@@ -25,6 +25,7 @@ import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.CoordType;
 import ch.interlis.ili2c.metamodel.Domain;
+import ch.interlis.ili2c.metamodel.LineForm;
 import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.MultiSurfaceOrAreaType;
 import ch.interlis.ili2c.metamodel.NumericType;
@@ -87,10 +88,10 @@ public class GeoPackageWriter implements IoxWriter {
     private static final String MULTILINESTRING="MULTILINESTRING";
     private static final String MULTIPOLYGON="MULTIPOLYGON";
     private static final String GEOMETRYCOLLECTION="GEOMETRYCOLLECTION";
-//    private static final String CIRCULARSTRING="CIRCULARSTRING";
-//    private static final String COMPOUNDCURVE="COMPOUNDCURVE";
-//    private static final String CURVEPOLYGON="CURVEPOLYGON";
-//    private static final String MULTICURVE="MULTICURVE";
+    private static final String CIRCULARSTRING="CIRCULARSTRING";
+    private static final String COMPOUNDCURVE="COMPOUNDCURVE";
+    private static final String CURVEPOLYGON="CURVEPOLYGON";
+    private static final String MULTICURVE="MULTICURVE";
 //    private static final String MULTISURFACE="MULTISURFACE";
     
     // gpkg types
@@ -252,7 +253,7 @@ public class GeoPackageWriter implements IoxWriter {
                                 CoordType coordType = (CoordType)iliType;
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
                             	
-                                attrDesc.setDbColumnTypeName(POINT);
+                                attrDesc.setDbColumnGeomTypeName(POINT);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -267,7 +268,7 @@ public class GeoPackageWriter implements IoxWriter {
                                 MultiCoordType multiCoordType = (MultiCoordType)iliType;
                                 attrDesc.setCoordDimension(multiCoordType.getDimensions().length);
 
-                                attrDesc.setDbColumnTypeName(MULTIPOINT);
+                                attrDesc.setDbColumnGeomTypeName(MULTIPOINT);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -283,7 +284,12 @@ public class GeoPackageWriter implements IoxWriter {
                                 CoordType coordType = (CoordType) domain.getType();
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
                             
-                                attrDesc.setDbColumnTypeName(LINESTRING);
+                                LineForm[] lineForms = ((PolylineType) iliType).getLineForms();
+                                for (LineForm lineForm : lineForms) {
+                                	System.out.println(lineForm.getName());
+                                }
+                                
+                                attrDesc.setDbColumnGeomTypeName(LINESTRING);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -299,8 +305,7 @@ public class GeoPackageWriter implements IoxWriter {
                                 CoordType coordType = (CoordType) domain.getType();
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
                               
-
-                                attrDesc.setDbColumnTypeName(MULTILINESTRING);
+                                attrDesc.setDbColumnGeomTypeName(MULTILINESTRING);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -317,7 +322,7 @@ public class GeoPackageWriter implements IoxWriter {
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
 
                                                          
-                                attrDesc.setDbColumnTypeName(POLYGON);
+                                attrDesc.setDbColumnGeomTypeName(POLYGON);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -332,8 +337,17 @@ public class GeoPackageWriter implements IoxWriter {
                                 Domain domain = ((MultiSurfaceOrAreaType) iliType).getControlPointDomain();
                                 CoordType coordType = (CoordType) domain.getType();
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
-                                                         
-                                attrDesc.setDbColumnTypeName(MULTIPOLYGON);
+                                      
+                                attrDesc.setDbColumnGeomTypeName(MULTIPOLYGON);
+                                
+                                // TODO
+//                                LineForm[] lineForms = ((MultiSurfaceOrAreaType) iliType).getLineForms();
+//                                for (LineForm lineForm : lineForms) {
+//                                	if (lineForm.getName().equalsIgnoreCase("ARCS")) {
+//                                        attrDesc.setDbColumnGeomTypeName(CURVEPOLYGON);
+//                                	} 
+//                                }
+                                
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
@@ -426,9 +440,9 @@ public class GeoPackageWriter implements IoxWriter {
                 		gpkgGeoColStmt.setString(1, tableName);
                 		
                 		for (AttributeDescriptor attrDesc : attrDescs) {
-                			if (attrDesc.isGeometry()) {
+                			if (attrDesc.getDbColumnGeomTypeName() != null) {
                 				gpkgGeoColStmt.setString(2, attrDesc.getDbColumnName());
-                				gpkgGeoColStmt.setString(3, attrDesc.getDbColumnTypeName());
+                				gpkgGeoColStmt.setString(3, attrDesc.getDbColumnGeomTypeName());
                 				gpkgGeoColStmt.setInt(4, attrDesc.getSrId());
                 				
                 				if (attrDesc.getCoordDimension() == 3) {
@@ -535,16 +549,16 @@ public class GeoPackageWriter implements IoxWriter {
     			if (attrDesc.getCoordDimension() == 3) is3D = true;
     	    	GpkgColumnConverter conv = new GpkgColumnConverter();
 
-    	    	if (attrDesc.getDbColumnTypeName().equalsIgnoreCase(POINT)) {
+    	    	if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POINT)) {
     	    		System.out.println("isPoint");
     	    		System.out.println(obj.toString());
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomCoord(iomGeom, attrDesc.getSrId(), is3D);
     	    		pstmt.setObject(i+1, geom);
     	    		System.out.println(geom);
-    	    	} else if (attrDesc.getDbColumnTypeName().equalsIgnoreCase(POLYGON)) {
+    	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
     	    		
-    	    	} else if (attrDesc.getDbColumnTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
+    	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomMultiSurface(iomGeom, 2056, false, is3D, 0.00); 
     	    		pstmt.setObject(i+1, geom);
