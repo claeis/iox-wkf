@@ -17,6 +17,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.vividsolutions.jts.io.ParseException;
+
+import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -114,6 +117,7 @@ public class GeoPackageWriterTest {
                 srsId.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+                fail();
             } finally {
                 if (conn != null){
                     try {
@@ -140,7 +144,7 @@ public class GeoPackageWriterTest {
             writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
             writer.write(new EndBasketEvent());
             writer.write(new EndTransferEvent());
-         }finally {
+         } finally {
             if (writer!=null) {
                 try {
                     writer.close();
@@ -173,6 +177,7 @@ public class GeoPackageWriterTest {
                 srsId.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+                fail();
             } finally {
                 if (conn != null){
                     try {
@@ -229,6 +234,7 @@ public class GeoPackageWriterTest {
                 rs.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+                fail();
             } finally {
                 if (conn != null){
                     try {
@@ -254,6 +260,7 @@ public class GeoPackageWriterTest {
                 rs.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+                fail();
             } finally {
                 if (conn != null){
                     try {
@@ -308,7 +315,8 @@ public class GeoPackageWriterTest {
             writer.write(new EndBasketEvent());
             writer.write(new EndTransferEvent());
         } catch(IoxException e) {
-            // TODO
+            e.printStackTrace();
+            fail();
         } finally {
             if (writer!=null) {
                 try {
@@ -334,6 +342,7 @@ public class GeoPackageWriterTest {
                 rs.close();
             } catch (SQLException e) {
                 e.printStackTrace();
+                fail();
             } finally {
                 if (conn != null){
                     try {
@@ -450,10 +459,42 @@ public class GeoPackageWriterTest {
 	    		writer=null;
 	    	}
 		}
+        // check if there is a polygon in the table
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT the_geom FROM class_found_in_last_input_model_ok");
+                while (rs.next()) {
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+                	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
+                			iomGeom.toString());
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+            } catch (ParseException e) {
+				e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
 	}
     
-	
-	
+    // In diesem Test wird eine Punkt-Geometrie in eine neue Tabelle geschrieben.
+    // In diesem Test wird die td gesetzt.
     @Test
     public void setModel_point_Ok() throws IoxException, IOException {
 		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
@@ -483,6 +524,108 @@ public class GeoPackageWriterTest {
                 writer=null;
             }
         }
+        // check if there is a point in the table
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT attrpoint FROM point_ok");
+                while (rs.next()) {
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+                	assertEquals("COORD {C1 -0.22857142857142854, C2 0.5688311688311687}",
+                			iomGeom.toString());
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+            } catch (ParseException e) {
+				e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
+    // In diesem Test wird eine Punkt-Geometrie und drei Attribute in eine neue Tabelle geschrieben.
+    // In diesem Test wird die td gesetzt.
+	@Test
+	public void setModel_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Point2", "o1");
+		inputObj.setattrvalue("id1", "1");
+		inputObj.setattrvalue("Text", "text1");
+		inputObj.setattrvalue("Double", "53434");
+		IomObject coordValue=inputObj.addattrobj("attrPoint2", "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+        GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"Point2.gpkg");
+		try {
+            writer = new GeoPackageWriter(file, "point_ok");
+			writer.setModel(td);
+            writer.setDefaultSridCode("2056");
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} finally {
+	    	if (writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+        // check if all attributes and the geom is available
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT id1, text, double, attrpoint2 FROM point_ok");
+                while (rs.next()) {
+    				assertEquals(1, rs.getInt(1));
+    				assertEquals("text1", rs.getString(2));
+    				assertEquals(53434, rs.getDouble(3), 0.0001);
+
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(4));
+                	assertEquals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}",
+                			iomGeom.toString());
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+            } catch (ParseException e) {
+				e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+
+	}
 }

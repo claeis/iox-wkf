@@ -222,7 +222,7 @@ public class GeoPackageWriter implements IoxWriter {
         } else if (event instanceof ObjectEvent) {
         	ObjectEvent obj=(ObjectEvent) event;
             IomObject iomObj=(IomObject)obj.getIomObject();
-            System.out.println(iomObj.toString());
+//            System.out.println(iomObj.toString());
             String tag = iomObj.getobjecttag();
             
             // Falls der Writer via Db2gpkg verwendet wird: In diesem Fall
@@ -242,6 +242,7 @@ public class GeoPackageWriter implements IoxWriter {
                         if(attrObj instanceof LocalAttribute) {
                             LocalAttribute localAttr= (LocalAttribute)attrObj;
                             String attrName=localAttr.getName();
+                            attrDesc.setIomAttributeName(attrName);
                             
                             ch.interlis.ili2c.metamodel.Type iliType=localAttr.getDomainResolvingAliases();
                             if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
@@ -396,7 +397,11 @@ public class GeoPackageWriter implements IoxWriter {
                 		// Create empty table.
                 		List<String> attrList = new ArrayList<String>();
                 		for (AttributeDescriptor attrDesc : attrDescs) {
-                			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnTypeName());
+                			if (attrDesc.getDbColumnGeomTypeName() != null) {
+                    			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnGeomTypeName());
+                			} else {
+                    			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnTypeName());
+                			}
                 		}
                 		StringBuffer createTableSql = new StringBuffer();
                 		createTableSql.append("CREATE TABLE " + tableName + " (");
@@ -456,7 +461,8 @@ public class GeoPackageWriter implements IoxWriter {
                 		gpkgGeoColStmt.executeUpdate();
                 	} catch (SQLException e) {
                 		throw new IoxException(e.getMessage());
-                		// TODO: rollback hier? Es gibt bereits eine journal-Datei.
+                		// TODO: There is a .gpkg-journal file when an exception is thrown here.
+                		// Not sure how to handle this?!
                 	}
                     tableExists = true;	
             	}
@@ -487,8 +493,9 @@ public class GeoPackageWriter implements IoxWriter {
                 
                 try {
                 	PreparedStatement pstmt = conn.prepareStatement(insertIntoTableSql.toString());
-                	System.out.println("******************");
+                	System.out.println("****************** start convert object");
                 	convertObject(iomObj, pstmt);
+                	System.out.println("****************** end convert object");
                 	pstmt.executeUpdate();
 				} catch (SQLException e) {
 					// TODO: How to deal with sql exception from preparedstatements?
@@ -501,12 +508,7 @@ public class GeoPackageWriter implements IoxWriter {
                 	e.printStackTrace();
                 	throw new IoxException(e.getMessage());
                 }
-
             }
-            
-            
-            
-            
         } else if(event instanceof EndBasketEvent){
             // ignore
         } else if (event instanceof EndTransferEvent) {
@@ -530,44 +532,43 @@ public class GeoPackageWriter implements IoxWriter {
                 }
             }
         }
-        
-        
-        // TODO Auto-generated method stub
     }
     
     private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2wkbException, ConverterException, SQLException {
     	for (int i = 0; i < attrDescs.size(); i++) {
     		AttributeDescriptor attrDesc = attrDescs.get(i);
     		String attrName = attrDesc.getDbColumnName();
-    		System.out.println(attrName);
+    		String iliAttrName = attrDesc.getIomAttributeName();
     		
     		if (attrDesc.getDbColumnGeomTypeName() != null) {
-    			System.out.println("isGeometry");
+//    			System.out.println("isGeometry");
     			boolean is3D = false;
     			if (attrDesc.getCoordDimension() == 3) is3D = true;
     	    	GpkgColumnConverter conv = new GpkgColumnConverter();
 
     	    	if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POINT)) {
-    	    		System.out.println("isPoint");
-    	    		System.out.println(obj.toString());
+//    	    		System.out.println("isPoint");
+//    	    		System.out.println(obj.toString());
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomCoord(iomGeom, attrDesc.getSrId(), is3D);
     	    		pstmt.setObject(i+1, geom);
-    	    		System.out.println(geom);
+//    	    		System.out.println(geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
     	    		
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomMultiSurface(iomGeom, 2056, false, is3D, 0.00); 
     	    		pstmt.setObject(i+1, geom);
-    	    		System.out.println(geom);
+//    	    		System.out.println(geom);
     	    	}
     	    	
     			
     		} else {
-    			String val=obj.getattrprim(attrName,0);
-    			pstmt.setString(i+1, obj.getattrprim(attrName, 0));
-        		System.out.println(val);
+    			// TODO: Was muss speziell behandelt werden?
+    			// Blobs (BLACKBOX BINARY), Datum?
+    			String val=obj.getattrprim(iliAttrName,0);
+    			pstmt.setObject(i+1, obj.getattrprim(iliAttrName, 0));
+//        		System.out.println(val);
 
     		}
     	
