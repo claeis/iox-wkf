@@ -626,6 +626,102 @@ public class GeoPackageWriterTest {
                 }
             }
         }
+	}
+	
+	// TODO: 
+    // In diesem Test wird eine Punkt-Geometrie und mehrere Attribute in eine neue Tabelle geschrieben.
+	// Dabei wird die Methode setAttributeDescriptors(attrDescs) verwendet.
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void setAttrDesc_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
 
+		
+		
+	}
+	
+	
+	
+	// Es wird getestet, ob eine Fehlermeldung ausgegeben wird, wenn eine Coord in einen Point konvertiert wird.
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void point_Ok() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
+		coordValue.setattrvalue("C1", "-0.22857142857142854");
+		coordValue.setattrvalue("C2", "0.5688311688311687");
+        GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"NoModelSetPointOk.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "no_model_set_point_ok");
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} catch(IoxException e) {
+			throw new IoxException(e);
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+        // check if point is written into new table
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT attrpoint FROM no_model_set_point_ok");
+                while (rs.next()) {
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+                	assertEquals("COORD {C1 -0.22857142857142854, C2 0.5688311688311687}",
+                			iomGeom.toString());
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+            } catch (ParseException e) {
+				e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+	}
+
+	// Es wird getestet ob MULTICOORD geschrieben werden kann
+	@Test
+	public void multiPoint_Ok() throws IoxException, IOException, Ili2cFailure{
+		Iom_jObject objSuccessFormat=new Iom_jObject("Test1.Topic1.MultiPoint", "o1");
+		IomObject multiCoordValue=objSuccessFormat.addattrobj("attrMPoint", "MULTICOORD");
+		IomObject coordValue1=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+		
+		IomObject coordValue2=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue2.setattrvalue("C1", "-0.19220779220779216");
+		coordValue2.setattrvalue("C2", "0.6935064935064934");
+		
+		IomObject coordValue3=multiCoordValue.addattrobj("coord", "COORD");
+		coordValue3.setattrvalue("C1", "-0.48831168831168836");
+		coordValue3.setattrvalue("C2", "0.32727272727272716");
+
+		
+		System.out.println(objSuccessFormat);
 	}
 }

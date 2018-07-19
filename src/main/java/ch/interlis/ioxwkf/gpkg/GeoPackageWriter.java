@@ -105,6 +105,7 @@ public class GeoPackageWriter implements IoxWriter {
     private static final String MULTICOORD="MULTICOORD";
     private static final String POLYLINE="POLYLINE";
     private static final String MULTIPOLYLINE="MULTIPOLYLINE";
+    private static final String SURFACE="SURFACE";
     private static final String MULTISURFACE="MULTISURFACE";
 
     // geopackage writer
@@ -378,14 +379,40 @@ public class GeoPackageWriter implements IoxWriter {
                     } 
                 } else {
                 	System.out.println("no td set");
-                	System.out.println(iomObj.getattrcount());
+                	attrDescs = new ArrayList<AttributeDescriptor>();
                 	for (int u=0;u<iomObj.getattrcount();u++) {
+                		AttributeDescriptor attrDesc = new AttributeDescriptor();
                 		String attrName=iomObj.getattrname(u);
                 		System.out.println(attrName);
-
                 		
-                		IomObject iomGeom=iomObj.getattrobj(attrName,0);
-                		System.out.println(iomGeom.toString());
+                		if (iliGeomAttrName==null && iomObj.getattrvaluecount(attrName)>0 && iomObj.getattrobj(attrName,0)!=null) {
+    						iliGeomAttrName=attrName;
+    						IomObject iomGeom=iomObj.getattrobj(attrName,0);
+                    		System.out.println(iomGeom.toString());
+                    		
+                    		if (iomGeom != null) {
+                    			if (iomGeom.getobjecttag().equals(COORD)) {
+                    				attrDesc.setDbColumnGeomTypeName(POINT);
+                    			} else if (iomGeom.getobjecttag().equals(MULTICOORD)) {
+                    				attrDesc.setDbColumnGeomTypeName(MULTIPOINT);
+                    			} else if (iomGeom.getobjecttag().equals(POLYLINE)) {
+                    				attrDesc.setDbColumnGeomTypeName(LINESTRING);
+                    			} else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)) {
+                    				attrDesc.setDbColumnGeomTypeName(MULTILINESTRING);
+                    			} else if (iomGeom.getobjecttag().equals(SURFACE)) {
+                    				attrDesc.setDbColumnGeomTypeName(POLYGON);
+                    			} else if (iomGeom.getobjecttag().equals(MULTISURFACE)) {
+                    				attrDesc.setDbColumnGeomTypeName(MULTIPOLYGON);
+                    			}
+                				attrDesc.setSrId(defaultSrsId);
+                				attrDesc.setCoordDimension(0);
+                    		}
+                		} else {
+                 			attrDesc.setDbColumnTypeName(TEXT);
+                 		}
+        				attrDesc.setIomAttributeName(attrName);
+                		attrDesc.setDbColumnName(attrName.toLowerCase());
+                		attrDescs.add(attrDesc);
                 	}
                 }
             }
