@@ -1,10 +1,13 @@
 package ch.interlis.ioxwkf.gpkg;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -18,8 +21,11 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.vividsolutions.jts.io.ParseException;
+
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2db.converter.ConverterException;
+import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.ehi.ili2gpkg.GpkgColumnConverter;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
@@ -286,11 +292,6 @@ public class GeoPackageWriter implements IoxWriter {
                                 CoordType coordType = (CoordType) domain.getType();
                                 attrDesc.setCoordDimension(coordType.getDimensions().length);
                             
-                                LineForm[] lineForms = ((PolylineType) iliType).getLineForms();
-                                for (LineForm lineForm : lineForms) {
-                                	System.out.println(lineForm.getName());
-                                }
-                                
                                 attrDesc.setDbColumnGeomTypeName(LINESTRING);
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
@@ -366,6 +367,7 @@ public class GeoPackageWriter implements IoxWriter {
                             	attrDesc.setDbColumnName(attrName.toLowerCase());
                             	attrDescs.add(attrDesc);
                             } else {
+                            	// TODO: BLOBS? Datum?
                             	if (localAttr.isDomainBoolean()) {
                             		attrDesc.setDbColumnName(attrName.toLowerCase());
                             		attrDesc.setDbColumnTypeName(INTEGER);
@@ -378,7 +380,6 @@ public class GeoPackageWriter implements IoxWriter {
                         }
                     } 
                 } else {
-                	System.out.println("no td set");
                 	attrDescs = new ArrayList<AttributeDescriptor>();
                 	for (int u=0;u<iomObj.getattrcount();u++) {
                 		AttributeDescriptor attrDesc = new AttributeDescriptor();
@@ -527,6 +528,7 @@ public class GeoPackageWriter implements IoxWriter {
 				} catch (SQLException e) {
 					// TODO: How to deal with sql exception from preparedstatements?
 					// A .gpkg-journal file will be around. Rollback/Close does not help.
+					e.printStackTrace();
                 	throw new IoxException(e.getMessage());
 				} catch (Iox2wkbException e) {
                 	throw new IoxException(e.getMessage()); // TODO: Nicht mehr benötigt, da ConverterException?
@@ -534,7 +536,7 @@ public class GeoPackageWriter implements IoxWriter {
                 	System.out.println("fehler");
                 	e.printStackTrace();
                 	throw new IoxException(e.getMessage());
-                }
+                } 
             }
         } else if(event instanceof EndBasketEvent){
             // ignore
@@ -574,19 +576,30 @@ public class GeoPackageWriter implements IoxWriter {
     	    	GpkgColumnConverter conv = new GpkgColumnConverter();
 
     	    	if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POINT)) {
-//    	    		System.out.println("isPoint");
-//    	    		System.out.println(obj.toString());
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomCoord(iomGeom, attrDesc.getSrId(), is3D);
     	    		pstmt.setObject(i+1, geom);
-//    	    		System.out.println(geom);
+    	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOINT)) {
+    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
+    	    		Object geom = conv.fromIomMultiCoord(iomGeom, attrDesc.getSrId(), is3D);
+    	    		pstmt.setObject(i+1, geom);
+    	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(LINESTRING)) {
+    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
+    	    		Object geom = conv.fromIomPolyline(iomGeom, attrDesc.getSrId(), is3D, 0.00);
+    	    		pstmt.setObject(i+1, geom);
+    	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTILINESTRING)) {
+    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
+    	    		Object geom = conv.fromIomMultiPolyline(iomGeom, attrDesc.getSrId(), is3D, 0.00);
+    	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
-    	    		
+    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
+    				System.out.println(iomGeom);
+    	    		Object geom = conv.fromIomSurface(iomGeom, attrDesc.getSrId(), false, is3D, 0.00);
+    	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
     				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     	    		Object geom = conv.fromIomMultiSurface(iomGeom, 2056, false, is3D, 0.00); 
     	    		pstmt.setObject(i+1, geom);
-//    	    		System.out.println(geom);
     	    	}
     	    	
     			
