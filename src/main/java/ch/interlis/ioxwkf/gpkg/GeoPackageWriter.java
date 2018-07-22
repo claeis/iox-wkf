@@ -133,7 +133,10 @@ public class GeoPackageWriter implements IoxWriter {
     private Integer srsId=null;
     private Integer defaultSrsId = -1;
 
-    // model
+	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
+	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
+	// model
     private TransferDescription td=null;
     private String iliGeomAttrName=null;
     
