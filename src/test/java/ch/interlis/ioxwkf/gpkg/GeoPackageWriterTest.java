@@ -12,6 +12,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -21,6 +22,7 @@ import org.junit.Test;
 import com.vividsolutions.jts.io.ParseException;
 
 import ch.ehi.ili2gpkg.Gpkg2iox;
+import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -34,6 +36,9 @@ import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
+import ch.interlis.ioxwkf.gpkg.GeoPackageWriter;
+import ch.interlis.iox_j.wkb.Wkb2iox;
+
 
 // TODO:
 // - curved geometries -> fail
@@ -52,7 +57,8 @@ public class GeoPackageWriterTest {
         new File(TEST_OUT).mkdirs();
         
         for (File f : new File(TEST_OUT).listFiles()) {
-            if (f.getName().endsWith("gpkg")) {
+            if (f.getName().endsWith("gpkg") || f.getName().endsWith("journal") 
+            		|| f.getName().endsWith("wal") || f.getName().endsWith("shm")) {
                 f.delete();
             }
         }
@@ -626,20 +632,7 @@ public class GeoPackageWriterTest {
             }
         }
 	}
-	
-	// TODO: 
-    // In diesem Test wird eine Punkt-Geometrie und mehrere Attribute in eine neue Tabelle geschrieben.
-	// Dabei wird die Methode setAttributeDescriptors(attrDescs) verwendet.
-    // In diesem Test wird die td NICHT gesetzt.
-	@Test
-	public void setAttrDesc_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
-
 		
-		
-	}
-	
-	
-	
 	// Es wird getestet, ob eine Fehlermeldung ausgegeben wird, wenn eine Coord in einen Point konvertiert wird.
     // In diesem Test wird die td NICHT gesetzt.
 	@Test
@@ -923,7 +916,7 @@ public class GeoPackageWriterTest {
 
 	// Es wird getestet, ob eine MULTIPOLYLINE geschrieben werden kann. Zusaetzlich werden Attribute erstellt.
     // In diesem Test wird die td NICHT gesetzt.
-	@Ignore("Returns POLYLINE instead of MULTIPOLYLINE. Where's the bug?")
+	//@Ignore("Returns POLYLINE instead of MULTIPOLYLINE. Where's the bug/misunderstanding?")
 	@Test
 	public void multiLineStringAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.MultiLineString2", "o1");
@@ -943,16 +936,16 @@ public class GeoPackageWriterTest {
 		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
 		IomObject coordStart2=segments2.addattrobj("segment", "COORD");
 		IomObject coordEnd2=segments2.addattrobj("segment", "COORD");
-		coordStart2.setattrvalue("C1", "-0.22557142857142853");
+		coordStart2.setattrvalue("C1", "-0.223557142857142853");
 		coordStart2.setattrvalue("C2", "0.5658311688311687");
 		coordEnd2.setattrvalue("C1", "-0.22755142857142853");
 		coordEnd2.setattrvalue("C2", "0.5558351688311687");
-		System.out.println(multiPolylineValue);
 		GeoPackageWriter writer = null;
 		File file = new File(TEST_OUT,"MultiLineString2.gpkg");
 		try {
 			writer = new GeoPackageWriter(file, "multi_linestring_2");
 			//writer.setModel(td);
+			writer.setDefaultSridCode("2056");
 			writer.write(new StartTransferEvent());
 			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
 			writer.write(new ObjectEvent(objStraightsSuccess));
@@ -977,9 +970,9 @@ public class GeoPackageWriterTest {
 	            conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
 	            stmt = conn.createStatement();
 	            rs = stmt.executeQuery("SELECT attrmlinestring2, attr1mls, attr2mls FROM multi_linestring_2");
-	            while (rs.next()) {
+	            while (rs.next()) {	            	
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	assertEquals("MULTIPOLYLINE {polyline [POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.22557142857142853, C2 0.5658311688311687}]}}, POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22557142857142853, C2 0.5658311688311687}, COORD {C1 -0.22755142857142853, C2 0.5558351688311687}]}}]}",
+	            	assertEquals("MULTIPOLYLINE {polyline [POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.22557142857142853, C2 0.5658311688311687}]}}, POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22355714285714284, C2 0.5658311688311687}, COORD {C1 -0.22755142857142854, C2 0.5558351688311687}]}}]}",
 	            			iomGeom.toString());
 	            	assertEquals("text2", rs.getString(2));
 	            	assertEquals(6, rs.getInt(3));
@@ -1005,7 +998,7 @@ public class GeoPackageWriterTest {
 	
 	// Es wird getestet, ob eine SURFACE geschrieben werden kann. 
     // In diesem Test wird die td gesetzt.
-	// TODO: Warum erwartet conv.fromIomSurface() eine Multisurface?
+	// Bemerkung: Das IOM-Modell erwartet immer eine MULTISURFACE.
 	@Test
 	public void setModel_polygon_Ok() throws IoxException, IOException, Ili2cFailure {
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon", "o1");
@@ -1013,9 +1006,6 @@ public class GeoPackageWriterTest {
 		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
 		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
 
-//		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon", "o1");
-//		IomObject surfaceValue=objSurfaceSuccess.addattrobj("attrPolygon", "SURFACE");
-//		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
 		// polyline
 		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
 		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
@@ -1075,7 +1065,6 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrpolygon FROM polygon");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	System.out.println(iomGeom);
 	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
 	            			iomGeom.toString());
 	            }
@@ -1096,6 +1085,207 @@ public class GeoPackageWriterTest {
 	            }
 	        }
 	    }
+	}
+	
+	// TODO
+	// Es wird getestet, ob eine SURFACE und zusätzliche Attribute geschrieben werden können. 
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void polygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure {
+
+	}
+	
+	// TODO
+	// Es wird getestet, ob eine MULTISURFACE geschrieben werden kann. 
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void multiPolygon_Ok() throws IoxException, IOException, Ili2cFailure {
+	
+	}
+	
+	// TODO
+	// Es wird getestet, ob eine MULTISURFACE und zusätzliche Attribute geschrieben werden können. 
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void multiPolygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure {
+
+	}
+	
+	// TODO
+    // In diesem Test wird eine Punkt-Geometrie und mehrere Attribute in eine neue Tabelle geschrieben.
+	// Dabei wird die Methode setAttributeDescriptors(attrDescs) verwendet.
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void setAttrDesc_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+		AttributeDescriptor[] attrDescs = new AttributeDescriptor[9];
+		
+		String id1_attr = "id1";
+		AttributeDescriptor id1AttrDesc = new AttributeDescriptor();
+		id1AttrDesc.setDbColumnName(id1_attr.toLowerCase());
+		id1AttrDesc.setIomAttributeName(id1_attr);
+		id1AttrDesc.setDbColumnTypeName("INTEGER");
+		attrDescs[0] = id1AttrDesc;
+		
+		String text_attr = "aText";
+		AttributeDescriptor textAttrDesc = new AttributeDescriptor();
+		textAttrDesc.setDbColumnName(text_attr.toLowerCase());
+		textAttrDesc.setIomAttributeName(text_attr);
+		textAttrDesc.setDbColumnTypeName("TEXT");
+		attrDescs[1] = textAttrDesc;
+
+		String double_attr = "aDouble";
+		AttributeDescriptor doubleAttrDesc = new AttributeDescriptor();
+		doubleAttrDesc.setDbColumnName(double_attr.toLowerCase());
+		doubleAttrDesc.setIomAttributeName(double_attr);
+		doubleAttrDesc.setDbColumnTypeName("REAL");
+		attrDescs[2] = doubleAttrDesc;
+
+		String geom_attr = "attrPoint2";
+		AttributeDescriptor geomAttrDesc = new AttributeDescriptor();
+		geomAttrDesc.setDbColumnName(geom_attr.toLowerCase());
+		geomAttrDesc.setIomAttributeName(geom_attr);
+		geomAttrDesc.setDbColumnGeomTypeName("POINT");
+		geomAttrDesc.setSrId(2056);
+		geomAttrDesc.setCoordDimension(2);
+		attrDescs[3] = geomAttrDesc;
+
+		String date_attr = "aDate";
+		AttributeDescriptor dateAttrDesc = new AttributeDescriptor();
+		dateAttrDesc.setDbColumnName(date_attr.toLowerCase());
+		dateAttrDesc.setIomAttributeName(date_attr);
+		dateAttrDesc.setDbColumnTypeName("DATE");
+		attrDescs[4] = dateAttrDesc;
+
+		String int_attr = "aInt";
+		AttributeDescriptor intAttrDesc = new AttributeDescriptor();
+		intAttrDesc.setDbColumnName(int_attr.toLowerCase());
+		intAttrDesc.setIomAttributeName(int_attr);
+		intAttrDesc.setDbColumnTypeName("INTEGER");
+		attrDescs[5] = intAttrDesc;
+
+		String datetime_attr = "aDateTime";
+		AttributeDescriptor datetimeAttrDesc = new AttributeDescriptor();
+		datetimeAttrDesc.setDbColumnName(datetime_attr.toLowerCase());
+		datetimeAttrDesc.setIomAttributeName(datetime_attr);
+		datetimeAttrDesc.setDbColumnTypeName("DATETIME");
+		attrDescs[6] = datetimeAttrDesc;
+				
+		String boolean_attr = "aBoolean";
+		AttributeDescriptor booleanAttrDesc = new AttributeDescriptor();
+		booleanAttrDesc.setDbColumnName(boolean_attr.toLowerCase());
+		booleanAttrDesc.setIomAttributeName(boolean_attr);
+		booleanAttrDesc.setDbColumnTypeName("BOOLEAN");
+		attrDescs[7] = booleanAttrDesc;
+
+		String blob_attr = "aBlob";
+		AttributeDescriptor blobAttrDesc = new AttributeDescriptor();
+		blobAttrDesc.setDbColumnName(blob_attr.toLowerCase());
+		blobAttrDesc.setIomAttributeName(blob_attr);
+		blobAttrDesc.setDbColumnTypeName("BLOB");
+		attrDescs[8] = blobAttrDesc;
+		
+		Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
+		inputObj.setattrvalue(id1_attr, "1");
+		inputObj.setattrvalue(text_attr, "text1");
+		inputObj.setattrvalue(double_attr, "53434.1234");
+		IomObject coordValue=inputObj.addattrobj(geom_attr, "COORD");
+		coordValue.setattrvalue("C1", "-0.4025974025974026");
+		coordValue.setattrvalue("C2", "1.3974025974025972");
+		inputObj.setattrvalue(date_attr, "2017-04-22");
+		inputObj.setattrvalue(int_attr, "1234");
+		inputObj.setattrvalue(datetime_attr, "2017-04-22 10:23:54.123");
+		inputObj.setattrvalue(boolean_attr, "true");
+		inputObj.setattrvalue(blob_attr, "iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACx jwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWH VRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC=");
+
+		System.out.println(inputObj.toString());
+		
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"Point2.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "point_2");
+			writer.setAttributeDescriptors(attrDescs);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(inputObj));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} finally {
+	    	if (writer != null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+
+	}
+	
+	// Das Model wird gesetzt. Es soll eine Fehlermeldung ausgegeben werden,
+	// weil die Klasse innerhalb des angegebenen Modells nicht gefunden werden kann.
+	@Test
+	public void classOfModelNotFound_Fail() throws IoxException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point99", "o1");
+		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
+		coordValue.setattrvalue("C1", "-0.22857142857142854");
+		coordValue.setattrvalue("C2", "0.5688311688311687");
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"classOfModelNotFound_Fail.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "class_of_model_not_found_fail");
+			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			fail();
+		} catch(IoxException e) {
+			assertTrue(e.getMessage().contains("Test1.Topic1.Point99"));
+			assertTrue(e.getMessage().contains("not found in"));
+			assertTrue(e.getMessage().contains("Test1"));
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	// Es wird getestet, ob eine Fehlermeldung ausgegeben wird, wenn die Coord nicht konvertiert werden kann.
+	@Test
+	public void failtedToConvertCoord_Fail() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue=objSuccess.addattrobj("attrPoint", "COORD");
+		coordValue.setattrvalue("C1", "-0.22857142857142854");
+		coordValue.setattrvalue("C3", "0.5688311688311687");
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"failedToConvertToCoord_Fail.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "failed_to_convert_coord");
+			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			fail();
+		} catch(IoxException e) {
+			System.out.println("foo");
+			System.out.println(e.getMessage());
+			System.out.println("bar");
+			assertTrue(e.getMessage().equals("ch.interlis.iox_j.wkb.Iox2wkbException: failed to read C2 <null>"));
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
 	}
 
 }

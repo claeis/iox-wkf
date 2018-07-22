@@ -640,7 +640,7 @@ public class Gpkg2dbTest {
                 Statement preStmt=jdbcConnection.createStatement();
                 preStmt.execute("DROP SCHEMA IF EXISTS gpkgtodbschema CASCADE");
                 preStmt.execute("CREATE SCHEMA gpkgtodbschema");
-                preStmt.execute("CREATE TABLE gpkgtodbschema.gpkgimporttable(fid integer,attr date, geom geometry(POINT,2056))WITH (OIDS=FALSE)");
+                preStmt.execute("CREATE TABLE gpkgtodbschema.gpkgimporttable(fid integer,attr date, geom geometry(POINT,2056))");
                 preStmt.close();
             }
             {

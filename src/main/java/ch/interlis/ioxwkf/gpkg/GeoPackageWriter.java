@@ -1,13 +1,10 @@
 package ch.interlis.ioxwkf.gpkg;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -17,16 +14,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import com.vividsolutions.jts.io.ParseException;
+import org.opengis.feature.type.GeometryType;
 
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2db.converter.ConverterException;
 import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.ehi.ili2gpkg.GpkgColumnConverter;
+import ch.ehi.ili2gpkg.Iox2gpkg;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.CoordType;
@@ -104,8 +103,11 @@ public class GeoPackageWriter implements IoxWriter {
     private static final String TEXT="TEXT";
     private static final String INTEGER="INTEGER";
     private static final String REAL="REAL";
-    
-    
+    private static final String DATE="DATE";
+    private static final String DATETIME="DATETIME";
+    private static final String BLOB="BLOB";
+    private static final String BOOLEAN="BOOLEAN";
+
     // ili types
     private static final String COORD="COORD";
     private static final String MULTICOORD="MULTICOORD";
@@ -113,6 +115,8 @@ public class GeoPackageWriter implements IoxWriter {
     private static final String MULTIPOLYLINE="MULTIPOLYLINE";
     private static final String SURFACE="SURFACE";
     private static final String MULTISURFACE="MULTISURFACE";
+    private static final String TRUE="true";
+    private static final String FALSE="false";
 
     // geopackage writer
     private Connection conn = null;
@@ -229,12 +233,12 @@ public class GeoPackageWriter implements IoxWriter {
         } else if (event instanceof ObjectEvent) {
         	ObjectEvent obj=(ObjectEvent) event;
             IomObject iomObj=(IomObject)obj.getIomObject();
-//            System.out.println(iomObj.toString());
             String tag = iomObj.getobjecttag();
             
             // Falls der Writer via Db2gpkg verwendet wird: In diesem Fall
             // wird attrDescs aus den DB-Tabellen resp. -Spalten direkt abgefüllt und
             // mittels public Methode 'setAttributeDescriptors' gesetzt.
+            // attrDescs wird benötigt, um die Tabelle in der GeoPackage-DB anzulegen.
             if (attrDescs == null) {
                 if (td != null) {
                 	attrDescs = new ArrayList<AttributeDescriptor>();
@@ -384,29 +388,32 @@ public class GeoPackageWriter implements IoxWriter {
                 	for (int u=0;u<iomObj.getattrcount();u++) {
                 		AttributeDescriptor attrDesc = new AttributeDescriptor();
                 		String attrName=iomObj.getattrname(u);
-                		System.out.println(attrName);
                 		
                 		if (iliGeomAttrName==null && iomObj.getattrvaluecount(attrName)>0 && iomObj.getattrobj(attrName,0)!=null) {
     						iliGeomAttrName=attrName;
     						IomObject iomGeom=iomObj.getattrobj(attrName,0);
-                    		System.out.println(iomGeom.toString());
-                    		
+//                    		System.out.println(iomGeom.toString());
                     		if (iomGeom != null) {
                     			if (iomGeom.getobjecttag().equals(COORD)) {
                     				attrDesc.setDbColumnGeomTypeName(POINT);
+                    				
                     			} else if (iomGeom.getobjecttag().equals(MULTICOORD)) {
                     				attrDesc.setDbColumnGeomTypeName(MULTIPOINT);
                     			} else if (iomGeom.getobjecttag().equals(POLYLINE)) {
                     				attrDesc.setDbColumnGeomTypeName(LINESTRING);
                     			} else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)) {
                     				attrDesc.setDbColumnGeomTypeName(MULTILINESTRING);
+                    				
+                    				// TODO: FALSCH!? KEINE SURFACE, nur MULTISURFACE.
+                    				// Falls nur 1 Element -> "Polygon", mehr als 1 Element
+                    				// -> "Multipolygon".
                     			} else if (iomGeom.getobjecttag().equals(SURFACE)) {
                     				attrDesc.setDbColumnGeomTypeName(POLYGON);
                     			} else if (iomGeom.getobjecttag().equals(MULTISURFACE)) {
                     				attrDesc.setDbColumnGeomTypeName(MULTIPOLYGON);
                     			}
                 				attrDesc.setSrId(defaultSrsId);
-                				attrDesc.setCoordDimension(0);
+                				attrDesc.setCoordDimension(2); // TODO
                     		}
                 		} else {
                  			attrDesc.setDbColumnTypeName(TEXT);
@@ -450,6 +457,9 @@ public class GeoPackageWriter implements IoxWriter {
                 		gpkgContentsStmt.setString(2, "features");
                 		gpkgContentsStmt.setString(3, tableName);
 
+                		// TODO
+                		// Wrong format?
+                		// TEXT as ISO8601 strings ("YYYY-MM-DD HH:MM:SS.SSS")
                 		SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
                 		gpkgContentsStmt.setString(4, dt.format(new Date()));
 
@@ -483,6 +493,7 @@ public class GeoPackageWriter implements IoxWriter {
                 					gpkgGeoColStmt.setInt(5, 0);
                 				}
                 				
+                				// m aka measure. 0=false, 1=true
                 				gpkgGeoColStmt.setInt(6, 0);
                 			}
                 		}
@@ -531,9 +542,6 @@ public class GeoPackageWriter implements IoxWriter {
 					e.printStackTrace();
                 	throw new IoxException(e.getMessage());
 				} catch (Iox2wkbException e) {
-                	throw new IoxException(e.getMessage()); // TODO: Nicht mehr benötigt, da ConverterException?
-                } catch (ConverterException e) {
-                	System.out.println("fehler");
                 	e.printStackTrace();
                 	throw new IoxException(e.getMessage());
                 } 
@@ -563,47 +571,56 @@ public class GeoPackageWriter implements IoxWriter {
         }
     }
     
-    private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2wkbException, ConverterException, SQLException {
+    // TODO: iliGeomAttrName ist null, wenn setAttributeDescriptors verwendet wird.
+    
+    private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2wkbException, SQLException {
     	for (int i = 0; i < attrDescs.size(); i++) {
     		AttributeDescriptor attrDesc = attrDescs.get(i);
     		String attrName = attrDesc.getDbColumnName();
     		String iliAttrName = attrDesc.getIomAttributeName();
     		
     		if (attrDesc.getDbColumnGeomTypeName() != null) {
-//    			System.out.println("isGeometry");
-    			boolean is3D = false;
-    			if (attrDesc.getCoordDimension() == 3) is3D = true;
-    	    	GpkgColumnConverter conv = new GpkgColumnConverter();
+//    			boolean is3D = false;
+//    			if (attrDesc.getCoordDimension() == 3) is3D = true;
+//    	    	GpkgColumnConverter conv = new GpkgColumnConverter();
+    	    	Iox2gpkg iox2gpgk = new Iox2gpkg(attrDesc.getCoordDimension());
+				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
 
+				// TODO: if NULL
     	    	if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POINT)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-    	    		Object geom = conv.fromIomCoord(iomGeom, attrDesc.getSrId(), is3D);
+    	    		Object geom = iox2gpgk.coord2wkb(iomGeom, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOINT)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-    	    		Object geom = conv.fromIomMultiCoord(iomGeom, attrDesc.getSrId(), is3D);
+    	    		Object geom = iox2gpgk.multicoord2wkb(iomGeom, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(LINESTRING)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-    	    		Object geom = conv.fromIomPolyline(iomGeom, attrDesc.getSrId(), is3D, 0.00);
+    	    		Object geom = iox2gpgk.polyline2wkb(iomGeom, false, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTILINESTRING)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-    	    		Object geom = conv.fromIomMultiPolyline(iomGeom, attrDesc.getSrId(), is3D, 0.00);
+    	    		Object geom = iox2gpgk.multiline2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
     				System.out.println(iomGeom);
-    	    		Object geom = conv.fromIomSurface(iomGeom, attrDesc.getSrId(), false, is3D, 0.00);
+    	    		Object geom = iox2gpgk.surface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
-    				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-    	    		Object geom = conv.fromIomMultiSurface(iomGeom, 2056, false, is3D, 0.00); 
+    	    		Object geom = iox2gpgk.multisurface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	}
-    	    	
-    			
-    		} else {
+    		} else if (attrDesc.getDbColumnTypeName().equals(BOOLEAN)) {
+    			String val = obj.getattrprim(iliAttrName, 0);
+    			if (val.equalsIgnoreCase(TRUE)) {
+        			pstmt.setObject(i+1, 1);
+    			} else {
+        			pstmt.setObject(i+1, 0);
+    			}
+    		} else if (attrDesc.getDbColumnTypeName().equals(BLOB)) {
+    			String val = obj.getattrprim(iliAttrName, 0);
+    			byte[] byteValue = Base64.getDecoder().decode(val);
+    			pstmt.setObject(i+1, byteValue);
+    		}
+    		
+    		else {
     			// TODO: Was muss speziell behandelt werden?
     			// Blobs (BLACKBOX BINARY), Datum?
     			String val=obj.getattrprim(iliAttrName,0);
@@ -617,8 +634,6 @@ public class GeoPackageWriter implements IoxWriter {
     		
     	}
     }
-    
-    
     
     // calculate x/y min/max from ili model
     private void setExtentFromIliDimensions(ch.interlis.ili2c.metamodel.NumericalType[] dimv) throws IoxException {    	
@@ -649,6 +664,21 @@ public class GeoPackageWriter implements IoxWriter {
         this.td = td;
     }
     
+	/** Sets the attribute descriptors.
+	 * Alternative to setting a model.
+	 * @param attrDescs[]
+	 */
+	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
+		this.attrDescs = new ArrayList<AttributeDescriptor>();
+		for(AttributeDescriptor attrDesc : attrDescs) {
+			if(attrDesc.getDbColumnGeomTypeName() != null) {
+				iliGeomAttrName = attrDesc.getIomAttributeName();
+			}
+			this.attrDescs.add(attrDesc);
+		}
+	}
+
+    
     @Override
     public void close() throws IoxException {
         // TODO Auto-generated method stub
@@ -663,7 +693,6 @@ public class GeoPackageWriter implements IoxWriter {
     @Override
     public void flush() throws IoxException {
         // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -675,7 +704,6 @@ public class GeoPackageWriter implements IoxWriter {
     @Override
     public void setFactory(IoxFactoryCollection arg0) throws IoxException {
         // TODO Auto-generated method stub
-
     }
 
 

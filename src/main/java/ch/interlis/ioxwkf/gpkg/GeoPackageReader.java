@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -28,9 +29,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-//import ch.interlis.ioxwkf.gpkg.AttributeDescriptor;
 import ch.ehi.ili2gpkg.Gpkg2iox;
-import ch.ehi.ili2gpkg.GpkgColumnConverter;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 
 /** Read a table from a GeoPackage database.
@@ -98,6 +97,9 @@ public class GeoPackageReader implements IoxReader {
     private Connection conn = null;
     private ResultSet featureResultSet = null;
     private Statement featureStatement = null;
+
+	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
+	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     // iox
     private TransferDescription td;
