@@ -18,10 +18,22 @@ MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 		
 		CLASS Point2 =
 			id1 : 0 .. 150;
-			Text : TEXT*100;
-			Double : 0 .. 60000;
+			aText : TEXT*100;
+			aDouble : 0.0 .. 60000.0;
+			aBoolean : BOOLEAN;
+            aDate : INTERLIS.XMLDate;
+		    aDatetime : INTERLIS.XMLDateTime;
+		    /*aTime : INTERLIS.XMLTime;*/
+		    aBlob : BLACKBOX BINARY;
 			attrPoint2 : Lkoord;
 		END Point2;
+		
+		CLASS Point3 =
+            attrPoint3 : Lkoord;
+		    aDate : INTERLIS.XMLDate;
+		    aDatetime : INTERLIS.XMLDateTime;
+		    aTime : INTERLIS.XMLTime;
+		END Point3;
 		
 		CLASS MultiPoint =
 			attrMPoint : Lkoord;

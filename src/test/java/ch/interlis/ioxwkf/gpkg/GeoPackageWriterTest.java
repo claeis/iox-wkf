@@ -12,7 +12,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Base64;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -569,8 +571,12 @@ public class GeoPackageWriterTest {
 	public void setModel_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject inputObj=new Iom_jObject("Test1.Topic1.Point2", "o1");
 		inputObj.setattrvalue("id1", "1");
-		inputObj.setattrvalue("Text", "text1");
-		inputObj.setattrvalue("Double", "53434");
+		inputObj.setattrvalue("aText", "text1");
+		inputObj.setattrvalue("aDouble", "53434");
+		inputObj.setattrvalue("aBoolean", "true");
+		inputObj.setattrvalue("aDate", "2018-07-24");
+		inputObj.setattrvalue("aDatetime", "2018-07-24T19:51:35.123");
+		inputObj.setattrvalue("aBlob", "iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC");
 		IomObject coordValue=inputObj.addattrobj("attrPoint2", "COORD");
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
@@ -604,13 +610,18 @@ public class GeoPackageWriterTest {
             	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
                 conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
                 stmt = conn.createStatement();
-                rs = stmt.executeQuery("SELECT id1, text, double, attrpoint2 FROM point_ok");
+                rs = stmt.executeQuery("SELECT id1, atext, adouble, aboolean, adate, adatetime, ablob, attrpoint2 FROM point_ok");
                 while (rs.next()) {
     				assertEquals(1, rs.getInt(1));
     				assertEquals("text1", rs.getString(2));
     				assertEquals(53434, rs.getDouble(3), 0.0001);
-
-                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(4));
+    				assertEquals(true, rs.getBoolean(4));
+    				assertEquals("2018-07-24", rs.getString(5));
+    				assertEquals("2018-07-24T19:51:35.123Z", rs.getString(6));
+	            	byte[] aboolean = rs.getBytes(7);
+	            	assertEquals("iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC",
+	            			 Base64.getEncoder().encodeToString(aboolean));
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(8));
                 	assertEquals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}",
                 			iomGeom.toString());
                 }
@@ -916,7 +927,8 @@ public class GeoPackageWriterTest {
 
 	// Es wird getestet, ob eine MULTIPOLYLINE geschrieben werden kann. Zusaetzlich werden Attribute erstellt.
     // In diesem Test wird die td NICHT gesetzt.
-	//@Ignore("Returns POLYLINE instead of MULTIPOLYLINE. Where's the bug/misunderstanding?")
+	@Ignore("Returns POLYLINE instead of MULTIPOLYLINE. Where's the bug/misunderstanding?")
+	// https://github.com/claeis/ili2db/issues/193
 	@Test
 	public void multiLineStringAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.MultiLineString2", "o1");
@@ -998,7 +1010,7 @@ public class GeoPackageWriterTest {
 	
 	// Es wird getestet, ob eine SURFACE geschrieben werden kann. 
     // In diesem Test wird die td gesetzt.
-	// Bemerkung: Das IOM-Modell erwartet immer eine MULTISURFACE.
+	// Bemerkung: Das Iom-Modell erwartet immer eine MULTISURFACE (in diesem Fall mit nur einer SURFACE drin).
 	@Test
 	public void setModel_polygon_Ok() throws IoxException, IOException, Ili2cFailure {
 		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon", "o1");
@@ -1111,7 +1123,6 @@ public class GeoPackageWriterTest {
 
 	}
 	
-	// TODO
     // In diesem Test wird eine Punkt-Geometrie und mehrere Attribute in eine neue Tabelle geschrieben.
 	// Dabei wird die Methode setAttributeDescriptors(attrDescs) verwendet.
     // In diesem Test wird die td NICHT gesetzt.
@@ -1192,13 +1203,11 @@ public class GeoPackageWriterTest {
 		coordValue.setattrvalue("C1", "-0.4025974025974026");
 		coordValue.setattrvalue("C2", "1.3974025974025972");
 		inputObj.setattrvalue(date_attr, "2017-04-22");
-		inputObj.setattrvalue(int_attr, "1234");
-		inputObj.setattrvalue(datetime_attr, "2017-04-22 10:23:54.123");
+		inputObj.setattrvalue(int_attr, "1234"); 
+		inputObj.setattrvalue(datetime_attr, "2017-04-22T10:23:54.123");
 		inputObj.setattrvalue(boolean_attr, "true");
-		inputObj.setattrvalue(blob_attr, "iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACx jwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWH VRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC=");
+		inputObj.setattrvalue(blob_attr, "iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC");
 
-		System.out.println(inputObj.toString());
-		
 		GeoPackageWriter writer = null;
 		File file = new File(TEST_OUT,"Point2.gpkg");
 		try {
@@ -1219,7 +1228,48 @@ public class GeoPackageWriterTest {
 	    		writer=null;
 	    	}
 		}
-
+		// check
+	    {
+	        Connection conn = null;
+	        Statement stmt = null;
+	        ResultSet rs = null;
+	        try {
+	        	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+	            conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+	            stmt = conn.createStatement();
+	            rs = stmt.executeQuery("SELECT id1, atext, adouble, attrpoint2, adate, aint, adatetime, aboolean, ablob FROM point_2");
+	            while (rs.next()) {
+	            	assertEquals(1, rs.getInt(1));
+	            	assertEquals("text1", rs.getString(2));
+	            	assertEquals(53434.1234, rs.getDouble(3), 0.0001);
+	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(4));
+	            	assertEquals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}",
+	            			iomGeom.toString());
+	            	assertEquals("2017-04-22", rs.getString(5));
+	            	assertEquals(1234, rs.getInt(6));
+	            	assertEquals("2017-04-22T10:23:54.123Z", rs.getString(7));
+	            	assertEquals(1, rs.getInt(8));
+	            	byte[] aboolean = rs.getBytes(9);
+	            	assertEquals("iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC",
+	            			 Base64.getEncoder().encodeToString(aboolean));
+	            }
+	            rs.close();
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            fail();
+	        } catch (ParseException e) {
+				e.printStackTrace();
+	            fail();
+			} finally {
+	            if (conn != null){
+	                try {
+	                    conn.close();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+	    }
 	}
 	
 	// Das Model wird gesetzt. Es soll eine Fehlermeldung ausgegeben werden,

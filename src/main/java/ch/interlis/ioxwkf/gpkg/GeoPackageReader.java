@@ -302,6 +302,12 @@ public class GeoPackageReader implements IoxReader {
                                 if (gpkgAttrType.equalsIgnoreCase("BLOB")) {
                                     String s = Base64.getEncoder().encodeToString((byte[])gpkgAttrValue);
                                     iomObj.setattrvalue(iliAttrName, s);
+                                } else if (gpkgAttrType.equalsIgnoreCase("DATETIME")) {
+                                	// TODO: timezone conversion needed?
+                                	String valueStr=gpkgAttrValue.toString();
+                                	if (valueStr != null) {
+                                		iomObj.setattrvalue(iliAttrName, valueStr.substring(0, valueStr.length() - 1));
+                                	}
                                 } else {
                                     String valueStr=gpkgAttrValue.toString();
                                     if(valueStr!=null && valueStr.length()>0)

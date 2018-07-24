@@ -804,7 +804,7 @@ public class GeoPackageReaderTest {
             String attr4=iomObj.getattrvalue("orientierung"); // Double
             assertTrue(attr4.equals("18.36"));
             assertEquals("2016-10-28", iomObj.getattrvalue("nachfuehrung")); // Date
-            assertEquals("2018-05-03T00:00:00Z", iomObj.getattrvalue("importdatum")); // Timestamp
+            assertEquals("2018-05-03T00:00:00", iomObj.getattrvalue("importdatum")); // Timestamp
             assertEquals("1", iomObj.getattrvalue("aboolean")); // Boolean            
             assertTrue(reader.read() instanceof EndBasketEvent);
             assertTrue(reader.read() instanceof EndTransferEvent);
