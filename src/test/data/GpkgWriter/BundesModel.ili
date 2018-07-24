@@ -10,7 +10,7 @@ MODEL BundesModel (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 	TOPIC Topic1 =
 		CLASS Polygon =
 			id : 0 .. 150;
-			the_geom : MULTISURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+			the_geom : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
 		END Polygon;
 	END Topic1;
 	
