@@ -9,7 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -18,6 +17,10 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
 
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2gpkg.Iox2gpkg;
@@ -47,11 +50,13 @@ import ch.interlis.iox.IoxWriter;
 import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.jts.Iox2jts;
+import ch.interlis.iox_j.jts.Iox2jtsException;
 import ch.interlis.iox_j.wkb.Iox2wkbException;
 
 /** Write data to a GeoPackage.
- * If the table in the file already exists, the existing table will be replaced.
- * If the file exists, the table will be added.
+ * If the table in the file already exists, an exception will be thrown.
+ * If the gpkg-file exists, the table will be added.
  * Only one geometry attribute per table is allowed.
  * Curved geometries are not supported.
  * <p>
@@ -63,7 +68,7 @@ import ch.interlis.iox_j.wkb.Iox2wkbException;
  * </ul>
  * <p>
  * <b>Data type mapping</b><br>
- * Any attribute type that is not Numeric, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the shape file
+ * Any attribute type that is not Numeric, BOOLEAN, BLOB, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the shape file
  * and its value is encoded according to Interlis 2.3 encoding rules.<p>
  * <b>Not supported INTERLIS data types</b><p>
  * <ul>
@@ -116,15 +121,13 @@ public class GeoPackageWriter implements IoxWriter {
 
     // geopackage writer
     private Connection conn = null;
-    private ResultSet featureSet = null;
-    private PreparedStatement featureStatement = null;
     private boolean tableExists = false;
     private boolean appendFeatures = false; // TODO
     private List<AttributeDescriptor> attrDescs = null;
-    private double xMin;
-    private double yMin;
-    private double xMax;
-    private double yMax;
+    private Double xMin = null;
+    private Double yMin = null;
+    private Double xMax = null;
+    private Double yMax = null;
     
     private Integer srsId=null;
     private Integer defaultSrsId = -1;
@@ -356,7 +359,7 @@ public class GeoPackageWriter implements IoxWriter {
                                 attrDesc.setSrId(defaultSrsId);
                                 attrDesc.setDbColumnName(attrName.toLowerCase());
                                 attrDescs.add(attrDesc);
-                                
+                                                                
                                 setExtentFromIliDimensions(coordType.getDimensions());
                             } else if (iliType instanceof ch.interlis.ili2c.metamodel.NumericalType) {
                             	NumericalType numericalType = (NumericalType)iliType;
@@ -399,6 +402,7 @@ public class GeoPackageWriter implements IoxWriter {
                         }
                     } 
                 } else {
+                	// TODO: If no model is set, the extent is not calculated.
                 	attrDescs = new ArrayList<AttributeDescriptor>();
                 	for (int u=0;u<iomObj.getattrcount();u++) {
                 		AttributeDescriptor attrDesc = new AttributeDescriptor();
@@ -440,7 +444,7 @@ public class GeoPackageWriter implements IoxWriter {
             if (tableExists) {
             	throw new IoxException("Table '" + tableName + "' already exists.");
             } else {
-            	if (attrDescs != null) {
+            	if (attrDescs != null && attrDescs.size() > 0) {
                 	try {
                 		// Create empty table.
                 		List<String> attrList = new ArrayList<String>();
@@ -456,36 +460,10 @@ public class GeoPackageWriter implements IoxWriter {
                 		createTableSql.append(String.join(",", attrList));
                 		createTableSql.append(")");
                 		
-                		System.out.println(createTableSql);
-                		
+                		System.out.println(createTableSql.toString());
+                		                		
                 		PreparedStatement createTableStmt = conn.prepareStatement(createTableSql.toString());
                 		createTableStmt.executeUpdate();
-
-                		// Insert table information into gpkg_contents meta table.
-                		String gpkgContentsSql = "INSERT INTO gpkg_contents (table_name, data_type, identifier, last_change, min_x, min_y, max_x, max_y, srs_id) "
-                				+ "VALUES (?,?,?,?,?,?,?,?,?)";
-
-                		PreparedStatement gpkgContentsStmt = conn.prepareStatement(gpkgContentsSql);
-                		gpkgContentsStmt.setString(1, tableName);
-                		gpkgContentsStmt.setString(2, "features");
-                		gpkgContentsStmt.setString(3, tableName);
-
-                		// TODO
-                		// Wrong format?
-                		// TEXT as ISO8601 strings ("YYYY-MM-DD HH:MM:SS.SSS")
-                		SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-                		gpkgContentsStmt.setString(4, dt.format(new Date()));
-
-                		for (AttributeDescriptor attrDesc : attrDescs) {
-                	   		if (attrDesc.getDbColumnGeomTypeName() != null) {
-                    			gpkgContentsStmt.setDouble(5, xMin);
-                    			gpkgContentsStmt.setDouble(6, yMin);
-                    			gpkgContentsStmt.setDouble(7, xMax);
-                    			gpkgContentsStmt.setDouble(8, yMax);
-                    			gpkgContentsStmt.setInt(9, attrDesc.getSrId());
-                    		}
-                		}
-                		gpkgContentsStmt.executeUpdate();
                 		
                 		// Insert into gpkg_geometry_columns meta table.
                 		String gpkgGeoColSql = "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) "
@@ -520,7 +498,7 @@ public class GeoPackageWriter implements IoxWriter {
             	}
             }
            
-            if (attrDescs != null) {
+            if (attrDescs != null && attrDescs.size() > 0) {
         		// insert statement
         		List<String> attrList = new ArrayList<String>();
         		for (AttributeDescriptor attrDesc : attrDescs) {
@@ -541,13 +519,10 @@ public class GeoPackageWriter implements IoxWriter {
         		}
         		
         		insertIntoTableSql.append(")");
-                System.out.println(insertIntoTableSql);
                 
                 try {
                 	PreparedStatement pstmt = conn.prepareStatement(insertIntoTableSql.toString());
-                	System.out.println("****************** start convert object");
                 	convertObject(iomObj, pstmt);
-                	System.out.println("****************** end convert object");
                 	pstmt.executeUpdate();
 				} catch (SQLException e) {
 					// TODO: How to deal with sql exception from preparedstatements?
@@ -557,11 +532,46 @@ public class GeoPackageWriter implements IoxWriter {
 				} catch (Iox2wkbException e) {
                 	e.printStackTrace();
                 	throw new IoxException(e.getMessage());
-                } 
+                } catch (Iox2jtsException e) {
+					e.printStackTrace();
+                	throw new IoxException(e.getMessage());
+				} 
             }
         } else if(event instanceof EndBasketEvent){
             // ignore
         } else if (event instanceof EndTransferEvent) {
+    		if (attrDescs != null && attrDescs.size() > 0) {
+            	try {
+
+            		// Insert table information into gpkg_contents meta table.
+            		// Since x/y min/max can change, we insert these values at the end of the reading process.
+            		String gpkgContentsSql = "INSERT INTO gpkg_contents (table_name, data_type, identifier, last_change, min_x, min_y, max_x, max_y, srs_id) "
+            				+ "VALUES (?,?,?,?,?,?,?,?,?)";
+
+            		PreparedStatement gpkgContentsStmt = conn.prepareStatement(gpkgContentsSql);
+            		gpkgContentsStmt.setString(1, tableName);
+            		gpkgContentsStmt.setString(2, "features");
+            		gpkgContentsStmt.setString(3, tableName);
+
+            		SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            		gpkgContentsStmt.setString(4, dt.format(new Date()));
+
+            		for (AttributeDescriptor attrDesc : attrDescs) {
+            	   		if (attrDesc.getDbColumnGeomTypeName() != null) {
+            	   			gpkgContentsStmt.setDouble(5, xMin);
+            	   			gpkgContentsStmt.setDouble(6, yMin);
+            	   			gpkgContentsStmt.setDouble(7, xMax);
+            	   			gpkgContentsStmt.setDouble(8, yMax);
+            	   			gpkgContentsStmt.setInt(9, attrDesc.getSrId());
+                		}
+            		}
+            		gpkgContentsStmt.executeUpdate();
+
+            	} catch (SQLException e) {
+            		e.printStackTrace();
+            		throw new IoxException(e.getMessage());
+            	}	
+    		}	
             if (conn != null) {
                 try {
                     conn.commit();
@@ -584,35 +594,47 @@ public class GeoPackageWriter implements IoxWriter {
         }
     }
        
-    private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2wkbException, SQLException {
+    private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2jtsException, Iox2wkbException, SQLException {
     	for (int i = 0; i < attrDescs.size(); i++) {
     		AttributeDescriptor attrDesc = attrDescs.get(i);
-    		String attrName = attrDesc.getDbColumnName();
     		String iliAttrName = attrDesc.getIomAttributeName();
     		
     		if (attrDesc.getDbColumnGeomTypeName() != null) {
     	    	Iox2gpkg iox2gpgk = new Iox2gpkg(attrDesc.getCoordDimension());
 				IomObject iomGeom = obj.getattrobj(iliGeomAttrName,0);
-
+				
+				Geometry jtsGeom = null;
+				
     	    	if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POINT)) {
-    	    		Object geom = iox2gpgk.coord2wkb(iomGeom, attrDesc.getSrId());
+					jtsGeom = new GeometryFactory().createPoint(Iox2jts.coord2JTS(iomGeom));
+					Object geom = iox2gpgk.coord2wkb(iomGeom, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOINT)) {
+    	    		jtsGeom = Iox2jts.multicoord2JTS(iomGeom);
     	    		Object geom = iox2gpgk.multicoord2wkb(iomGeom, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(LINESTRING)) {
+    	    		jtsGeom = new GeometryFactory().createLineString(Iox2jts.polyline2JTS(iomGeom, false, 0.00).toCoordinateArray());
     	    		Object geom = iox2gpgk.polyline2wkb(iomGeom, false, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTILINESTRING)) {
+    	    		jtsGeom = Iox2jts.multipolyline2JTS(iomGeom, 0.00);
     	    		Object geom = iox2gpgk.multiline2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
+    	    		jtsGeom = Iox2jts.surface2JTS(iomGeom, 0.00);
     	    		Object geom = iox2gpgk.surface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
+    	    		jtsGeom = Iox2jts.multisurface2JTS(iomGeom, 0.00, defaultSrsId);
     	    		Object geom = iox2gpgk.multisurface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	}
+    	    	
+    	    	if (td == null) {
+    	    		this.updateExtentFromGeometry(jtsGeom);
+    	    	}
+    	    	
     		} else if (attrDesc.getDbColumnTypeName().equals(BOOLEAN)) {
     			String val = obj.getattrprim(iliAttrName, 0);
     			if (val.equalsIgnoreCase(TRUE)) {
@@ -649,6 +671,26 @@ public class GeoPackageWriter implements IoxWriter {
         }
     }
     
+    // update x/y min/max from geometry
+    private void updateExtentFromGeometry(Geometry geom) {    	
+    	Envelope envelope = geom.getEnvelopeInternal();
+    	double xMinObj = envelope.getMinX();
+    	double xMaxObj = envelope.getMaxX();
+    	double yMinObj = envelope.getMinY();
+    	double yMaxObj = envelope.getMaxY();
+    	if (this.xMin == null || this.xMin > xMinObj) {
+    		this.xMin = xMinObj;
+    	}
+    	if (this.xMax == null || this.xMax < xMaxObj) {
+    		this.xMax = xMaxObj;
+    	}
+    	if (this.yMin == null || this.yMin > yMinObj) {
+    		this.yMin = yMinObj;
+    	}
+    	if (this.yMax == null || this.yMax < yMaxObj) {
+    		this.yMax = yMaxObj;
+    	}
+    }
     
 	/** The default srid code, used if not given by the model or the attribute descriptors.
 	 * @param sridCode EPSG code e.g. "2056"

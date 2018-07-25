@@ -12,8 +12,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Base64;
 
 import org.junit.Before;
@@ -39,13 +37,10 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.gpkg.GeoPackageWriter;
-import ch.interlis.iox_j.wkb.Wkb2iox;
 
 
 // TODO:
 // - curved geometries -> fail
-// - blob
-// - boolean
 
 public class GeoPackageWriterTest {
 
@@ -76,13 +71,11 @@ public class GeoPackageWriterTest {
         assertNotNull(td);
     }
 
-    // TODO: mit/ohne Erstellen der Tabelle?
     // In diesem Test wird ein transfer-event gestartet und gleich wieder beendet.
-    // Die GeoPackage-Datei muss dabei erstellt werden, darf jedoch keinen Inhalt aufweisen.
+    // Die GeoPackage-Datei muss dabei erstellt werden, darf jedoch nur die gpkg-Tabellen aufweisen.
     // In diesem Test wird die td gesetzt.
     @Test
     public void setModel_emptyTransfer_Ok() throws IoxException, IOException {
-        assertTrue(true);
         GeoPackageWriter writer = null;
         File file = new File(TEST_OUT,"testEmptyTransfer.gpkg");
         try {
@@ -215,7 +208,7 @@ public class GeoPackageWriterTest {
             writer.write(new EndBasketEvent());
             writer.write(new EndTransferEvent());
         } catch(IoxException e) {
-            // TODO
+        	e.printStackTrace();
         } finally {
             if (writer!=null) {
                 try {
@@ -323,7 +316,6 @@ public class GeoPackageWriterTest {
             writer.write(new EndTransferEvent());
         } catch(IoxException e) {
             e.printStackTrace();
-            fail();
         } finally {
             if (writer!=null) {
                 try {
@@ -394,7 +386,7 @@ public class GeoPackageWriterTest {
         }
     }
     
-	// Der Benutzer gibt 3 models an.
+	// Der Benutzer gibt 3 Models an.
 	// Es wird getestet, ob der Name des Models (Name des Models: StadtModel.ili) stimmt.
 	// Es wird getestet, ob der Name des Topics (Topic: Topic1) stimmt.
 	// Es wird getestet, ob der Name der Klasse (Class: Polygon) stimmt.
@@ -1099,20 +1091,225 @@ public class GeoPackageWriterTest {
 	    }
 	}
 	
-	// TODO
 	// Es wird getestet, ob eine SURFACE und zusätzliche Attribute geschrieben werden können. 
-    // In diesem Test wird die td NICHT gesetzt.
+    // In diesem Test wird die td gesetzt.
 	@Test
-	public void polygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure {
-
+	public void setModel_polygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure {
+		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.Polygon2", "o1");
+		objSurfaceSuccess.setattrvalue("attr1PG","text2");
+		objSurfaceSuccess.setattrvalue("attr2PG","6");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrPolygon2", "MULTISURFACE");
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+		// polyline
+		IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment=segments.addattrobj("segment", "COORD");
+		startSegment.setattrvalue("C1", "-0.22857142857142854");
+		startSegment.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment=segments.addattrobj("segment", "COORD");
+		endSegment.setattrvalue("C1", "-0.15857142857142854");
+		endSegment.setattrvalue("C2", "0.5688311688311687");
+		// polyline 2
+		IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+		startSegment2.setattrvalue("C1", "-0.15857142857142854");
+		startSegment2.setattrvalue("C2", "0.5688311688311687");
+		IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+		endSegment2.setattrvalue("C1", "-0.15857142857142854");
+		endSegment2.setattrvalue("C2", "0.5888311688311687");
+		// polyline 3
+		IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+		IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+		IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+		startSegment3.setattrvalue("C1", "-0.15857142857142854");
+		startSegment3.setattrvalue("C2", "0.5888311688311687");
+		IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+		endSegment3.setattrvalue("C1", "-0.22857142857142854");
+		endSegment3.setattrvalue("C2", "0.5688311688311687");
+		
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"Polygon2.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "polygon_2");
+			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		// check
+		{
+	        Connection conn = null;
+	        Statement stmt = null;
+	        ResultSet rs = null;
+	        try {
+	        	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+	            conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+	            stmt = conn.createStatement();
+	            rs = stmt.executeQuery("SELECT attrpolygon2, attr1pg, attr2pg FROM polygon_2");
+	            while (rs.next()) {
+	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+	            	System.out.println(iomGeom);
+	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
+	            			iomGeom.toString());
+	            	assertEquals("text2", rs.getString(2));
+	            	assertEquals(6, rs.getInt(3));
+	            }
+	            rs.close();
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            fail();
+	        } catch (ParseException e) {
+				e.printStackTrace();
+	            fail();
+			} finally {
+	            if (conn != null){
+	                try {
+	                    conn.close();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+		}
 	}
 	
-	// TODO
 	// Es wird getestet, ob eine MULTISURFACE geschrieben werden kann. 
     // In diesem Test wird die td NICHT gesetzt.
 	@Test
 	public void multiPolygon_Ok() throws IoxException, IOException, Ili2cFailure {
-	
+		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.MultiPolygon", "o1");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrMultiPolygon", "MULTISURFACE");
+		
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+			IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "-0.228");
+			startSegment.setattrvalue("C2", "0.568");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "-0.158");
+			endSegment.setattrvalue("C2", "0.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "-0.158");
+			startSegment2.setattrvalue("C2", "0.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "-0.158");
+			endSegment2.setattrvalue("C2", "0.588");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "-0.158");
+			startSegment3.setattrvalue("C2", "0.588");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "-0.228");
+			endSegment3.setattrvalue("C2", "0.568");
+		}
+		
+		IomObject surfaceValue2 = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+			IomObject outerBoundary = surfaceValue2.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "0.228");
+			startSegment.setattrvalue("C2", "1.300");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "0.158");
+			endSegment.setattrvalue("C2", "1.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "0.158");
+			startSegment2.setattrvalue("C2", "1.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "0.158");
+			endSegment2.setattrvalue("C2", "0.500");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "0.158");
+			startSegment3.setattrvalue("C2", "0.500");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "0.228");
+			endSegment3.setattrvalue("C2", "1.300");
+		}
+		
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPolygon.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "multipolygon");
+			//writer.setModel(td);
+			writer.setDefaultSridCode("2056");
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		// check
+		{
+	        Connection conn = null;
+	        Statement stmt = null;
+	        ResultSet rs = null;
+	        try {
+	        	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+	            conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+	            stmt = conn.createStatement();
+	            rs = stmt.executeQuery("SELECT attrmultipolygon FROM multipolygon");
+	            while (rs.next()) {
+	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
+	            			iomGeom.toString());
+	            }
+	            rs.close();
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            fail();
+	        } catch (ParseException e) {
+				e.printStackTrace();
+	            fail();
+			} finally {
+	            if (conn != null){
+	                try {
+	                    conn.close();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+		}
 	}
 	
 	// TODO
@@ -1120,6 +1317,127 @@ public class GeoPackageWriterTest {
     // In diesem Test wird die td NICHT gesetzt.
 	@Test
 	public void multiPolygonAttributes_Ok() throws IoxException, IOException, Ili2cFailure {
+		Iom_jObject objSurfaceSuccess=new Iom_jObject("Test1.Topic1.MultiPolygon2", "o1");
+		objSurfaceSuccess.setattrvalue("attr1MPG","text3");
+		objSurfaceSuccess.setattrvalue("attr2MPG","8");
+		IomObject multisurfaceValue=objSurfaceSuccess.addattrobj("attrMultiPolygon2", "MULTISURFACE");
+		IomObject surfaceValue = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+			IomObject outerBoundary = surfaceValue.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "-0.228");
+			startSegment.setattrvalue("C2", "0.568");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "-0.158");
+			endSegment.setattrvalue("C2", "0.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "-0.158");
+			startSegment2.setattrvalue("C2", "0.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "-0.158");
+			endSegment2.setattrvalue("C2", "0.588");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "-0.158");
+			startSegment3.setattrvalue("C2", "0.588");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "-0.228");
+			endSegment3.setattrvalue("C2", "0.568");
+		}
+		
+		IomObject surfaceValue2 = multisurfaceValue.addattrobj("surface", "SURFACE");
+		{
+			IomObject outerBoundary = surfaceValue2.addattrobj("boundary", "BOUNDARY");
+			// polyline
+			IomObject polylineValue = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments=polylineValue.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment=segments.addattrobj("segment", "COORD");
+			startSegment.setattrvalue("C1", "0.228");
+			startSegment.setattrvalue("C2", "1.300");
+			IomObject endSegment=segments.addattrobj("segment", "COORD");
+			endSegment.setattrvalue("C1", "0.158");
+			endSegment.setattrvalue("C2", "1.568");
+			// polyline 2
+			IomObject polylineValue2 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments2=polylineValue2.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment2=segments2.addattrobj("segment", "COORD");
+			startSegment2.setattrvalue("C1", "0.158");
+			startSegment2.setattrvalue("C2", "1.568");
+			IomObject endSegment2=segments2.addattrobj("segment", "COORD");
+			endSegment2.setattrvalue("C1", "0.158");
+			endSegment2.setattrvalue("C2", "0.500");
+			// polyline 3
+			IomObject polylineValue3 = outerBoundary.addattrobj("polyline", "POLYLINE");
+			IomObject segments3=polylineValue3.addattrobj("sequence", "SEGMENTS");
+			IomObject startSegment3=segments3.addattrobj("segment", "COORD");
+			startSegment3.setattrvalue("C1", "0.158");
+			startSegment3.setattrvalue("C2", "0.500");
+			IomObject endSegment3=segments3.addattrobj("segment", "COORD");
+			endSegment3.setattrvalue("C1", "0.228");
+			endSegment3.setattrvalue("C2", "1.300");
+		}
+		GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"MultiPolygon2.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "multipolygon_2");
+//			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSurfaceSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+		// check
+		{
+	        Connection conn = null;
+	        Statement stmt = null;
+	        ResultSet rs = null;
+	        try {
+	        	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+	            conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+	            stmt = conn.createStatement();
+	            rs = stmt.executeQuery("SELECT attrmultipolygon2, attr1mpg, attr2mpg FROM multipolygon_2");
+	            while (rs.next()) {
+	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
+	            			iomGeom.toString());
+	            	assertEquals("text3", rs.getString(2));
+	            	assertEquals("8", rs.getString(3));	            	
+	            }
+	            rs.close();
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	            fail();
+	        } catch (ParseException e) {
+				e.printStackTrace();
+	            fail();
+			} finally {
+	            if (conn != null){
+	                try {
+	                    conn.close();
+	                } catch (SQLException e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+		}
 
 	}
 	
@@ -1322,10 +1640,7 @@ public class GeoPackageWriterTest {
 			writer.write(new ObjectEvent(objSuccess));
 			fail();
 		} catch(IoxException e) {
-			System.out.println("foo");
-			System.out.println(e.getMessage());
-			System.out.println("bar");
-			assertTrue(e.getMessage().equals("ch.interlis.iox_j.wkb.Iox2wkbException: failed to read C2 <null>"));
+			assertTrue(e.getMessage().contains("failed to read C2 <null>"));
 		} finally {
 	    	if(writer!=null) {
 	    		try {
