@@ -21,8 +21,9 @@ public class Db2Csv extends AbstractExportFromdb {
 	private String attributes[]=null;
 	
 	@Override
-	protected IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException {
+	protected IoxWriter createWriter(Object obj, Settings config, AttributeDescriptor dbColumns[]) throws IoxException {
 		// mandatory: file to reader has not to be null.
+		File file = (File) obj;
 		if(file!=null) {
 				EhiLogger.logState("file to write to: <"+file.getName()+">");
 		}else {

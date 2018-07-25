@@ -47,9 +47,8 @@ public class Gpkg2db extends AbstractImport2db {
      * <p>
      * 
      * File has to exist and has to be readable.<br>
-     * File file=new File("C:\file.shp");<br>
      * Gpkg2db gpkgImport = new Gpkg2db();<br>
-     * gpkgImport.importData(file, "Connection", config);
+     * gpkgImport.importData("/path/to/file/;tablename", "Connection", config);
      * <p>
      * 
      * Setting possibilities:<br>

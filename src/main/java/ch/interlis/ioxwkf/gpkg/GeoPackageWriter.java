@@ -141,6 +141,7 @@ public class GeoPackageWriter implements IoxWriter {
     
     private String tableName = null;
     private boolean isNewFile = false;
+    private boolean emptyDataSet = true;
 
     public GeoPackageWriter(File file, String tableName) throws IoxException {
         this(file, tableName, null);
@@ -402,7 +403,6 @@ public class GeoPackageWriter implements IoxWriter {
                         }
                     } 
                 } else {
-                	// TODO: If no model is set, the extent is not calculated.
                 	attrDescs = new ArrayList<AttributeDescriptor>();
                 	for (int u=0;u<iomObj.getattrcount();u++) {
                 		AttributeDescriptor attrDesc = new AttributeDescriptor();
@@ -494,7 +494,8 @@ public class GeoPackageWriter implements IoxWriter {
                 		// TODO: There is a .gpkg-journal file when an exception is thrown here.
                 		// Not sure how to handle this?!
                 	}
-                    tableExists = true;	
+                    tableExists = true;
+                    emptyDataSet = false;
             	}
             }
            
@@ -540,9 +541,8 @@ public class GeoPackageWriter implements IoxWriter {
         } else if(event instanceof EndBasketEvent){
             // ignore
         } else if (event instanceof EndTransferEvent) {
-    		if (attrDescs != null && attrDescs.size() > 0) {
+    		if (!emptyDataSet && attrDescs != null && attrDescs.size() > 0) {
             	try {
-
             		// Insert table information into gpkg_contents meta table.
             		// Since x/y min/max can change, we insert these values at the end of the reading process.
             		String gpkgContentsSql = "INSERT INTO gpkg_contents (table_name, data_type, identifier, last_change, min_x, min_y, max_x, max_y, srs_id) "
@@ -558,10 +558,12 @@ public class GeoPackageWriter implements IoxWriter {
 
             		for (AttributeDescriptor attrDesc : attrDescs) {
             	   		if (attrDesc.getDbColumnGeomTypeName() != null) {
-            	   			gpkgContentsStmt.setDouble(5, xMin);
-            	   			gpkgContentsStmt.setDouble(6, yMin);
-            	   			gpkgContentsStmt.setDouble(7, xMax);
-            	   			gpkgContentsStmt.setDouble(8, yMax);
+            	   			if (xMin != null) {
+                	   			gpkgContentsStmt.setDouble(5, xMin);
+                	   			gpkgContentsStmt.setDouble(6, yMin);
+                	   			gpkgContentsStmt.setDouble(7, xMax);
+                	   			gpkgContentsStmt.setDouble(8, yMax);
+            	   			}
             	   			gpkgContentsStmt.setInt(9, attrDesc.getSrId());
                 		}
             		}
