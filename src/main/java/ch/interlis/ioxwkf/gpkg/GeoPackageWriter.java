@@ -69,7 +69,7 @@ import ch.interlis.iox_j.wkb.Iox2wkbException;
  * </ul>
  * <p>
  * <b>Data type mapping</b><br>
- * Any attribute type that is not Numeric, BOOLEAN, BLOB, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the shape file
+ * Any attribute type that is not Numeric, BOOLEAN, BLOB, COORD, POLYLINE, SURFACE, AREA or XMLDate is mapped to a text attribute in the gpkg table
  * and its value is encoded according to Interlis 2.3 encoding rules.<p>
  * <b>Not supported INTERLIS data types</b><p>
  * <ul>
@@ -78,6 +78,7 @@ import ch.interlis.iox_j.wkb.Iox2wkbException;
  * </ul>
  * <p>
  * <b>Curved geometries are not supported.</b><p>
+ * <b>Multiple geometries in a table are not supported.</b><p>
  * <p>
  * 
  * <b>Attachement</b><p>
