@@ -2382,7 +2382,7 @@ public class Db2GpkgTest {
 		}
 	}
 
-	@Ignore
+	@Ignore("Needs another source database. Export takes one minute.")
 	@Test
 	public void export_Realworld_Dataset_Ok() throws Exception {
 		Settings config=new Settings();
@@ -2393,46 +2393,16 @@ public class Db2GpkgTest {
 		try {
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-//	        	Statement preStmt=pgConnection.createStatement();
-//	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
-//	        	preStmt.execute("CREATE SCHEMA dbtogpkgschema");
-//	        	preStmt.execute("CREATE TABLE dbtogpkgschema.exportdatatype(attr character,the_geom geometry(POINT,2056));");
-//	        	preStmt.executeUpdate("INSERT INTO dbtogpkgschema.exportdatatype(attr,the_geom) VALUES ('a','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
-//	        	preStmt.close();
-	        }
-	        {
-				if(data.exists()) {
-					data.delete();
-				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_realworld_dataset";
-
-				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "agi_mopublic_pub");
-				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "mopublic_bodenbedeckung");
-				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+	        
+			if(data.exists()) {
+				data.delete();
 			}
-	        {
-//		        Statement stmt = null;
-//		        ResultSet rs = null;
-//		        try {
-//		        	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
-//		        	gpkgConnection = DriverManager.getConnection("jdbc:sqlite:" + data.getAbsolutePath());
-//		        	stmt = gpkgConnection.createStatement();
-//		        	rs = stmt.executeQuery("SELECT attr, the_geom FROM export_datatype_character");
-//		            while (rs.next()) {
-//		            	assertEquals("a", rs.getString(1));
-//		            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(2));
-//		            	assertEquals("COORD {C1 -0.22857142857142854, C2 0.5688311688311687}",
-//		            			iomGeom.toString());
-//		            }
-//			        rs.close();
-//			        stmt.close();
-//		        } catch (SQLException e) {
-//		            e.printStackTrace();
-//		            fail();
-//		        }
-	        }
+            String dataSet = data.getAbsolutePath() + ";" + "export_realworld_dataset";
+
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "agi_mopublic_pub");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "mopublic_bodenbedeckung");
+			AbstractExportFromdb db2Gpkg=new Db2Gpkg();
+			db2Gpkg.exportData(dataSet, pgConnection, config);
 		} finally {
 			if (pgConnection!=null) {
 				pgConnection.close();
