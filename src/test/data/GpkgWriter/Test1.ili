@@ -11,10 +11,12 @@ MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 	
 		CLASS Point =
 			attrPoint : Lkoord;
-			/*aBoolean : BOOLEAN;
-			aDate : INTERLIS.XMLDate;
-			aDouble : 0.000 .. 60000.000;*/
 		END Point;
+		
+        CLASS TwoPoints =
+			attrPoint1 : Lkoord;
+			attrPoint2 : Lkoord;
+		END TwoPoints;
 		
 		CLASS Point2 =
 			id1 : 0 .. 150;
@@ -23,7 +25,6 @@ MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 			aBoolean : BOOLEAN;
             aDate : INTERLIS.XMLDate;
 		    aDatetime : INTERLIS.XMLDateTime;
-		    /*aTime : INTERLIS.XMLTime;*/
 		    aBlob : BLACKBOX BINARY;
 			attrPoint2 : Lkoord;
 		END Point2;

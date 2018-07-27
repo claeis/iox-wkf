@@ -943,7 +943,6 @@ public class ShapeReaderTest {
 			reader.read();
 			fail();
 		}catch(IoxException ex){
-		    System.out.println(ex.getMessage());
     		assertEquals("attributes 'the_geom' not found in model: 'ShapeModel'.",ex.getMessage());
     	}finally {
 	    	if(reader!=null) {

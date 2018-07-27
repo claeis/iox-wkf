@@ -9,6 +9,7 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
@@ -23,7 +24,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import ch.ehi.basics.settings.Settings;
-import ch.ehi.ili2gpkg.Iox2gpkg;
+import ch.interlis.ioxwkf.gpkg.Iox2gpkg;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.BlackboxType;
@@ -121,8 +122,9 @@ public class GeoPackageWriter implements IoxWriter {
 
     // geopackage writer
     private Connection conn = null;
-    private boolean tableExists = false;
+    private boolean featureTableExists = false;
     private boolean appendFeatures = false; // TODO
+    private boolean tablesCreated = false;
     private List<AttributeDescriptor> attrDescs = null;
     private Double xMin = null;
     private Double yMin = null;
@@ -141,8 +143,7 @@ public class GeoPackageWriter implements IoxWriter {
     
     private String tableName = null;
     private boolean isNewFile = false;
-    private boolean emptyDataSet = true;
-
+    
     public GeoPackageWriter(File file, String tableName) throws IoxException {
         this(file, tableName, null);
     }
@@ -232,7 +233,20 @@ public class GeoPackageWriter implements IoxWriter {
         if (event instanceof StartTransferEvent){
             // ignore
         } else if (event instanceof StartBasketEvent) {
-            // ignore
+            try {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT table_name FROM gpkg_contents");
+                while (rs.next()) {
+                	String table_name = rs.getString("table_name");
+                	if (table_name.equalsIgnoreCase(tableName)) {
+                		throw new IoxException("Table '" + tableName + "' already exists.");
+                	}
+                }
+                rs.close();
+                stmt.close();
+            } catch (SQLException e) {
+        		throw new IoxException(e.getMessage());
+            }
         } else if (event instanceof ObjectEvent) {
         	ObjectEvent obj=(ObjectEvent) event;
             IomObject iomObj=(IomObject)obj.getIomObject();
@@ -414,7 +428,6 @@ public class GeoPackageWriter implements IoxWriter {
                     		if (iomGeom != null) {
                     			if (iomGeom.getobjecttag().equals(COORD)) {
                     				attrDesc.setDbColumnGeomTypeName(POINT);
-                    				
                     			} else if (iomGeom.getobjecttag().equals(MULTICOORD)) {
                     				attrDesc.setDbColumnGeomTypeName(MULTIPOINT);
                     			} else if (iomGeom.getobjecttag().equals(POLYLINE)) {
@@ -432,6 +445,8 @@ public class GeoPackageWriter implements IoxWriter {
                 				attrDesc.setSrId(defaultSrsId);
                 				attrDesc.setCoordDimension(2); // TODO: figure it out from input object
                     		}
+                		} else if (iliGeomAttrName!=null && iomObj.getattrvaluecount(attrName)>0 && iomObj.getattrobj(attrName,0)!=null) {
+                			throw new IoxException("only one geometry attribute allowed");
                 		} else {
                  			attrDesc.setDbColumnTypeName(TEXT);
                  		}
@@ -441,16 +456,19 @@ public class GeoPackageWriter implements IoxWriter {
                 	}
                 }
             }
-            if (tableExists) {
-            	throw new IoxException("Table '" + tableName + "' already exists.");
-            } else {
+
+            if (!tablesCreated) {
             	if (attrDescs != null && attrDescs.size() > 0) {
                 	try {
                 		// Create empty table.
                 		List<String> attrList = new ArrayList<String>();
                 		for (AttributeDescriptor attrDesc : attrDescs) {
                 			if (attrDesc.getDbColumnGeomTypeName() != null) {
-                    			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnGeomTypeName());
+                				if (attrDesc.getDbColumnName().equalsIgnoreCase(iliGeomAttrName) || iliGeomAttrName == null) {
+                        			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnGeomTypeName());
+                				} else {
+                					throw new IoxException("only one geometry attribute allowed");
+                				}
                 			} else {
                     			attrList.add(attrDesc.getDbColumnName() + " " + attrDesc.getDbColumnTypeName());
                 			}
@@ -459,9 +477,7 @@ public class GeoPackageWriter implements IoxWriter {
                 		createTableSql.append("CREATE TABLE " + tableName + " (");
                 		createTableSql.append(String.join(",", attrList));
                 		createTableSql.append(")");
-                		
-                		System.out.println(createTableSql.toString());
-                		                		
+                	                		                		                		
                 		PreparedStatement createTableStmt = conn.prepareStatement(createTableSql.toString());
                 		createTableStmt.executeUpdate();
                 		
@@ -494,8 +510,7 @@ public class GeoPackageWriter implements IoxWriter {
                 		// TODO: There is a .gpkg-journal file when an exception is thrown here.
                 		// Not sure how to handle this?!
                 	}
-                    tableExists = true;
-                    emptyDataSet = false;
+                	tablesCreated = true;
             	}
             }
            
@@ -528,20 +543,17 @@ public class GeoPackageWriter implements IoxWriter {
 				} catch (SQLException e) {
 					// TODO: How to deal with sql exception from preparedstatements?
 					// A .gpkg-journal file will be around. Rollback/Close does not help.
-					e.printStackTrace();
                 	throw new IoxException(e.getMessage());
 				} catch (Iox2wkbException e) {
-                	e.printStackTrace();
                 	throw new IoxException(e.getMessage());
                 } catch (Iox2jtsException e) {
-					e.printStackTrace();
                 	throw new IoxException(e.getMessage());
 				} 
             }
         } else if(event instanceof EndBasketEvent){
             // ignore
         } else if (event instanceof EndTransferEvent) {
-    		if (!emptyDataSet && attrDescs != null && attrDescs.size() > 0) {
+        	if (tablesCreated && attrDescs != null && attrDescs.size() > 0) {
             	try {
             		// Insert table information into gpkg_contents meta table.
             		// Since x/y min/max can change, we insert these values at the end of the reading process.
@@ -570,7 +582,6 @@ public class GeoPackageWriter implements IoxWriter {
             		gpkgContentsStmt.executeUpdate();
 
             	} catch (SQLException e) {
-            		e.printStackTrace();
             		throw new IoxException(e.getMessage());
             	}	
     		}	

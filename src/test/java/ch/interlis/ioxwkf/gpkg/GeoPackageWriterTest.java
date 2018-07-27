@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import com.vividsolutions.jts.io.ParseException;
 
-import ch.ehi.ili2gpkg.Gpkg2iox;
+import ch.interlis.ioxwkf.gpkg.Gpkg2iox;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
@@ -373,7 +373,7 @@ public class GeoPackageWriterTest {
             writer.write(new EndTransferEvent());
             fail();
         } catch(IoxException e) {
-            assertEquals("[SQLITE_ERROR] SQL error or missing database (table empty_object_ok already exists)", e.getMessage());
+            assertEquals("Table 'empty_object_ok' already exists.", e.getMessage());
         } finally {
             if (writer!=null) {
                 try {
@@ -386,6 +386,106 @@ public class GeoPackageWriterTest {
         }
     }
     
+    // In diesem Test werden zwei unterschiedliche Tabellen angelegt.
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void twoTables_Ok() throws IoxException, IOException {
+		Iom_jObject objSuccess1=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue1=objSuccess1.addattrobj("attrPoint", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+        GeoPackageWriter writer1 = null;
+		File file = new File(TEST_OUT,"twoTables.gpkg");
+		try {
+			writer1 = new GeoPackageWriter(file, "table_1");
+			writer1.write(new StartTransferEvent());
+			writer1.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer1.write(new ObjectEvent(objSuccess1));
+			writer1.write(new EndBasketEvent());
+			writer1.write(new EndTransferEvent());
+		} catch(IoxException e) {
+			throw new IoxException(e);
+		} finally {
+	    	if(writer1!=null) {
+	    		try {
+					writer1.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer1=null;
+	    	}
+		}
+		
+		Iom_jObject objSuccess2=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue2=objSuccess2.addattrobj("attrPoint", "COORD");
+		coordValue2.setattrvalue("C1", "-0.22957142857142854");
+		coordValue2.setattrvalue("C2", "0.5658311688311687");
+        GeoPackageWriter writer2 = null;
+		try {
+			writer2 = new GeoPackageWriter(file, "table_2");
+			writer2.write(new StartTransferEvent());
+			writer2.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer2.write(new ObjectEvent(objSuccess2));
+			writer2.write(new EndBasketEvent());
+			writer2.write(new EndTransferEvent());
+		} catch(IoxException e) {
+			throw new IoxException(e);
+		} finally {
+	    	if(writer2!=null) {
+	    		try {
+					writer2.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer2=null;
+	    	}
+		}
+		
+        // check if point is written into new table
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT attrpoint FROM table_1");
+                while (rs.next()) {
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+                	assertEquals("COORD {C1 -0.22857142857142854, C2 0.5688311688311687}",
+                			iomGeom.toString());
+                }
+                rs.close();
+                stmt.close();
+                
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT attrpoint FROM table_2");
+                while (rs.next()) {
+                	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
+                	assertEquals("COORD {C1 -0.22957142857142854, C2 0.5658311688311687}",
+                			iomGeom.toString());
+                }
+                rs.close();
+                stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+            } catch (ParseException e) {
+				e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+	}
+
 	// Der Benutzer gibt 3 Models an.
 	// Es wird getestet, ob der Name des Models (Name des Models: StadtModel.ili) stimmt.
 	// Es wird getestet, ob der Name des Topics (Topic: Topic1) stimmt.
@@ -557,6 +657,73 @@ public class GeoPackageWriterTest {
         }
     }
 
+    // In diesem Test werden zwei Punkt-Geometrien in eine neue Tabelle geschrieben.
+    // In diesem Test wird die td gesetzt.
+    @Test
+    public void setModel_twoPoints_Ok() throws IoxException, IOException {
+		Iom_jObject objSuccess1=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue1=objSuccess1.addattrobj("attrPoint", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+		
+		Iom_jObject objSuccess2=new Iom_jObject("Test1.Topic1.Point", "o2");
+		IomObject coordValue2=objSuccess2.addattrobj("attrPoint", "COORD");
+		coordValue2.setattrvalue("C1", "-0.22837142857142854");
+		coordValue2.setattrvalue("C2", "0.5648311688311687");
+
+        GeoPackageWriter writer = null;
+        File file = new File(TEST_OUT,"setModel_two_points.gpkg");
+        try {
+            writer = new GeoPackageWriter(file, "two_points");
+            writer.setModel(td);
+            writer.setDefaultSridCode("2056");
+            writer.write(new StartTransferEvent());
+            writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+            writer.write(new ObjectEvent(objSuccess1));
+            writer.write(new ObjectEvent(objSuccess2));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } catch(IoxException e) {
+            // TODO
+        } finally {
+            if (writer!=null) {
+                try {
+                    writer.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                writer=null;
+            }
+        }
+        // check if there is a point in the table
+        {
+            Connection conn = null;
+            Statement stmt = null;
+            ResultSet rs = null;
+            try {
+            	Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                stmt = conn.createStatement();
+                rs = stmt.executeQuery("SELECT count(*) FROM two_points");
+                while (rs.next()) {
+                	assertEquals(2, rs.getInt(1));
+                }
+                rs.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                fail();
+			} finally {
+                if (conn != null){
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+    
     // In diesem Test wird eine Punkt-Geometrie und drei Attribute in eine neue Tabelle geschrieben.
     // In diesem Test wird die td gesetzt.
 	@Test
@@ -697,6 +864,77 @@ public class GeoPackageWriterTest {
                 }
             }
         }
+	}
+
+	// Es wird getestet, ob eine Fehlermeldung ausgegeben wird, falls mehrere Geometrieattribute vorhanden sind.
+    // In diesem Test wird die td NICHT gesetzt.
+	@Test
+	public void multipleGeometries_Fail() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.Point", "o1");
+		IomObject coordValue1=objSuccess.addattrobj("attrPoint1", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+		IomObject coordValue2=objSuccess.addattrobj("attrPoint2", "COORD");
+		coordValue2.setattrvalue("C1", "-0.2");
+		coordValue2.setattrvalue("C2", "0.5");
+        GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"MultipleGeometriesFail.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "multiple_geometries_fail");
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+			fail();
+		} catch(IoxException e) {
+			assertEquals("only one geometry attribute allowed", e.getMessage());
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
+	}
+	
+	// Es wird getestet, ob eine Fehlermeldung ausgegeben wird, falls mehrere Geometrieattribute vorhanden sind.
+    // In diesem Test wird die td gesetzt.
+	@Test
+	public void setModel_multipleGeometries_Fail() throws IoxException, IOException {
+		Iom_jObject objSuccess=new Iom_jObject("Test1.Topic1.TwoPoints", "o1");
+		IomObject coordValue1=objSuccess.addattrobj("attrPoint1", "COORD");
+		coordValue1.setattrvalue("C1", "-0.22857142857142854");
+		coordValue1.setattrvalue("C2", "0.5688311688311687");
+		IomObject coordValue2=objSuccess.addattrobj("attrPoint2", "COORD");
+		coordValue2.setattrvalue("C1", "-0.2");
+		coordValue2.setattrvalue("C2", "0.5");
+        GeoPackageWriter writer = null;
+		File file = new File(TEST_OUT,"ModelSet_MultipleGeometriesFail.gpkg");
+		try {
+			writer = new GeoPackageWriter(file, "set_model_multiple_geometries_fail");
+			writer.setModel(td);
+			writer.write(new StartTransferEvent());
+			writer.write(new StartBasketEvent("Test1.Topic1","bid1"));
+			writer.write(new ObjectEvent(objSuccess));
+			writer.write(new EndBasketEvent());
+			writer.write(new EndTransferEvent());
+			fail();
+		} catch(IoxException e) {
+			assertEquals("only one geometry attribute allowed", e.getMessage());
+		} finally {
+	    	if(writer!=null) {
+	    		try {
+					writer.close();
+				} catch (IoxException e) {
+					throw new IoxException(e);
+				}
+	    		writer=null;
+	    	}
+		}
 	}
 
 	// Es wird getestet, ob MULTICOORD geschrieben werden kann.
@@ -892,7 +1130,6 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrlinestring2, attr1ls, attr2ls FROM linestring_2");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	System.out.println(iomGeom);
 	            	assertEquals("POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.22557142857142853, C2 0.5658311688311687}]}}",
 	            			iomGeom.toString());
 	            	assertEquals("text1", rs.getString(2));
@@ -919,8 +1156,6 @@ public class GeoPackageWriterTest {
 
 	// Es wird getestet, ob eine MULTIPOLYLINE geschrieben werden kann. Zusaetzlich werden Attribute erstellt.
     // In diesem Test wird die td NICHT gesetzt.
-	@Ignore("Returns POLYLINE instead of MULTIPOLYLINE. Where's the bug/misunderstanding?")
-	// https://github.com/claeis/ili2db/issues/193
 	@Test
 	public void multiLineStringAttributes_Ok() throws IoxException, IOException, Ili2cFailure{
 		Iom_jObject objStraightsSuccess=new Iom_jObject("Test1.Topic1.MultiLineString2", "o1");
@@ -1161,7 +1396,6 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrpolygon2, attr1pg, attr2pg FROM polygon_2");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	System.out.println(iomGeom);
 	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
 	            			iomGeom.toString());
 	            	assertEquals("text2", rs.getString(2));

@@ -29,7 +29,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-import ch.ehi.ili2gpkg.Gpkg2iox;
+import ch.interlis.ioxwkf.gpkg.Gpkg2iox;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 
 /** Read a table from a GeoPackage database.
@@ -282,7 +282,7 @@ public class GeoPackageReader implements IoxReader {
                         // attribute name
                         String gpkgAttrName = gpkgAttribute.getDbColumnName();
                         String iliAttrName=iliAttributes.get(attri);
-
+                        
                         // attribute type
                         String gpkgAttrType = gpkgAttribute.getDbColumnTypeName();
 
@@ -290,6 +290,7 @@ public class GeoPackageReader implements IoxReader {
                         // TODO: handle different date datetime stuff
                         // see https://www.sqlite.org/datatype3.html
                         Object gpkgAttrValue = featureResultSet.getObject(gpkgAttrName);
+
                         if (gpkgAttrValue!=null) {
                             if (theGeomAttrs.contains(gpkgAttrName)) {
                                 try {

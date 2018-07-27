@@ -78,7 +78,6 @@ public class Db2Gpkg extends AbstractExportFromdb {
         // Create and return gpkg writer.
         GeoPackageWriter writer = new GeoPackageWriter(file, tableName, config);
         AttributeDescriptor attrDescs[] = new AttributeDescriptor[dbColumns.length];
-    	System.out.println("ççççççççççççççççççççççççççç");
 
         for(int i=0;i<dbColumns.length;i++) {
         	String attrName=dbColumns[i].getIomAttributeName();
@@ -87,16 +86,6 @@ public class Db2Gpkg extends AbstractExportFromdb {
         	AttributeDescriptor attrDesc = new AttributeDescriptor();
         	attrDesc.setIomAttributeName(dbColumns[i].getIomAttributeName());
         	attrDesc.setDbColumnName(dbColumns[i].getDbColumnName().toLowerCase());
-
-        	System.out.println("**** PostgreSQL");
-        	System.out.println("getIomAttributeName: " + dbColumns[i].getIomAttributeName());
-        	System.out.println("getDbColumnName: " + dbColumns[i].getDbColumnName());
-        	System.out.println("getDbColumnTypeName: " + dbColumns[i].getDbColumnTypeName());
-        	System.out.println("getDbColumnType: " + dbColumns[i].getDbColumnType());
-        	System.out.println("getDbColumnGeomTypeName: " + dbColumns[i].getDbColumnGeomTypeName());
-        	System.out.println("getCoordDimension: " + dbColumns[i].getCoordDimension());
-        	System.out.println("getSrId: " +  dbColumns[i].getSrId());
-        	System.out.println("****");
         	        	
         	if(dbColumns[i].isGeometry()) {
         		attrDesc.setCoordDimension(dbColumns[i].getCoordDimension());

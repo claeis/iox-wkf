@@ -34,7 +34,6 @@ dependencies {
 //    compile (group: 'ch.interlis', name: 'ili2gpkg', version: '3.11.3') {
 //        exclude group: 'ch.interlis', module: 'iox-ili'
 //    }
-    compile fileTree(dir: 'libs', include: 'ili2gpkg-3.11.99.jar')
 	deployerJars "org.apache.maven.wagon:wagon-ftp:3.0.0"
 }
 

@@ -828,7 +828,6 @@ public class Shp2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		java.text.DateFormatSymbols symbols=new java.text.DateFormatSymbols();
-		System.out.println(symbols.getShortMonths()[11]);
 		try{
 	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);

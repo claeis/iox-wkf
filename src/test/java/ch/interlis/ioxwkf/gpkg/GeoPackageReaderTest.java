@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.interlis.ili2c.Ili2cFailure;
@@ -26,7 +25,6 @@ import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
 import ch.interlis.ioxwkf.gpkg.GeoPackageReader;
-import ch.interlis.ioxwkf.shp.ShapeReader;
 
 public class GeoPackageReaderTest {
     
@@ -219,31 +217,6 @@ public class GeoPackageReaderTest {
             assertTrue(event instanceof EndTransferEvent);
         } catch(Exception e) {
             throw new IoxException(e);
-        } finally {
-            if(reader!=null) {
-                reader.close();
-                reader=null;
-            }
-        }
-    }
-
-    // Es wird getestet, ob der Name der Klasse dem Modelklassennamen entspricht.
-    @Ignore // Nicht mehr notwendig, da bereits mit Test 3 abgedeckt wird?
-    @Test
-    public void setModel_className_Ok() throws IoxException, IOException{
-        GeoPackageReader reader=null;
-        try {
-            reader = new GeoPackageReader(new File(TEST_IN+"Point/Point2d.gpkg"), "point2d");
-            assertTrue(reader.read() instanceof StartTransferEvent);
-            assertTrue(reader.read() instanceof StartBasketEvent);
-            IoxEvent event=reader.read();
-            assertTrue(event instanceof ObjectEvent);
-            IomObject iomObj=((ObjectEvent)event).getIomObject();
-            assertTrue(iomObj.getobjecttag().contains("point2d"));
-            event=reader.read();
-            assertTrue(event instanceof EndBasketEvent);
-            event=reader.read();
-            assertTrue(event instanceof EndTransferEvent);
         } finally {
             if(reader!=null) {
                 reader.close();
@@ -842,7 +815,7 @@ public class GeoPackageReaderTest {
             String attr4=iomObj.getattrvalue("orientierung"); // Double
             assertTrue(attr4.equals("18.36"));
             assertEquals("2016-10-28", iomObj.getattrvalue("nachfuehrung")); // Date
-            assertEquals("2018-05-03T00:00:00Z", iomObj.getattrvalue("importdatum")); // Timestamp
+            assertEquals("2018-05-03T00:00:00", iomObj.getattrvalue("importdatum")); // Timestamp
             assertEquals("1", iomObj.getattrvalue("aboolean")); // Boolean            
             assertTrue(reader.read() instanceof EndBasketEvent);
             assertTrue(reader.read() instanceof EndTransferEvent);
