@@ -2248,11 +2248,11 @@ public class Db2GpkgTest {
 		}
 	}
 	
-	// Es wird getestet, ob jeder Datentyp innerhalb der Datenbank-Tabelle im richtigen Format in die Gpkg-Datei exportiert wurde.
+	// Es wird getestet, ob zwei Geometrieattribute exportiert werden können.
 	// - set: database-dbtoshpschema
 	// - set: database-table
 	// --
-	// Erwartung: SUCCESS: datatype=point2d
+	// Erwartung: FAILURE: datatype=point2d
 	@Test
 	public void export_MultipleGeometryColumns_Fail() throws Exception {
 		Settings config=new Settings();
@@ -2267,9 +2267,7 @@ public class Db2GpkgTest {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
 	        	preStmt.execute("CREATE SCHEMA dbtogpkgschema");
-	        	// TODO: a bug in AbstractExportFromDb?
-//	        	preStmt.execute("CREATE TABLE dbtogpkgschema.exportgpkg(attr character varying, the_point geometry(POINT,2056), the_linestring geometry(LINESTRING,2056));");
-//	        	preStmt.executeUpdate("INSERT INTO dbtogpkgschema.exportgpkg(attr,the_point,the_linestring) VALUES ('fubar','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F','010200002008080000020000001CD4411DD441CDBF0E69626CDD33E23F202A504A86DFCCBF8FFEA5F7491BE23F')");
+	        	// identische Geometrietypen
 	        	preStmt.execute("CREATE TABLE dbtogpkgschema.exportgpkg(attr character varying, the_point geometry(POINT,2056), the_other_point geometry(POINT,2056));");
 	        	preStmt.executeUpdate("INSERT INTO dbtogpkgschema.exportgpkg(attr,the_point,the_other_point) VALUES ('fubar','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
 	        	preStmt.close();
@@ -2285,7 +2283,50 @@ public class Db2GpkgTest {
 			db2Gpkg.exportData(dataSet, pgConnection, config);
 			fail();
 		} catch (Exception e) {
-			// TODO: better exception message from underlying lib?
+			assertTrue(e.getMessage().contains("export of:"));
+			assertTrue(e.getMessage().contains("failed"));
+		} finally {
+			if (pgConnection!=null) {
+				pgConnection.close();
+			}
+		}
+	}
+	
+	// Es wird getestet, ob zwei Geometrieattribute exportiert werden können.
+	// - set: database-dbtoshpschema
+	// - set: database-table
+	// --
+	// Erwartung: FAILURE: datatype=point2d
+	@Test
+	public void export_MultipleGeometryColumns2_Fail() throws Exception {
+		Settings config=new Settings();
+		Connection pgConnection=null;
+		Connection gpkgConnection = null;
+		File data = new File(TEST_OUT,"export_multiple_geometry_columns.gpkg");
+		
+		try {
+	        Class driverClass = Class.forName("org.postgresql.Driver");
+	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        {
+	        	Statement preStmt=pgConnection.createStatement();
+	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
+	        	preStmt.execute("CREATE SCHEMA dbtogpkgschema");
+	        	// unterschiedliche Geometrietypen
+	        	preStmt.execute("CREATE TABLE dbtogpkgschema.exportgpkg(attr character varying, the_point geometry(POINT,2056), the_linestring geometry(LINESTRING,2056));");
+	        	preStmt.executeUpdate("INSERT INTO dbtogpkgschema.exportgpkg(attr,the_point,the_linestring) VALUES ('fubar','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F','010200002008080000020000001CD4411DD441CDBF0E69626CDD33E23F202A504A86DFCCBF8FFEA5F7491BE23F')");
+	        	preStmt.close();
+	        }
+			if(data.exists()) {
+				data.delete();
+			}
+            String dataSet = data.getAbsolutePath() + ";" + "export_multiple_geometry_columns2";
+
+			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
+			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportgpkg");
+			AbstractExportFromdb db2Gpkg=new Db2Gpkg();
+			db2Gpkg.exportData(dataSet, pgConnection, config);
+			fail();
+		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("export of:"));
 			assertTrue(e.getMessage().contains("failed"));
 		} finally {
