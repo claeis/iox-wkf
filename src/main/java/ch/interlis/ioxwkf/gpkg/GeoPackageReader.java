@@ -29,7 +29,7 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
-import ch.interlis.ioxwkf.gpkg.Gpkg2iox;
+import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 
 /** Read a table from a GeoPackage database.

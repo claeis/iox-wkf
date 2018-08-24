@@ -21,7 +21,7 @@ import org.junit.Test;
 
 import com.vividsolutions.jts.io.ParseException;
 
-import ch.interlis.ioxwkf.gpkg.Gpkg2iox;
+import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;

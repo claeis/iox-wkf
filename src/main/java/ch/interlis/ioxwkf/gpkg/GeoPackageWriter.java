@@ -24,7 +24,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ioxwkf.gpkg.Iox2gpkg;
+import ch.ehi.ili2gpkg.Iox2gpkg;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.BlackboxType;

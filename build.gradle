@@ -30,9 +30,9 @@ dependencies {
 	compile('ch.interlis:ili2pg:3.+') {
         exclude group: 'ch.interlis', module: 'iox-ili'
     }
-//    compile (group: 'ch.interlis', name: 'ili2gpkg', version: '3.11.3') {
-//        exclude group: 'ch.interlis', module: 'iox-ili'
-//    }
+    compile (group: 'ch.interlis', name: 'ili2gpkg', version: '3.+') {
+        exclude group: 'ch.interlis', module: 'iox-ili'
+    }
 	deployerJars "org.apache.maven.wagon:wagon-ftp:3.0.0"
 }
 

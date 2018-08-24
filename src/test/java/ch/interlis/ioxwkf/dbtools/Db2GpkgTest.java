@@ -16,7 +16,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ioxwkf.gpkg.Gpkg2iox;
+import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox.IoxException;
 
