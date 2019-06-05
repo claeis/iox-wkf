@@ -1,7 +1,10 @@
 ideas/open issues
 ----------------------------
 
-LATEST (1.0.1 2018-01-xx)
+LATEST
+-----------------------------
+
+iox-wkf 1.0.1 (2019-06-05)
 -----------------------------
 - Import2db: support additional columns (not present in source file) in target table
 
