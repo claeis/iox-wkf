@@ -1,6 +1,8 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -156,7 +158,14 @@ public class AttributeDescriptor {
 	private Integer coordDimension=null;
 	private Integer srId=null;
 	private Integer precision=null;
+	private Boolean mandatory=null;
+	private String columnRemarks=null;
+	private String targetTableName=null;
+	private String referenceColumnName=null;
+	private String attributeDefinition=null;
 	
+	public static final String JDBC_GETCOLUMNS_FKCOLUMNNAME="FKCOLUMN_NAME";
+	public static final String JDBC_GETCOLUMNS_PKTABLENAME="PKTABLE_NAME";
 	/** The typeName bool is an alias of boolean type.
 	 * <p>
 	 * get type:<br>
@@ -255,9 +264,28 @@ public class AttributeDescriptor {
 	 */
 	public final static String GEOMETRYTYPE_POINT="POINT";
 	
+	public final static String GEOMETRYTYPE_COMPOUNDCURVE = "COMPOUNDCURVE";
+	public final static String GEOMETRYTYPE_CURVEPOLYGON = "CURVEPOLYGON";
+	
 	private final static String GEOMCOLUMNS_COLUMN_TYPE="type";
 	private final static String GEOMCOLUMNS_COLUMN_SRID="srid";
 	private final static String GEOMCOLUMNS_COLUMN_DIMENSION="coord_dimension";
+	
+	public final static String JDBC_GETCOLUMNS_REMARKS="REMARKS";
+	public final static String JDBC_GETCOLUMNS_COLUMNNAME="COLUMN_NAME";
+	public final static String JDBC_GETCOLUMNS_DATATYPE="DATA_TYPE";
+	public final static String JDBC_GETCOLUMNS_TYPENAME="TYPE_NAME";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE="IS_NULLABLE";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE_YES="YES";
+	public final static String JDBC_GETCOLUMNS_ISNULLABLE_NO="NO";
+	
+	/** table name that this the scope of a reference attribute (null if the DATA_TYPE isn't REF)
+	 */
+	public final static String JDBC_GETCOLUMNS_SCOPETABLE="SCOPE_TABLE";
+	/** the COLUMN_SIZE column the specified column size for the given column.
+	 * for numeric data, this is the maximum PRECISION.
+	 */
+	public final static String JDBC_GETCOLUMNS_PRECISION="COLUMN_SIZE";
 	
 	/**  <td>The name (String) of the column in the data base table</td>
 	 *   <p>
@@ -489,54 +517,24 @@ public class AttributeDescriptor {
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setSrId(Integer srId)
 	 *  </td>
-	 *  <p>
-	 *  <td>precision</td>
-	 *  <td>Precision is the number of digits in the not scaled value.</td>
-	 *  <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setPrecision(Integer precision)
-	 *  </td>
-	 *  <p>
      * @param srId
 	 */
 	protected void setSrId(Integer srId) {
 		this.srId = srId;
 	}
-	/** <td>The srId is an integer that uniquely identifies the Spatial Referencing System (SRS) within the database.
-	 *   	<p>
-	 *	 	requirements:<br>
-	 *      <li>isGeometry() has to be true</li><br>
-	 *      srid can be found in table geometry_columns.
-	 *  </td>
-	 *  <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setSrId(Integer srId)
-	 *  </td>
-	 *  <p>
-	 *  <td>precision</td>
-	 *  <td>Precision is the number of digits in the not scaled value.</td>
-	 *  <td>
+	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
+	 *   </td>
+	 *   <td>
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setPrecision(Integer precision)
-	 *  </td>
+	 *   </td>
 	 * @return precision
 	 */
 	protected Integer getPrecision() {
 		return precision;
 	}
-	/**  <td>The srId is an integer that uniquely identifies the Spatial Referencing System (SRS) within the database.
-	 *   	<p>
-	 *	 	requirements:<br>
-	 *      <li>isGeometry() has to be true</li><br>
-	 *      srid can be found in table geometry_columns.
+	/**  <td>get the designated column's specified column size. For numeric data, this is the maximum precision.
 	 *   </td>
-	 *   <td>
-	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
-	 *  	attrDesc.setSrId(Integer srId)
-	 *   </td>
-	 *   <p>
-	 *   <td>precision</td>
-	 *   <td>Precision is the number of digits in the not scaled value.</td>
 	 *   <td>
 	 *  	AttributeDescriptor attrDesc= new AttributeDescriptor()<br>
 	 *  	attrDesc.setPrecision(Integer precision)
@@ -554,8 +552,9 @@ public class AttributeDescriptor {
 	 * @param db
 	 * @return final list of attribute descriptors
 	 * @throws SQLException 
+	 * @throws IoxException 
 	 */
-	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException {
+	protected static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String schemaName, String tableName, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException, IoxException {
 		for(AttributeDescriptor attr:attributeDesc) {
 			if(attr.getDbColumnTypeName().equals(DBCOLUMN_TYPENAME_GEOMETRY)) {
 				ResultSet tableInDb =null;
@@ -572,7 +571,9 @@ public class AttributeDescriptor {
 				} catch (SQLException e) {
 					throw new SQLException(e);
 				}
+				
 				tableInDb.next();
+				
 				attr.setCoordDimension(tableInDb.getInt(GEOMCOLUMNS_COLUMN_DIMENSION));
 				attr.setSrId(tableInDb.getInt(GEOMCOLUMNS_COLUMN_SRID));
 				attr.setDbColumnGeomTypeName(tableInDb.getString(GEOMCOLUMNS_COLUMN_TYPE));
@@ -590,7 +591,8 @@ public class AttributeDescriptor {
 	 */
 	protected static List<AttributeDescriptor> getAttributeDescriptors(String schemaName, String tableName, Connection db) throws IoxException {
 		List<AttributeDescriptor> attrs=new ArrayList<AttributeDescriptor>();
-		ResultSet tableInDb =null;
+		PreparedStatement ps=null;
+		ResultSet rs =null;
 		StringBuilder queryBuild=new StringBuilder();
 		queryBuild.append("SELECT * FROM ");
 		if(schemaName!=null) {
@@ -598,28 +600,48 @@ public class AttributeDescriptor {
 		}
 		queryBuild.append(tableName+" WHERE 1<>1;");
 		try {
-			Statement stmt = db.createStatement();
-			tableInDb=stmt.executeQuery(queryBuild.toString());
-			if(tableInDb==null) {
+			ps=db.prepareStatement(queryBuild.toString());
+			ps.clearParameters();
+			rs = ps.executeQuery();
+			if(rs==null) {
 				throw new IoxException("table "+schemaName+"."+tableName+" not found");
 			}
 		} catch (SQLException e) {
 			throw new IoxException(e);
 		}
-		ResultSetMetaData rsmd;
+		DatabaseMetaData md;
 		try {
-			rsmd = tableInDb.getMetaData();
+			md = db.getMetaData();
+		} catch (SQLException e2) {
+			throw new IoxException(e2);
+		}
+		try {
+			ResultSetMetaData rsmd = rs.getMetaData();
+			rs = md.getColumns(null, schemaName, tableName, "%");
 			for(int k=1;k<rsmd.getColumnCount()+1;k++) {
-				tableInDb.next();
+				rs.next();
 				// create attr descriptor
 				AttributeDescriptor attr=new AttributeDescriptor();
-				attr.setPrecision(rsmd.getPrecision(k));
-				attr.setDbColumnName(rsmd.getColumnName(k));
-				attr.setDbColumnType(rsmd.getColumnType(k));
-				attr.setDbColumnTypeName(rsmd.getColumnTypeName(k));
+				attr.setColumnRemarks(rs.getString(JDBC_GETCOLUMNS_REMARKS));
+				attr.setPrecision(rs.getInt(JDBC_GETCOLUMNS_PRECISION));
+				attr.setDbColumnName(rs.getString(JDBC_GETCOLUMNS_COLUMNNAME));
+				attr.setDbColumnType(rs.getInt(JDBC_GETCOLUMNS_DATATYPE));
+				attr.setDbColumnTypeName(rs.getString(JDBC_GETCOLUMNS_TYPENAME));
+				// YES: can include NULLs, else NO.
+				String nullable = rs.getString(JDBC_GETCOLUMNS_ISNULLABLE);
+				if(nullable.equals(JDBC_GETCOLUMNS_ISNULLABLE_YES)) {
+					attr.setMandatory(false);
+				}else {
+					attr.setMandatory(true);
+				}
 				attrs.add(attr);
 			}
 		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		try {
+			addGeomDataToAttributeDescriptors(schemaName, tableName, attrs, db);
+		}catch(SQLException e) {
 			throw new IoxException(e);
 		}
 		return attrs;
@@ -634,5 +656,79 @@ public class AttributeDescriptor {
 	 */
 	public boolean isGeometry() {
 		return attributeType==Types.OTHER && attributeTypeName!=null && attributeTypeName.equals(AttributeDescriptor.DBCOLUMN_TYPENAME_GEOMETRY);
+	}
+	/** an attribute is mandatory if the column is defined as not null.
+	 * @return true if attribute is mandatory, else false.
+	 */
+	public Boolean isMandatory() {
+		return mandatory;
+	}
+	/** an attribute is mandatory if the column is defined as not null.
+	 * @param mandatory true if attribute is mandatory, else false.
+	 */
+	public void setMandatory(Boolean mandatory) {
+		this.mandatory = mandatory;
+	}
+	/** is the documentation of this attribute.
+	 * @return the columnRemarks
+	 */
+	public String getColumnRemarks() {
+		return columnRemarks;
+	}
+	/** is the documentation of this attribute.
+	 * @param columnRemarks the documentation to set
+	 */
+	public void setColumnRemarks(String columnRemarks) {
+		this.columnRemarks = columnRemarks;
+	}
+	
+	/** an attribute is a reference if the column references to a target class.
+	 * @return true if attribute is a reference, else false.
+	 */
+	public boolean isReference() {
+		if(getTargetTableName()!=null) {
+			return true;
+		}
+		return false;
+	}
+	
+	/** the target table of the reference.
+	 * @return the target table name
+	 */
+	public String getTargetTableName() {
+		return targetTableName;
+	}
+
+	/** the table of the target reference of the foreign key.
+	 * @param targetTableName the referencedTableName to set
+	 */
+	public void setTargetTableName(String targetTableName) {
+		this.targetTableName = targetTableName;
+	}
+
+	/** the name of the column with the reference to the target table.
+	 * @return the reference column name to the target table.
+	 */
+	public String getReferenceColumnName() {
+		return referenceColumnName;
+	}
+
+	/** the name of the column with the reference to the target table.
+	 * @param the reference column name to the target table.
+	 */
+	public void setReferenceColumnName(String referenceColumnName) {
+		this.referenceColumnName = referenceColumnName;
+	}
+	/** the definition of the attribute.
+	 * @return the attributeDefinition.
+	 */
+	public String getAttributeTypeDefinition() {
+		return attributeDefinition;
+	}
+	/** the definition of the attribute.
+	 * @param attributeDefinition the attributeDefinition to set.
+	 */
+	public void setAttributeTypeDefinition(String attributeDefinition) {
+		this.attributeDefinition = attributeDefinition;
 	}
 }

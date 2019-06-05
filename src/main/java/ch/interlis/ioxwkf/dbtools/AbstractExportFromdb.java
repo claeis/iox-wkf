@@ -103,7 +103,6 @@ public abstract class AbstractExportFromdb {
 		List<AttributeDescriptor> attributes=null;
 		try {
 			attributes=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
-			AttributeDescriptor.addGeomDataToAttributeDescriptors(definedSchemaName, definedTableName, attributes, db);
 		}catch(Exception e) {
 			if(definedSchemaName!=null) {
 				throw new IoxException("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: not found.",e);

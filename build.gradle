@@ -1,5 +1,5 @@
 group 'ch.interlis'
-version '1.0.0'+System.getProperty('release','-SNAPSHOT')
+version '1.0.1'+System.getProperty('release','-SNAPSHOT')
 
 apply plugin: "java"
 apply plugin: "maven"
@@ -24,7 +24,7 @@ dependencies {
     }
     testCompile group: 'junit', name: 'junit', version: '4.+'
     compile group: 'ch.interlis', name: 'iox-ili', version: '1.20.1'
-    compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.7.6'
+    compile group: 'ch.interlis', name: 'ili2c-tool', version: '4.7.+'
 	runtime group: 'org.geotools', name: 'gt-epsg-hsql', version: '10.8'
 	testCompile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
 	compile('ch.interlis:ili2pg:3.+'){

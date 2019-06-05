@@ -38,6 +38,7 @@ public abstract class AbstractImport2db {
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
 	private SimpleDateFormat timeStampFormat;
+	private int batchSize;
 	
 	/** Create the IoxReader. 
 	 * @param file 
@@ -115,6 +116,14 @@ public abstract class AbstractImport2db {
 		}
 		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
+		// optional: set batch size.
+		String batchSizeString=config.getValue(IoxWkfConfig.SETTING_BATCHSIZE);
+		if(batchSizeString==null) {
+			batchSize = IoxWkfConfig.SETTING_BATCHSIZE_DEFAULT;
+		} else {
+			batchSize = Integer.valueOf(batchSizeString);
+		}
+		
 		// create appropriate IoxReader.
 		IoxReader reader=createReader(file, config);
 		
@@ -122,26 +131,16 @@ public abstract class AbstractImport2db {
 		List<AttributeDescriptor> attrDescriptors=null;
 		if(config.getValue(IoxWkfConfig.SETTING_DBTABLE)!=null){
 			attrDescriptors=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
-			try {
-				AttributeDescriptor.addGeomDataToAttributeDescriptors(definedSchemaName, definedTableName, attrDescriptors, db);
-			} catch (SQLException e) {
-				throw new IoxException(e);
-			}
 		}else {
 			throw new IoxException("expected tablename");
 		}
 		// insert statement to insert data to db.
-		String insertQuery=getInsertStatement(definedSchemaName, definedTableName, attrDescriptors, db);
 		PreparedStatement ps=null;
-		try {
-			ps = db.prepareStatement(insertQuery);
-		}catch(Exception e) {
-			throw new IoxException(e);
-		}
 		
 		// read IoxEvents
 		IoxEvent event=reader.read();
 		EhiLogger.logState("start import");
+		int k = 0;
 		while(event instanceof IoxEvent){
 			if(event instanceof ObjectEvent) {
 				IomObject iomObj=((ObjectEvent)event).getIomObject();
@@ -150,25 +149,36 @@ public abstract class AbstractImport2db {
 					ps.clearParameters();
 					// convert data to import data type.
 					convertObject(attrDescriptors, iomObj, ps, db, config, dateFormatPattern);
-					rs = ps.executeUpdate();
+					ps.addBatch();
+					
+					if (k % batchSize == 0) {
+						ps.executeBatch();
+						ps.clearBatch();
+		            }
+					k+=1;
 				} catch (SQLException e) {
 					throw new IoxException(e);
 				} catch (ConverterException e) {
 					throw new IoxException(e);
 				}
-				if(rs==0) {
-					if(definedSchemaName!=null) {
-						throw new IoxException("import of "+iomObj.getobjecttag()+" to "+definedSchemaName+"."+definedTableName+" failed");
-					}else {
-						throw new IoxException("import of "+iomObj.getobjecttag()+" to "+definedTableName+" failed");
-					}
-				}
 			}else if(event instanceof StartBasketEvent) {
 				ArrayList<String> missingAttributes=new ArrayList<String>();
-				setIomAttrNames(reader,attrDescriptors,missingAttributes);
+				attrDescriptors=assignIomAttr2DbColumn(reader,attrDescriptors,missingAttributes);
+		        try {
+		            String insertQuery=getInsertStatement(definedSchemaName, definedTableName, attrDescriptors, db);
+		            ps = db.prepareStatement(insertQuery);
+		        }catch(Exception e) {
+		            throw new IoxException(e);
+		        }
 			}
 			event=reader.read();
 		}
+		try {
+			ps.executeBatch();
+		} catch (SQLException e) {
+			throw new IoxException(e);
+		}
+		
 		EhiLogger.logState("end of import");
 		EhiLogger.logState("import successful");
 		
@@ -180,26 +190,14 @@ public abstract class AbstractImport2db {
 		event=null;
 	}
 
-	/** setIomAttrNames<br>
-	 * set attribute names to attribute descriptor.<br>
-	 * <p>
-	 * 
-	 * IoxReader:<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AbstractImport2db#createReader()}
-	 * <p>
-	 * 
-	 * AttributeDescriptor possibilities<br>
-	 * {@link ch.interlis.ioxwkf.dbtools.AttributeDescriptor}<br>
-	 * <p>
-	 * 
-	 * Missing Attributes:<br>
-	 * Set iom attribute names to attribute descriptor.
-	 * 
-	 * @param reader
-	 * @param attrDescriptors
-	 * @param missingAttributes
+	/** assigns the attributes (from the reader) to a db column.
+	 * Set the attribute name as read by the reader in the column descriptors of the target table of the import.
+	 * @param reader 
+	 * @param dbColumns 
+	 * @param missingDbColumns attributes from the reader, that are not assigned to a column in the database target table
+	 * @return the list of columns for which the reader has attributes
 	 */
-	protected abstract void setIomAttrNames(IoxReader reader, List<AttributeDescriptor> attrDescriptors,List<String> missingAttributes);
+	protected abstract List<AttributeDescriptor> assignIomAttr2DbColumn(IoxReader reader, List<AttributeDescriptor> dbColumns,List<String> missingDbColumns);
 	
 	/** convertObject<br>
 	 * convert attributes of IomObject to PostGis dataTypes.<br>

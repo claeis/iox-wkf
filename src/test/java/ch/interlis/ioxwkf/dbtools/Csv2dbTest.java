@@ -83,6 +83,54 @@ public class Csv2dbTest {
 			}
 		}
 	}
+    @Test
+    public void import_additionalDbCol_Ok() throws Exception
+    {
+        Settings config=new Settings();
+        Connection jdbcConnection=null;
+        try{
+            Class driverClass = Class.forName("org.postgresql.Driver");
+            jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            {
+                Statement preStmt=jdbcConnection.createStatement();
+                // drop schema
+                preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
+                // create schema
+                preStmt.execute("CREATE SCHEMA csvtodbschema");
+                // create table in schema
+                preStmt.execute("CREATE TABLE csvtodbschema.csvimportwithheadernopk(idname character varying,abbreviation character varying,state character varying,area decimal(5,2) NOT NULL DEFAULT 2.1)");
+                preStmt.close();
+            }
+            {
+                // csv
+                File data=new File(TEST_IN, "AttributesHeader.csv");
+                config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+                config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "csvtodbschema");
+                config.setValue(IoxWkfConfig.SETTING_DBTABLE, "csvimportwithheadernopk");
+                AbstractImport2db csv2db=new Csv2db();
+                csv2db.importData(data, jdbcConnection, config);
+            }
+            {
+                stmt=jdbcConnection.createStatement();
+                ResultSet rowCount = stmt.executeQuery("SELECT COUNT(*) AS rowcount FROM csvtodbschema.csvimportwithheadernopk;");
+                while(rowCount.next()) {
+                    assertEquals(1, rowCount.getInt(1));
+                }
+                ResultSet rs = stmt.executeQuery("SELECT idname,abbreviation,state,area FROM csvtodbschema.csvimportwithheadernopk;");
+                ResultSetMetaData rsmd=rs.getMetaData();
+                while(rs.next()){
+                    assertEquals("20", rs.getObject(1));
+                    assertEquals("AU", rs.getObject(2));
+                    assertEquals("Deutschland", rs.getObject(3));
+                    assertEquals(2.1, rs.getDouble(4),0.000001);
+                }
+            }
+        }finally{
+            if(jdbcConnection!=null){
+                jdbcConnection.close();
+            }
+        }
+    }
 	
 	// Hier darf keine Fehlermeldung ausgegeben werden.
 	// Der Header ist nicht gesetzt, somit wird die erste Zeile als Werte Zeile gelesen.
@@ -1125,48 +1173,7 @@ public class Csv2dbTest {
 			}
 		}
 	}
-	
-	// Wenn alle Parameter nicht gesetzt werden, muss die Fehlermeldung
-	// table not found ausgegeben werden.
-	// --
-	// Die Test-Konfiguration wird wie folgt gesetzt:
-	// - NOT SET: header not set
-	// - NOT SET: database-schema not set
-	// - NOT SET: database-table not set
-	// --
-	// Erwartung: FEHLER: table ... not found.
-	@Test
-	public void import_AllNotSet_Fail() throws Exception
-	{
-		Settings config=null;
-		config=new Settings();
-		Connection jdbcConnection=null;
-		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
-	        {
-	        	Statement preStmt=jdbcConnection.createStatement();
-	        	// drop schema
-	        	preStmt.execute("DROP SCHEMA IF EXISTS csvtodbschema CASCADE");
-	        	preStmt.close();
-	        }
-	        // csv
-			File data=new File(TEST_IN, "AttributesHeader.csv");
-			// HEADER: HEADERPRESENT, HEADERABSENT not set
-			// DBSCHEMA: "csvtodbschema" not set
-			// TABLE: "csvimportwithheader" not set
-			AbstractImport2db csv2db=new Csv2db();
-			csv2db.importData(data, jdbcConnection, config);
-			fail();
-		}catch(IoxException e) {
-			assertTrue(e.getMessage().contains("database table==null."));
-		}finally{
-			if(jdbcConnection!=null){
-				jdbcConnection.close();
-			}
-		}
-	}
-	
+		
 	// Wenn der Parameter database-table nicht gesetzt wird, muss die Fehlermeldung
 	// table not found ausgegeben werden.
 	// --

@@ -22,9 +22,31 @@ public class IoxWkfConfig {
 	/** the data base table name.
 	 */
 	public final static String SETTING_DBTABLE=PREFIX+".dbTable";
+	/** only the listed tables from the database should be exported to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_INCLUDETABLES=PREFIX+".includeTables";
+	/** the listed tables should not be exported from the database to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_EXCLUDETABLES=PREFIX+".excludeTables";
+	/** only the listed attributes from the database should be exported to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_INCLUDEATTRIBUTES=PREFIX+".includeAttributes";
+	/** the listed attributes should not be exported from the database to the interlis file.
+	 * multiple tables are separated by semicolon (';').
+	 */
+	public final static String SETTING_EXCLUDEATTRIBUTES=PREFIX+".excludeAttributes";
 	/** model names. Multiple model names are separated by semicolon (';'). 
 	 */
 	public final static String SETTING_MODELNAMES=PREFIX+".modelNames";
+	/** set the range of numeric attributes.
+	 */
+	public final static String SETTING_SCANNUMBERRANGE=PREFIX+".scanNumberRange";
+	/** set the range of numeric attributes to on.
+	 */
+	public final static String SETTING_SCANNUMBERRANGE_ON=SETTING_SCANNUMBERRANGE+".on";
 	/** Path with folders of Interlis model files.
 	 * decide between:<br>
 	 * <li>set default model directory: SETTING_ILIDIRS_DEFAULT.</li>
@@ -119,4 +141,10 @@ public class IoxWkfConfig {
 	/** the default time stamp format pattern.
 	 */
 	public final static String SETTING_DEFAULTFORMAT_TIMESTAMP="yyyy-MM-dd'T'HH:mm:ss.SSS";
+	/** the jdbc batch size.
+	 */
+	public final static String SETTING_BATCHSIZE=PREFIX+".batchSize";
+	/** the default batch size.
+	 */
+	public final static int SETTING_BATCHSIZE_DEFAULT=5000;
 }
