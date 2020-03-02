@@ -1,0 +1,24 @@
+INTERLIS 2.4;
+
+MODEL ShapeModelSimilarAttrs (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -10 .. 20 [INTERLIS.m],
+				  -10 .. 20 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic1 =
+		CLASS Attributes =
+		    fid : 0 .. 150;
+			id : 0 .. 150;
+			text : TEXT*100; !! 'Text' in gpkg file
+			double : 0 .. 60000; !! 'Double' in gpkg file
+			integer : 0 .. 10; !! 'Integer' in gpkg file
+			geom : Lkoord;
+			adate : INTERLIS.XMLDate;
+			atimestamp : INTERLIS.XMLDateTime;
+			aboolean : BOOLEAN;
+		END Attributes;
+	END Topic1;
+	
+END ShapeModelSimilarAttrs.

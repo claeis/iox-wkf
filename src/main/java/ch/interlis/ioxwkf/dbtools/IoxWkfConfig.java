@@ -22,6 +22,7 @@ public class IoxWkfConfig {
 	/** the data base table name.
 	 */
 	public final static String SETTING_DBTABLE=PREFIX+".dbTable";
+    public final static String SETTING_GPKGTABLE=PREFIX+".gpkgTable";
 	/** only the listed tables from the database should be exported to the interlis file.
 	 * multiple tables are separated by semicolon (';').
 	 */

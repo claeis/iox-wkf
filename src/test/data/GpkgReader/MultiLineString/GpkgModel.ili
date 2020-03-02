@@ -1,0 +1,17 @@
+INTERLIS 2.4;
+
+MODEL GpkgModel (de) AT "mailto:edigonzales@localhost" VERSION "20180706" =
+
+	DOMAIN
+		Lkoord = COORD -0.22857142857142854 .. 0.22857142857142854 [INTERLIS.m],
+				  0.5688311688311687 .. 1.5688311688311687 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic1 =
+		CLASS MultiLineString2d =
+		    fid : 0..900000000;
+			geom : POLYLINE WITH (STRAIGHTS) VERTEX Lkoord;
+		END MultiLineString2d;
+	END Topic1;
+	
+END GpkgModel.

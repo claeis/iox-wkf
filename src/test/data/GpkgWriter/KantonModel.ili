@@ -1,0 +1,17 @@
+INTERLIS 2.4;
+
+MODEL KantonModel (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+	DOMAIN
+		Lkoord = COORD -0.22857142857142854 .. 0.22857142857142854 [INTERLIS.m],
+				  0.5688311688311687 .. 1.5688311688311687 [INTERLIS.m],
+				  ROTATION 2 -> 1;
+
+	TOPIC Topic1 =
+		CLASS Polygon2 =
+			id : 0 .. 150;
+			the_geom : SURFACE WITH (STRAIGHTS,ARCS) VERTEX Lkoord WITHOUT OVERLAPS > 0.001;
+		END Polygon2;
+	END Topic1;
+	
+END KantonModel.
