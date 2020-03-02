@@ -3,6 +3,11 @@ ideas/open issues
 
 LATEST
 -----------------------------
+- add gpkg2db
+- add db2gpkg
+- add GpkgReader
+- add GpkgWriter
+- ili2db-4.4.1
 
 iox-wkf 1.0.1 (2019-06-05)
 -----------------------------
