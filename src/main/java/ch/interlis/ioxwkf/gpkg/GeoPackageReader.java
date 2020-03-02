@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
+import net.iharder.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -237,7 +237,7 @@ public class GeoPackageReader implements IoxReader {
                 for (AttributeDescriptor attr : gpkgAttributes) {
                     gpkgAttributeNames.add(attr.getDbColumnName());
                 }
-                String attrs = String.join(",", gpkgAttributeNames);
+                String attrs = GeoPackageWriter.StringJoin(",", gpkgAttributeNames);
                 String sql = "SELECT " + attrs + " FROM " + tableName;
                 featureStatement = conn.createStatement();
                 featureResultSet = featureStatement.executeQuery(sql);
@@ -301,7 +301,7 @@ public class GeoPackageReader implements IoxReader {
                                 }
                             } else {
                                 if (gpkgAttrType.equalsIgnoreCase("BLOB")) {
-                                    String s = Base64.getEncoder().encodeToString((byte[])gpkgAttrValue);
+                                    String s = Base64.encodeBytes((byte[])gpkgAttrValue);
                                     iomObj.setattrvalue(iliAttrName, s);
                                 } else if (gpkgAttrType.equalsIgnoreCase("DATETIME")) {
                                 	// TODO: timezone conversion needed?

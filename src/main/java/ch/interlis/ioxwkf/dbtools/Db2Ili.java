@@ -626,12 +626,12 @@ public class Db2Ili{
 				resultType.append("INTERLIS.XMLDate");
 			}else if(dataType.equals(Types.TIME)) {
 				resultType.append("INTERLIS.XMLTime");
-			}else if(dataType.equals(Types.TIME_WITH_TIMEZONE)) {
-				resultType.append("INTERLIS.XMLTime");
+			//}else if(dataType.equals(Types.TIME_WITH_TIMEZONE)) {
+			//	resultType.append("INTERLIS.XMLTime");
 			}else if(dataType.equals(Types.TIMESTAMP)) {
 				resultType.append("INTERLIS.XMLDateTime");
-			}else if(dataType.equals(Types.TIMESTAMP_WITH_TIMEZONE)) {
-				resultType.append("INTERLIS.XMLDateTime");
+			//}else if(dataType.equals(Types.TIMESTAMP_WITH_TIMEZONE)) {
+			//	resultType.append("INTERLIS.XMLDateTime");
 			}else if(dataType.equals(Types.DECIMAL)) {
 				resultType.append("-"+precision+" .. "+precision);
 			}else if(dataType.equals(Types.NUMERIC)) {

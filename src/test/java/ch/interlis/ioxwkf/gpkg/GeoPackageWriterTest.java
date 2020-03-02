@@ -12,7 +12,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Base64;
+import net.iharder.Base64;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -779,7 +779,7 @@ public class GeoPackageWriterTest {
     				assertEquals("2018-07-24T19:51:35.123Z", rs.getString(6));
 	            	byte[] aboolean = rs.getBytes(7);
 	            	assertEquals("iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC",
-	            			 Base64.getEncoder().encodeToString(aboolean));
+	            			 Base64.encodeBytes(aboolean));
                 	IomObject iomGeom = gpkg2iox.read(rs.getBytes(8));
                 	assertEquals("COORD {C1 -0.4025974025974026, C2 1.3974025974025972}",
                 			iomGeom.toString());
@@ -1803,7 +1803,7 @@ public class GeoPackageWriterTest {
 	            	assertEquals(1, rs.getInt(8));
 	            	byte[] aboolean = rs.getBytes(9);
 	            	assertEquals("iVBORw0KGgoAAAANSUhEUgAAAEcAAAAjCAIAAABJt4AEAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuOWwzfk4AAABSSURBVFhH7c8xDQAwDAPB8IcSJqVSEu3UoWHw1ks32OPX6UDzZ3hrrxBWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRWHVRxWcVjFYRXHV5Vl/gRdFz8WhOvgDqIcAAAAAElFTkSuQmCC",
-	            			 Base64.getEncoder().encodeToString(aboolean));
+	            			 Base64.encodeBytes(aboolean));
 	            }
 	            rs.close();
 	        } catch (SQLException e) {

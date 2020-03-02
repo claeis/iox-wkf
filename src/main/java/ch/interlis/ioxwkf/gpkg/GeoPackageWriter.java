@@ -14,7 +14,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Base64;
+import net.iharder.Base64;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -254,9 +254,9 @@ public class GeoPackageWriter implements IoxWriter {
             String tag = iomObj.getobjecttag();
             
             // Falls der Writer via Db2gpkg verwendet wird: In diesem Fall
-            // wird attrDescs aus den DB-Tabellen resp. -Spalten direkt abgefüllt und
+            // wird attrDescs aus den DB-Tabellen resp. -Spalten direkt abgefuellt und
             // mittels public Methode 'setAttributeDescriptors' gesetzt.
-            // attrDescs wird benötigt, um die Tabelle in der GeoPackage-DB anzulegen.
+            // attrDescs wird benoetigt, um die Tabelle in der GeoPackage-DB anzulegen.
             if (attrDescs == null) {
                 if (td != null) {
                 	attrDescs = new ArrayList<AttributeDescriptor>();
@@ -476,7 +476,7 @@ public class GeoPackageWriter implements IoxWriter {
                 		}
                 		StringBuffer createTableSql = new StringBuffer();
                 		createTableSql.append("CREATE TABLE " + tableName + " (");
-                		createTableSql.append(String.join(",", attrList));
+                		createTableSql.append(StringJoin(",", attrList));
                 		createTableSql.append(")");
                 	                		                		                		
                 		PreparedStatement createTableStmt = conn.prepareStatement(createTableSql.toString());
@@ -524,7 +524,7 @@ public class GeoPackageWriter implements IoxWriter {
         		
         		StringBuffer insertIntoTableSql = new StringBuffer();
         		insertIntoTableSql.append("INSERT INTO " + tableName + " (");
-        		insertIntoTableSql.append(String.join(",", attrList));
+        		insertIntoTableSql.append(StringJoin(",", attrList));
         		insertIntoTableSql.append(") VALUES (");
         		
         		for (int i=0; i<attrDescs.size(); i++) {
@@ -608,6 +608,16 @@ public class GeoPackageWriter implements IoxWriter {
         }
     }
        
+    public static String StringJoin(String sep, List<String> eles) {
+        StringBuffer ret=new StringBuffer();
+        ret.append(eles.get(0));
+        for(int i=1;i<eles.size();i++) {
+            ret.append(sep);
+            ret.append(eles.get(i));
+        }
+        return ret.toString();
+    }
+
     private void convertObject(IomObject obj, PreparedStatement pstmt) throws Iox2jtsException, Iox2wkbException, SQLException {
     	for (int i = 0; i < attrDescs.size(); i++) {
     		AttributeDescriptor attrDesc = attrDescs.get(i);
@@ -658,7 +668,12 @@ public class GeoPackageWriter implements IoxWriter {
     			}
     		} else if (attrDesc.getDbColumnTypeName().equals(BLOB)) {    			
     			String val = obj.getattrprim(iliAttrName, 0);
-    			byte[] byteValue = Base64.getDecoder().decode(val);
+    			byte[] byteValue;
+                try {
+                    byteValue = Base64.decode(val);
+                } catch (IOException e) {
+                    throw new Iox2wkbException(e);
+                }
     			pstmt.setObject(i+1, byteValue);
     		} else if (attrDesc.getDbColumnTypeName().equals(DATETIME)) {
     			// TODO: do we need some timezone conversion?
