@@ -60,13 +60,13 @@ public class Gpkg2db extends AbstractImport2db {
      * @return IoxReader
      */
     @Override
-    protected IoxReader createReader(Object obj, Settings config) throws IoxException {
-        File file = null;
+    protected IoxReader createReader(File file, Settings config) throws IoxException {
         String tableName = null;
-        if (obj != null) {
-            String[] splits = ((String)obj).split(";");
-            file = new File(splits[0]);
-            tableName = splits[1];
+        if (file != null) {
+            tableName = config.getValue(IoxWkfConfig.SETTING_GPKGTABLE);
+            if(tableName==null) {
+                tableName = config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+            }
             if (file.exists()) {
                 EhiLogger.logState("file to read from: <"+file.getName()+">");
             } else {

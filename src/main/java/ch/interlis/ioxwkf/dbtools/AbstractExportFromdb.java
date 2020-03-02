@@ -50,11 +50,11 @@ public abstract class AbstractExportFromdb {
 	 * @return
 	 * @throws IoxException
 	 */
-	protected abstract IoxWriter createWriter(Object obj, Settings config, AttributeDescriptor dbColumns[]) throws IoxException;
+	protected abstract IoxWriter createWriter(File file, Settings config, AttributeDescriptor dbColumns[]) throws IoxException;
 	
 	/** export from data base table to a file.
 	 */
-	public void exportData(Object obj,Connection db,Settings config) throws IoxException {
+	public void exportData(File file,Connection db,Settings config) throws IoxException {
 		// data base connection has not to be null.
 		if(db==null) {
 			throw new IoxException("connection==null");
@@ -114,7 +114,7 @@ public abstract class AbstractExportFromdb {
 		IomObject iomObject=null;
 		
 		// create appropriate IoxWriter.
-		IoxWriter writer=createWriter(obj, config,attributes.toArray(new AttributeDescriptor[attributes.size()]));
+		IoxWriter writer=createWriter(file, config,attributes.toArray(new AttributeDescriptor[attributes.size()]));
 
 		EhiLogger.logState("start to write records.");
 		
@@ -133,7 +133,7 @@ public abstract class AbstractExportFromdb {
 				try {
 					writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
 				}catch(IoxException e) {
-					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to object: <"+obj.toString()+"> failed.",e);
+					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to object: <"+file.getPath()+"> failed.",e);
 				}
 			}
 		} catch (SQLException e) {

@@ -60,9 +60,8 @@ public class Shp2db extends AbstractImport2db {
 	 * @return IoxReader
 	 */
 	@Override
-	protected IoxReader createReader(Object obj, Settings config) throws IoxException {
+	protected IoxReader createReader(File file, Settings config) throws IoxException {
 		// mandatory: file to reader has not to be null.
-	    File file = (File) obj;
 		if(file!=null) {
 			if(file.exists()) {
 				EhiLogger.logState("file to read from: <"+file.getName()+">");

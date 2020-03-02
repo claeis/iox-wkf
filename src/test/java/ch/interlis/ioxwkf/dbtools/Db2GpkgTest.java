@@ -59,12 +59,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_singlerow_ok";
-
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_singlerow_ok");
+                
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexport");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -121,12 +121,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_norow_ok";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_norow_ok");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexport");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 	        	Statement stmt = null;
@@ -182,11 +182,11 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_schemanotset_ok";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_schemanotset_ok");
 
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "defaultgpkgexport");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -249,12 +249,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_findtableindefinedschema_ok";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_findtableindefinedschema_ok");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "defaultgpkgexport");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -317,11 +317,11 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_findtableindefaultschema_ok";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_findtableindefaultschema_ok");
 
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "defaultgpkgexport");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -381,12 +381,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_bigint";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_bigint");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -446,12 +446,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_boolean";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_boolean");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -510,12 +510,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_bit";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_bit");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -576,12 +576,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_bit1";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_bit1");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -641,12 +641,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_bit3";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_bit3");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -706,12 +706,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_character";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_character");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -771,12 +771,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_varchar";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_varchar");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -836,12 +836,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_date";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_date");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -902,12 +902,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_date_null";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_date_null");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -968,12 +968,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_datatypes_null";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_datatypes_null");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1034,12 +1034,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_integer";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_integer");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1099,12 +1099,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_numeric";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_numeric");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1164,12 +1164,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_text";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_text");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1229,12 +1229,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_smallint";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_smallint");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1295,12 +1295,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_timestamp";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_timestamp");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1360,12 +1360,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_uuid";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_uuid");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1425,12 +1425,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_xml";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_xml");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1490,12 +1490,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_point2d";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_point2d");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1555,12 +1555,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_point3d";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_point3d");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1620,12 +1620,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_multipoint2d";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_multipoint2d");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1693,12 +1693,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_multipoint3d";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_multipoint3d");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1767,12 +1767,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_linestring";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_linestring");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1840,12 +1840,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_multilinestring";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_multilinestring");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1913,12 +1913,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_polygon";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_polygon");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -1987,12 +1987,12 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_datatype_multipolygon";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_datatype_multipolygon");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportdatatype");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -2044,11 +2044,11 @@ public class Db2GpkgTest {
 	        jdbcConnection = null;
 
 			File data=new File(TEST_OUT,"export_ConnectionFailed_Fail.gpkg");
-            String dataSet = data.getAbsolutePath() + ";" + "export_connectionfailed";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_connectionfailed");
 
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexport");
 			Db2Gpkg db2Gpkg=new Db2Gpkg();
-			db2Gpkg.exportData(dataSet, jdbcConnection, config);
+			db2Gpkg.exportData(data, jdbcConnection, config);
 	    	fail();
 		} catch(Exception e) {
 			assertEquals(IoxException.class,e.getClass());
@@ -2090,12 +2090,12 @@ public class Db2GpkgTest {
 	        if(data.exists()) {
 	        	data.delete();
 	        }
-	        String dataSet = data.getAbsolutePath() + ";" + "export_table_in_schema_not_found";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_table_in_schema_not_found");
 
 	        config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema999999");
 	        config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexport");
 	        AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-	        db2Gpkg.exportData(dataSet, pgConnection, config);
+	        db2Gpkg.exportData(data, pgConnection, config);
 	        fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("db table"));
@@ -2139,12 +2139,12 @@ public class Db2GpkgTest {
 	        if(data.exists()) {
 	        	data.delete();
 	        }
-	        String dataSet = data.getAbsolutePath() + ";" + "export_table_in_schema_not_found";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_table_in_schema_not_found");
 
 	        config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 	        config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexport999999");
 	        AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-	        db2Gpkg.exportData(dataSet, pgConnection, config);
+	        db2Gpkg.exportData(data, pgConnection, config);
 	        fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("db table"));
@@ -2188,12 +2188,12 @@ public class Db2GpkgTest {
 	        if(data.exists()) {
 	        	data.delete();
 	        }
-	        String dataSet = data.getAbsolutePath() + ";" + "export_all_not_set";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_all_not_set");
 
 	        // DBSCHEMA: "dbtogpkgschema" not set
 			// TABLE: "gpkgexport" not set
 	        AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-	        db2Gpkg.exportData(dataSet, pgConnection, config);
+	        db2Gpkg.exportData(data, pgConnection, config);
 	        fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("database table==null."));
@@ -2233,11 +2233,11 @@ public class Db2GpkgTest {
 	        if(data.exists()) {
 	        	data.delete();
 	        }
-	        String dataSet = data.getAbsolutePath() + ";" + "export_table_not_set";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_table_not_set");
 
 	        config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 	        AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-	        db2Gpkg.exportData(dataSet, pgConnection, config);
+	        db2Gpkg.exportData(data, pgConnection, config);
 	        fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("database table==null."));
@@ -2275,12 +2275,12 @@ public class Db2GpkgTest {
 			if(data.exists()) {
 				data.delete();
 			}
-            String dataSet = data.getAbsolutePath() + ";" + "export_multiple_geometry_columns";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_multiple_geometry_columns");
 
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportgpkg");
 			AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-			db2Gpkg.exportData(dataSet, pgConnection, config);
+			db2Gpkg.exportData(data, pgConnection, config);
 			fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("export of:"));
@@ -2319,12 +2319,12 @@ public class Db2GpkgTest {
 			if(data.exists()) {
 				data.delete();
 			}
-            String dataSet = data.getAbsolutePath() + ";" + "export_multiple_geometry_columns2";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_multiple_geometry_columns2");
 
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportgpkg");
 			AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-			db2Gpkg.exportData(dataSet, pgConnection, config);
+			db2Gpkg.exportData(data, pgConnection, config);
 			fail();
 		} catch (Exception e) {
 			assertTrue(e.getMessage().contains("export of:"));
@@ -2366,20 +2366,20 @@ public class Db2GpkgTest {
 				if(data.exists()) {
 					data.delete();
 				}
-                String dataSet = data.getAbsolutePath() + ";" + "export_table_1";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_table_1");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exporttable1");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
-                String dataSet = data.getAbsolutePath() + ";" + "export_table_2";
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_table_2");
 
 				config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
 				config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exporttable2");
 				AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-				db2Gpkg.exportData(dataSet, pgConnection, config);
+				db2Gpkg.exportData(data, pgConnection, config);
 			}
 	        {
 		        Statement stmt = null;
@@ -2438,12 +2438,12 @@ public class Db2GpkgTest {
 			if(data.exists()) {
 				data.delete();
 			}
-            String dataSet = data.getAbsolutePath() + ";" + "export_realworld_dataset";
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_realworld_dataset");
 
 			config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "agi_mopublic_pub");
 			config.setValue(IoxWkfConfig.SETTING_DBTABLE, "mopublic_bodenbedeckung");
 			AbstractExportFromdb db2Gpkg=new Db2Gpkg();
-			db2Gpkg.exportData(dataSet, pgConnection, config);
+			db2Gpkg.exportData(data, pgConnection, config);
 		} finally {
 			if (pgConnection!=null) {
 				pgConnection.close();

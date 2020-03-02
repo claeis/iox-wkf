@@ -46,7 +46,7 @@ public abstract class AbstractImport2db {
 	 * @return IoxReader
 	 * @throws IoxException
 	 */
-	protected abstract IoxReader createReader(Object obj, Settings config) throws IoxException;
+	protected abstract IoxReader createReader(File file, Settings config) throws IoxException;
 	
 	/** importData.<br>
 	 * Set File (Mandatory)<br>
@@ -71,7 +71,7 @@ public abstract class AbstractImport2db {
 	 * @param config
 	 * @throws IoxException
 	 */
-	public void importData(Object obj,Connection db,Settings config) throws IoxException {
+	public void importData(File file,Connection db,Settings config) throws IoxException {
 		// validity of connection
 		if(db==null) {
 			throw new IoxException("connection==null.");
@@ -125,7 +125,7 @@ public abstract class AbstractImport2db {
 		}
 		
 		// create appropriate IoxReader.
-		IoxReader reader=createReader(obj, config);
+		IoxReader reader=createReader(file, config);
 		
 		// create list with all attribute descriptors including data
 		List<AttributeDescriptor> attrDescriptors=null;

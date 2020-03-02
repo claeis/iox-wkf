@@ -50,9 +50,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "Point.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "Point");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "Point";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -100,9 +100,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "LineString.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "LineString");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "LineString";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -150,9 +150,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "MultiLineString.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "MultiLineString");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "MultiLineString";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -200,9 +200,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "Polygon.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "Polygon");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "Polygon";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -251,9 +251,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "MultiPolygon.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "MultiPolygon");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "MultiPolygon";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -302,9 +302,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "Point.gpkg");
                 //config.setValue(Config.DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgmportnoschematable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "Point");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "Point";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -351,9 +351,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeBigInt.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBigInt");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeBigInt";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -400,9 +400,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeBit.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBit");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeBit";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -449,9 +449,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeBoolean.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBoolean");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeBoolean";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -499,9 +499,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeChar.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeChar");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeChar";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -543,9 +543,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeChar.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeChar");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeChar";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -597,9 +597,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeVarChar.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeVarChar");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeVarChar";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -647,9 +647,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeDate.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeDate");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeDate";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -697,9 +697,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeInteger.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeInteger");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeInteger";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -747,9 +747,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeNumeric.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeNumeric");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeNumeric";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -796,9 +796,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeText.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeText");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeText";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -845,9 +845,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeTime.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeTime");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeTime";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -894,9 +894,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeSmallint.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeSmallint");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeSmallint";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -943,9 +943,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeTimestamp.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeTimestamp");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeTimestamp";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -992,9 +992,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeUuid.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeUuid");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeUuid";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -1041,9 +1041,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeXml.gpkg");
                 config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimporttable");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeXml");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeXml";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
             }
             {
                 stmt=jdbcConnection.createStatement();
@@ -1084,9 +1084,9 @@ public class Gpkg2dbTest {
             jdbcConnection = null;
 
             File data=new File(TEST_IN, "DataTypeBoolean.gpkg");
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBoolean");
             AbstractImport2db gpkg2db=new Gpkg2db();
-            String dataSet = data.getAbsolutePath() + ";" + "DataTypeBoolean";
-            gpkg2db.importData(dataSet, jdbcConnection, config);
+            gpkg2db.importData(data, jdbcConnection, config);
             fail();
         } catch(Exception e) {
             assertEquals(IoxException.class,e.getClass());
@@ -1117,9 +1117,9 @@ public class Gpkg2dbTest {
             File data=new File(TEST_IN, "DataTypeBoolean.gpkg");
             // DBSCHEMA: "gpkgtodbschema" not set
             // TABLE: "gpkgimportwithheader" not set
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBoolean");
             AbstractImport2db gpkg2db=new Gpkg2db();
-            String dataSet = data.getAbsolutePath() + ";" + "DataTypeBoolean";
-            gpkg2db.importData(dataSet, jdbcConnection, config);
+            gpkg2db.importData(data, jdbcConnection, config);
             fail();
         } catch(Exception e) {
             assertTrue(e.getMessage().contains("database table==null."));
@@ -1148,10 +1148,10 @@ public class Gpkg2dbTest {
             // shp
             File data=new File(TEST_IN, "DataTypeBoolean.gpkg");
             config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBoolean");
             // TABLE: "gpkgimporttable" not set
             AbstractImport2db gpkg2db=new Gpkg2db();
-            String dataSet = data.getAbsolutePath() + ";" + "DataTypeBoolean";
-            gpkg2db.importData(dataSet, jdbcConnection, config);
+            gpkg2db.importData(data, jdbcConnection, config);
             fail();
         } catch(Exception e) {
             assertTrue(e.getMessage().contains("database table==null."));
@@ -1180,9 +1180,9 @@ public class Gpkg2dbTest {
             jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
             // shp
             File data=new File(TEST_IN, "NOTFOUND/testPointAttrs.gpkg");
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "testPointAttrs");
             AbstractImport2db gpkg2db=new Gpkg2db();
-            String dataSet = data.getAbsolutePath() + ";" + "testPointAttrs";
-            gpkg2db.importData(dataSet, jdbcConnection, config);
+            gpkg2db.importData(data, jdbcConnection, config);
             fail();
         } catch(IoxException e) {
             assertTrue(e.getMessage().contains("file"));
@@ -1222,9 +1222,9 @@ public class Gpkg2dbTest {
                 File data=new File(TEST_IN, "DataTypeBoolean.gpkg");
                 // DBSCHEMA: "shptodbschema"
                 config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimportunique");
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "DataTypeBoolean");
                 AbstractImport2db gpkg2db=new Gpkg2db();
-                String dataSet = data.getAbsolutePath() + ";" + "DataTypeBoolean";
-                gpkg2db.importData(dataSet, jdbcConnection, config);
+                gpkg2db.importData(data, jdbcConnection, config);
                 fail();
             }
         } catch(IoxException e) {

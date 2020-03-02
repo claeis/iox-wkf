@@ -58,13 +58,13 @@ public class Db2Gpkg extends AbstractExportFromdb {
 	 */
 
 	@Override
-	protected IoxWriter createWriter(Object obj, Settings config, AttributeDescriptor[] dbColumns) throws IoxException {
-        File file = null;
+	protected IoxWriter createWriter(File file, Settings config, AttributeDescriptor[] dbColumns) throws IoxException {
         String tableName = null;
-        if (obj != null) {
-            String[] splits = ((String)obj).split(";");
-            file = new File(splits[0]);
-            tableName = splits[1];
+        if (file != null) {
+            tableName = config.getValue(IoxWkfConfig.SETTING_GPKGTABLE);
+            if(tableName==null) {
+                tableName = config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+            }
             if (file!=null && tableName != null) {
             	EhiLogger.logState("file to write to: <"+file.getName()+">");
             	EhiLogger.logState("table name: <"+tableName+">");
