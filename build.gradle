@@ -46,8 +46,8 @@ repositories {
     maven {
         url "http://download.java.net/maven/2"
     }
-    maven {
-		url "http://download.osgeo.org/webdav/geotools/"
+    maven { 
+        url "https://repo.osgeo.org/repository/release/" 
     }
     maven {
     	url "http://maven.geo-solutions.it"

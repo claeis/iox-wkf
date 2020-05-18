@@ -285,12 +285,12 @@ public class GeoPackageReader implements IoxReader {
                         
                         // attribute type
                         String gpkgAttrType = gpkgAttribute.getDbColumnTypeName();
-
+                        
                         // attribute value
                         // TODO: handle different date datetime stuff
                         // see https://www.sqlite.org/datatype3.html
                         Object gpkgAttrValue = featureResultSet.getObject(gpkgAttrName);
-
+                        
                         if (gpkgAttrValue!=null) {
                             if (theGeomAttrs.contains(gpkgAttrName)) {
                                 try {
@@ -309,7 +309,17 @@ public class GeoPackageReader implements IoxReader {
                                 	if (valueStr != null) {
                                 		iomObj.setattrvalue(iliAttrName, valueStr.substring(0, valueStr.length() - 1));
                                 	}
-                                } else {
+                                } else if (gpkgAttrType.equalsIgnoreCase("BOOLEAN")) {
+                                    String valueStr=gpkgAttrValue.toString();
+                                    if(valueStr!=null && valueStr.length()>0) {
+                                        if (valueStr.equals("0")) {
+                                            iomObj.setattrvalue(iliAttrName, "false"); 
+                                        } else {
+                                            iomObj.setattrvalue(iliAttrName, "true"); 
+                                        }
+                                    }
+                                }
+                                else {
                                     String valueStr=gpkgAttrValue.toString();
                                     if(valueStr!=null && valueStr.length()>0)
                                     iomObj.setattrvalue(iliAttrName, valueStr);
