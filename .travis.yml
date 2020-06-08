@@ -25,14 +25,14 @@ before_script:
   
 script: 
   - gradle -Ddburl=jdbc:postgresql:ioxwkf -Ddbusr=postgres build 
-deploy:
-  - provider: script
-    skip_cleanup: true
-    script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE upload
-    on:
-      branch: master
-  - provider: script
-    skip_cleanup: true
-    script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE '-Drelease=' upload
-    on:
-      branch: stable
+# deploy:
+#   - provider: script
+#     skip_cleanup: true
+#     script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE upload
+#     on:
+#       branch: master
+#   - provider: script
+#     skip_cleanup: true
+#     script: gradle -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE '-Drelease=' upload
+#     on:
+#       branch: stable
