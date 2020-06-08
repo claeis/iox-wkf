@@ -46,7 +46,6 @@ public class Csv2dbTest {
     public void import_Ok() throws Exception {
         Settings config = new Settings();
         Connection jdbcConnection = null;
-
         try {
             jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(),
                     postgres.getPassword());
