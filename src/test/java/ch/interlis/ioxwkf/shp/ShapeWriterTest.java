@@ -403,6 +403,175 @@ public class ShapeWriterTest {
     	}
 	}
 		
+	// Überlanger Attributnamen (> 10 Zeichen)
+    @Test
+    public void longAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+        Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
+        inputObj.setattrvalue("id1", "1");
+        inputObj.setattrvalue("SehrLangerText", "text1");
+        inputObj.setattrvalue("Double", "53434");
+        IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
+        coordValue.setattrvalue("C1", "-0.4025974025974026");
+        coordValue.setattrvalue("C2", "1.3974025974025972");
+        ShapeWriter writer = null;
+        File file = new File(TEST_OUT, "Point2.shp");
+        try {
+            writer = new ShapeWriter(file);
+            writer.write(new StartTransferEvent());
+            writer.write(new StartBasketEvent("Test1.Topic1", "bid1"));
+            writer.write(new ObjectEvent(inputObj));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                writer = null;
+            }
+        }
+        {
+            // Open the file for reading
+            FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT, "Point2.shp"));
+            SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+            SimpleFeatureIterator featureCollectionIter = featuresSource.getFeatures().features();
+            if (featureCollectionIter.hasNext()) {
+                // feature object
+                SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
+                Object attr1 = shapeObj.getAttribute("id1");
+                assertEquals("1", attr1.toString());
+                Object attr2 = shapeObj.getAttribute("SehrLanger"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                assertEquals("text1", attr2.toString());
+                Object attr3 = shapeObj.getAttribute("Double");
+                assertEquals("53434", attr3.toString());
+                Object attr4 = shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                assertEquals("POINT (-0.4025974025974026 1.3974025974025972)", attr4.toString());
+            }
+            featureCollectionIter.close();
+            dataStore.dispose();
+        }
+    }
+    
+    // Überlange Attributnamen (> 10 Zeichen)
+    // Gekürzte Attributnamen (substring) wären gleich. Algorithmus muss 
+    // eindeutige Namen finden.
+    @Test
+    public void similarLongAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+        Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
+        inputObj.setattrvalue("id1", "1");
+        inputObj.setattrvalue("SehrLangerText", "text1");
+        inputObj.setattrvalue("SehrLangerLangerText", "text2");
+        inputObj.setattrvalue("SehrLangerLangerLangerText", "text3");        
+        inputObj.setattrvalue("Double", "53434");
+        IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
+        coordValue.setattrvalue("C1", "-0.4025974025974026");
+        coordValue.setattrvalue("C2", "1.3974025974025972");
+        ShapeWriter writer = null;
+        File file = new File(TEST_OUT, "Point2.shp");
+        try {
+            writer = new ShapeWriter(file);
+            writer.write(new StartTransferEvent());
+            writer.write(new StartBasketEvent("Test1.Topic1", "bid1"));
+            writer.write(new ObjectEvent(inputObj));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                writer = null;
+            }
+        }
+        {
+            // Open the file for reading
+            FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT, "Point2.shp"));
+            SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+            SimpleFeatureIterator featureCollectionIter = featuresSource.getFeatures().features();
+            if (featureCollectionIter.hasNext()) {
+                // feature object
+                SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
+                
+                System.out.println(shapeObj.toString());
+                
+                Object attr1 = shapeObj.getAttribute("id1");
+                assertEquals("1", attr1.toString());
+                // Die Reihenfolge stimmt nicht mehr mit der Definition des IomObjektes überein.
+                // Auf den ersten Blick irritierend. Aber das sollte nicht falsch sein und 
+                // keine Auswirkungen haben.
+                Object attr2 = shapeObj.getAttribute("SehrLanger"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                assertEquals("text3", attr2.toString());
+                Object attr3 = shapeObj.getAttribute("SehrLange1"); // Shapefile-tauglicher Attributnamen (9+1 Zeichen)
+                assertEquals("text1", attr3.toString());
+                Object attr4 = shapeObj.getAttribute("SehrLange2"); // Shapefile-tauglicher Attributnamen (9+1 Zeichen)
+                assertEquals("text2", attr4.toString());
+                Object attr5 = shapeObj.getAttribute("Double");
+                assertEquals("53434", attr5.toString());
+                Object attr6 = shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                assertEquals("POINT (-0.4025974025974026 1.3974025974025972)", attr6.toString());
+            }
+            featureCollectionIter.close();
+            dataStore.dispose();
+        }
+    }
+	
+    // Überlanger Attributnamen (> 10 Zeichen)
+    // Modell wird gesetzt
+    @Test
+    public void setModel_longAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+        Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point3", "o1");
+        inputObj.setattrvalue("id1", "1");
+        inputObj.setattrvalue("SehrLangerText", "text1");
+        inputObj.setattrvalue("Double", "53434");
+        IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
+        coordValue.setattrvalue("C1", "-0.4025974025974026");
+        coordValue.setattrvalue("C2", "1.3974025974025972");
+        ShapeWriter writer = null;
+        File file = new File(TEST_OUT, "Point2.shp");
+        try {
+            writer = new ShapeWriter(file);
+            writer.setModel(td);
+            writer.write(new StartTransferEvent());
+            writer.write(new StartBasketEvent("Test1.Topic1", "bid1"));
+            writer.write(new ObjectEvent(inputObj));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                writer = null;
+            }
+        }
+        {
+            // Open the file for reading
+            FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT, "Point2.shp"));
+            SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+            SimpleFeatureIterator featureCollectionIter = featuresSource.getFeatures().features();
+            if (featureCollectionIter.hasNext()) {
+                // feature object
+                SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
+                Object attr1 = shapeObj.getAttribute("id1");
+                assertEquals("1", attr1.toString());
+                Object attr2 = shapeObj.getAttribute("SehrLanger"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                assertEquals("text1", attr2.toString());
+                Object attr3 = shapeObj.getAttribute("Double");
+                assertEquals("53434", attr3.toString());
+                Object attr4 = shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                assertEquals("POINT (-0.4025974025974026 1.3974025974025972)", attr4.toString());
+            }
+            featureCollectionIter.close();
+            dataStore.dispose();
+        }
+    }
+    
 	// Es wird getestet ob eine Fehlermeldung ausgegeben wird, wenn 3 Attribute in Fields konvertiert werden
 	@Test
 	public void setModel_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure{
