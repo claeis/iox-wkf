@@ -228,16 +228,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                             attributeBuilder.setMaxOccurs(1);
                             attributeBuilder.setNillable(true);
 
-                            // TODO must be smarter!
-                            // Geometrie-Attribute müssen nicht gekürzte werden, da sie sowieos
-                            // speziell behandelt werden.                            
-                            String shpAttrName;
-                            if (attrName.length() > 10 && !attrName.equalsIgnoreCase(iliGeomAttrName)) {
-                                shpAttrName = attrName.substring(0, 10);
-                            } else {
-                                shpAttrName = attrName;
-                            }
-
                             String trimmedAttrName = trimAttributeName(attrName);
                             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
                             attrDescsMap.put(attrName, descriptor);      
