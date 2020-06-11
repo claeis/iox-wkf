@@ -43,17 +43,6 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-//;
-import com.vividsolutions.jts.geom.CoordinateList;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.io.WKBWriter;
 
 import ch.interlis.iom.*;
 import ch.interlis.iox.EndBasketEvent;
@@ -313,7 +302,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                 featureBuilder = new SimpleFeatureBuilder(featureType);
                 try {
                     dataStore.createSchema(featureType);
-                    
+
                     String typeName = dataStore.getTypeNames()[0];
 
                     transaction = new DefaultTransaction("create");
@@ -321,12 +310,15 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                     writer = dataStore.getFeatureWriter(typeName, transaction);
                 } catch (IOException e) {
                     throw new IoxException(e);
-                }
+                } 
             }
             // write object attribute-values of model attribute-names
             try {
-                SimpleFeature feature=convertObject(iomObj);
-                writeFeatureToShapefile(feature);
+//                if (iomObj.getattrcount() > 0) {
+                    System.out.println(iomObj.getattrcount());
+                    SimpleFeature feature=convertObject(iomObj);
+                    writeFeatureToShapefile(feature);
+//                }
             } catch (IOException e) {
                 throw new IoxException("failed to write object "+iomObj.getobjecttag(),e);
             } catch (Iox2jtsException e) {
@@ -344,7 +336,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                 } else {
                     SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
                     builder.setName(featureTypeName);
-                    builder.add(ShapeReader.GEOTOOLS_THE_GEOM, Point.class);
+                    builder.add(ShapeReader.GEOTOOLS_THE_GEOM, org.locationtech.jts.geom.Point.class);
+                    builder.setDefaultGeometry(ShapeReader.GEOTOOLS_THE_GEOM);
                     if (defaultSrsId != null) {
                         builder.setCRS(createCrs(defaultSrsId));
                     }
@@ -429,7 +422,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
             }
         }
         if(!hasGeometry) {
-            builder.add(ShapeReader.GEOTOOLS_THE_GEOM,org.locationtech.jts.geom.Point.class);
+            builder.add(ShapeReader.GEOTOOLS_THE_GEOM, org.locationtech.jts.geom.Point.class);
             if(defaultSrsId!=null) {
                 builder.setCRS(createCrs(defaultSrsId));
             }
@@ -451,7 +444,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
         for (Map.Entry<String, AttributeDescriptor> entry : attrDescsMap.entrySet()) {
             AttributeDescriptor attrDesc = entry.getValue();
-            GeometryFactory geometryFactory = new GeometryFactory();
+            com.vividsolutions.jts.geom.GeometryFactory geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory();
             String attrName = attrDesc.getLocalName();
             String originalAttrName = entry.getKey();
                     
@@ -486,21 +479,21 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                         if (iomValueCount > 1) {
                             throw new IoxException("max one COORD value allowed (" + attrName + ")");
                         }
-                        Geometry geometry = (geometryFactory.createPoint(jtsCoord));
+                        com.vividsolutions.jts.geom.Geometry geometry = (geometryFactory.createPoint(jtsCoord));
                         if (srsId != null) {
                             geometry.setSRID(srsId);
                         }
                         featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
                     } else if (iomGeom.getobjecttag().equals(MULTICOORD)) {
                         try {
-                            Geometry geometry = Iox2jts.multicoord2JTS(iomGeom);
+                            com.vividsolutions.jts.geom.Geometry geometry = Iox2jts.multicoord2JTS(iomGeom);
                             featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
                         } catch (Exception e) {
                             throw new IoxException("failed to convert " + iomGeom.getobjecttag() + " to jts", e);
                         }
                     } else if (iomGeom.getobjecttag().equals(POLYLINE)) {
                         // POLYLINE
-                        CoordinateList jtsLineString = null;
+                        com.vividsolutions.jts.geom.CoordinateList jtsLineString = null;
                         try {
                             jtsLineString = Iox2jts.polyline2JTS(iomGeom, true, 0.0);                            
                         } catch (Iox2jtsException e) {
@@ -513,7 +506,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                         com.vividsolutions.jts.geom.Coordinate[] coordArray = new com.vividsolutions.jts.geom.Coordinate[jtsLineString.size()];
                         coordArray = (com.vividsolutions.jts.geom.Coordinate[]) jtsLineString.toArray(coordArray);
                         // convert ili to jts
-                        Geometry geometry = (geometryFactory.createLineString(coordArray));
+                        com.vividsolutions.jts.geom.Geometry geometry = (geometryFactory.createLineString(coordArray));
                         if (srsId != null) {
                             geometry.setSRID(srsId);
                         }
@@ -522,7 +515,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                     } else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)) {
                         // MULTIPOLYLINE
                         try {
-                            Geometry geometry = Iox2jts.multipolyline2JTS(iomGeom, 0.0);
+                            com.vividsolutions.jts.geom.Geometry geometry = Iox2jts.multipolyline2JTS(iomGeom, 0.0);
                             featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
                         } catch (Exception e) {
                             throw new IoxException("failed to convert " + iomGeom.getobjecttag() + " to jts", e);
@@ -534,7 +527,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                         int surfaceCount = iomGeom.getattrvaluecount("surface");
                         if (surfaceCount == 1) {
                             try {
-                                Polygon jtsSurface = Iox2jts.surface2JTS(iomGeom, 0.00);
+                                com.vividsolutions.jts.geom.Polygon jtsSurface = Iox2jts.surface2JTS(iomGeom, 0.00);
                                 if (srsId != null) {
                                     jtsSurface.setSRID(srsId);
                                 }
@@ -545,7 +538,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                         } else if (surfaceCount > 1) {
                             // MULTIPOLYGON
                             try {
-                                Geometry geometry = Iox2jts.multisurface2JTS(iomGeom, 0, 0);
+                                com.vividsolutions.jts.geom.Geometry geometry = Iox2jts.multisurface2JTS(iomGeom, 0, 0);
                                 if (srsId != null) {
                                     geometry.setSRID(srsId);
                                 }
@@ -575,9 +568,12 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         if (dataStore == null) {
             throw new IoxException("datastore null");
         }
+        System.out.println("1");
         List <AttributeDescriptor> attrDescs = feature.getFeatureType().getAttributeDescriptors();
         try {
             SimpleFeature newFeature = (SimpleFeature) writer.next();
+            System.out.println("2");
+            System.out.println(newFeature.getIdentifier());
 
             // newFeature.setAttributes(feature.getAttributes()) does not work
             // since the two AttributeDescriptor have not the same order of attributes.
@@ -590,7 +586,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
                     newFeature.setAttribute(attrDesc.getLocalName(), feature.getAttribute(attrDesc.getLocalName()));
                 }
             }
+            System.out.println("3");
+            System.out.println(newFeature.toString());
             writer.write();
+            System.out.println("4");
+
         } catch (IOException e) {
                 try {
                     transaction.rollback();
@@ -602,7 +602,12 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     }
     
     private org.locationtech.jts.geom.Geometry wkb2wkb(com.vividsolutions.jts.geom.Geometry oldGeom) throws IOException {
+        if (oldGeom == null) {
+            org.locationtech.jts.geom.GeometryFactory geometryFactory = new org.locationtech.jts.geom.GeometryFactory();
+            return geometryFactory.createPoint();
+        }
         try {
+            System.out.println(oldGeom);
             org.locationtech.jts.io.WKBReader wkbReader = new org.locationtech.jts.io.WKBReader();
             com.vividsolutions.jts.io.WKBWriter wkbWriter = new com.vividsolutions.jts.io.WKBWriter();
             org.locationtech.jts.geom.Geometry newGeom = wkbReader.read(wkbWriter.write(oldGeom));

@@ -14,8 +14,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.Point;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -264,6 +264,7 @@ public class ShapeWriterTest {
 			FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"emptyObject_Ok.shp"));
         	SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
     		SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+    		System.out.println(featuresSource.getSchema());
     		assertEquals(true,featureCollectionIter.hasNext());
     		// feature object
     		SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
