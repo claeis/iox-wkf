@@ -10,33 +10,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.feature.type.AttributeTypeImpl;
 import org.geotools.feature.type.BasicFeatureTypes;
-import org.geotools.feature.type.GeometryTypeImpl;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.geom.PrecisionModel;
+//import org.locationtech.jts.geom.Coordinate;
+//import org.locationtech.jts.geom.LineString;
+//import org.locationtech.jts.geom.MultiLineString;
+//import org.locationtech.jts.geom.MultiPoint;
+//import org.locationtech.jts.geom.MultiPolygon;
+//import org.locationtech.jts.geom.Point;
+//import org.locationtech.jts.geom.Polygon;
+//import org.locationtech.jts.geom.PrecisionModel;
 
 import ch.ehi.basics.settings.Settings;
-import ch.interlis.ili2c.metamodel.DataModel;
-import ch.interlis.ili2c.metamodel.Element;
-import ch.interlis.ili2c.metamodel.LocalAttribute;
 import ch.interlis.ili2c.metamodel.Model;
 import ch.interlis.ili2c.metamodel.PredefinedModel;
 import ch.interlis.ili2c.metamodel.Table;
@@ -298,22 +289,22 @@ public class ShapeReader implements IoxReader{
 	        		AttributeType shapeAttrType=shapeAttribute.getType();
 	        		Object shapeAttrValue=shapeObj.getAttribute(shapeAttrName);
 	        		if(shapeAttrValue!=null) {
-		        		if(shapeAttrValue instanceof MultiLineString) {
+		        		if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiLineString) {
 	    					// multiLineString
-	        				MultiLineString multiLineString=(MultiLineString)shapeAttrValue;
+		        		    org.locationtech.jts.geom.MultiLineString multiLineString=(org.locationtech.jts.geom.MultiLineString)shapeAttrValue;
 	        				// contains number of linestrings.
-	        				Coordinate[] coords=multiLineString.getCoordinates();
-	        				PrecisionModel precisionModel=multiLineString.getPrecisionModel();
+		        		    org.locationtech.jts.geom.Coordinate[] coords=multiLineString.getCoordinates();
+		        		    org.locationtech.jts.geom.PrecisionModel precisionModel=multiLineString.getPrecisionModel();
 	        				Integer srid=multiLineString.getSRID();
 	        				if(multiLineString.getNumGeometries()==1) {
 			        			// lineString
 	        					try {
 	        						if(coords!=null && precisionModel!=null && srid!=null) {
 	        							// create lineString
-	        							LineString lineString=new LineString(coords, precisionModel, srid);
+	        						    org.locationtech.jts.geom.LineString lineString=new org.locationtech.jts.geom.LineString(coords, precisionModel, srid);
 	        							if(lineString!=null) {
 	        								// convert to iox polyline
-	        								subIomObj=Jts2iox.JTS2polyline(lineString);
+	        								subIomObj=Jts2iox.JTS2polyline((com.vividsolutions.jts.geom.LineString)geom2geom(lineString));
 	        							}
 	        						}
 	        					} catch (Exception e) {
@@ -322,52 +313,56 @@ public class ShapeReader implements IoxReader{
 	    					}else {
 	    						// multiLineString
 		        				try {
-	    							subIomObj=Jts2iox.JTS2multipolyline(multiLineString);
+	    							subIomObj=Jts2iox.JTS2multipolyline((com.vividsolutions.jts.geom.MultiLineString)geom2geom(multiLineString));
 								} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}
 	        				iomObj.addattrobj(iliAttrName, subIomObj);
-	    				}else if(shapeAttrValue instanceof MultiPoint) {
+	    				}else if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiPoint) {
 	    					// multiPoint
-	        				MultiPoint multiPoint=(MultiPoint)shapeAttrValue;
+	    				    org.locationtech.jts.geom.MultiPoint multiPoint=(org.locationtech.jts.geom.MultiPoint)shapeAttrValue;
 	        				try {
-	        					Coordinate[] coords=multiPoint.getCoordinates();
-								subIomObj=Jts2iox.JTS2multicoord(coords);
+	        				    org.locationtech.jts.geom.Coordinate[] coords=multiPoint.getCoordinates();
+								subIomObj=Jts2iox.JTS2multicoord(coords2coords(coords));
 								iomObj.addattrobj(iliAttrName, subIomObj);
 							} catch (Exception e){
 								throw new IoxException(e);
 							}
-	    				}else if(shapeAttrValue instanceof MultiPolygon) {
+	    				}else if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiPolygon) {
 	        				// multiPolygon
-	        				MultiPolygon multiPolygon=(MultiPolygon)shapeAttrValue;
+	    				    org.locationtech.jts.geom.MultiPolygon multiPolygon=(org.locationtech.jts.geom.MultiPolygon)shapeAttrValue;
 	        				if(multiPolygon.getNumGeometries()==1) {
 	        					try {
-		        					Polygon polygonObj=(Polygon)multiPolygon.getGeometryN(0);
-									subIomObj=Jts2iox.JTS2surface(polygonObj);
+	        					    org.locationtech.jts.geom.Polygon polygonObj=(org.locationtech.jts.geom.Polygon)multiPolygon.getGeometryN(0);
+									subIomObj=Jts2iox.JTS2surface((com.vividsolutions.jts.geom.Polygon)geom2geom(polygonObj));
 			        				iomObj.addattrobj(iliAttrName, subIomObj);
 	        					} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}else {
 		        				try {
-	    							subIomObj=Jts2iox.JTS2multisurface(multiPolygon);
+	    							subIomObj=Jts2iox.JTS2multisurface((com.vividsolutions.jts.geom.MultiPolygon)geom2geom(multiPolygon));
 	    							iomObj.addattrobj(iliAttrName, subIomObj);
 								} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}
-	        			}else if(shapeAttrValue instanceof Point) {
+	        			}else if(shapeAttrValue instanceof org.locationtech.jts.geom.Point) {
 	        				// point
-	        				Point pointObj=(Point)shapeAttrValue;
-	        				Coordinate coord=pointObj.getCoordinate();
-							subIomObj=Jts2iox.JTS2coord(coord);
+	        			    org.locationtech.jts.geom.Point pointObj=(org.locationtech.jts.geom.Point)shapeAttrValue;
+	        			    org.locationtech.jts.geom.Coordinate coord=pointObj.getCoordinate();
+							subIomObj=Jts2iox.JTS2coord(coord2coord(coord));
 							iomObj.addattrobj(iliAttrName, subIomObj);
-	        			}else if(shapeAttrValue instanceof Polygon) {
+	        			}else if(shapeAttrValue instanceof org.locationtech.jts.geom.Polygon) {
 	        				// polygon
-	        				Polygon polygonObj=(Polygon)shapeAttrValue;
-							subIomObj=Jts2iox.JTS2surface(polygonObj);
-	        				iomObj.addattrobj(iliAttrName, subIomObj);
+	        			    try {
+	                            org.locationtech.jts.geom.Polygon polygonObj=(org.locationtech.jts.geom.Polygon)shapeAttrValue;
+	                            subIomObj=Jts2iox.JTS2surface((com.vividsolutions.jts.geom.Polygon)geom2geom(polygonObj));
+	                            iomObj.addattrobj(iliAttrName, subIomObj);
+	        			    } catch (Exception e){
+                                throw new IoxException(e);
+                            }
 	        			}else {
 		        			String shapeGeomTypeName=shapeAttrType.getName().toString();
 		        			String shapeTypeName=shapeAttrType.getBinding().getSimpleName();
@@ -404,6 +399,41 @@ public class ShapeReader implements IoxReader{
 		return null;
 	}
 
+    private com.vividsolutions.jts.geom.Geometry geom2geom(org.locationtech.jts.geom.Geometry newGeom) throws IOException {
+        if (newGeom == null) {
+            return null;
+        }
+        try {
+            com.vividsolutions.jts.io.WKBReader wkbReader = new com.vividsolutions.jts.io.WKBReader();
+            org.locationtech.jts.io.WKBWriter wkbWriter = new org.locationtech.jts.io.WKBWriter();
+            com.vividsolutions.jts.geom.Geometry oldGeom = wkbReader.read(wkbWriter.write(newGeom));
+            return oldGeom;
+        } catch (com.vividsolutions.jts.io.ParseException e) {
+            e.printStackTrace();
+            throw new IOException(e.getMessage());
+        } 
+    }
+    
+    private com.vividsolutions.jts.geom.Coordinate coord2coord(org.locationtech.jts.geom.Coordinate newCoord) {
+        if (newCoord == null) {
+            return null;
+        }
+        com.vividsolutions.jts.geom.Coordinate oldCoord = new com.vividsolutions.jts.geom.Coordinate(newCoord.getX(), newCoord.getY(), newCoord.getZ());
+        return oldCoord;
+    }
+    
+    private com.vividsolutions.jts.geom.Coordinate[] coords2coords(org.locationtech.jts.geom.Coordinate[] newCoords) {
+        if (newCoords == null) {
+            return null;
+        }
+        com.vividsolutions.jts.geom.CoordinateList oldCoords = new com.vividsolutions.jts.geom.CoordinateList();
+        for (int i=0; i<newCoords.length; i++) {
+            com.vividsolutions.jts.geom.Coordinate oldCoord = new com.vividsolutions.jts.geom.Coordinate(newCoords[i].getX(), newCoords[i].getY(), newCoords[i].getZ());
+            oldCoords.add(oldCoord);
+        }
+        return oldCoords.toCoordinateArray();
+    }
+	
     private String getNameList(List<AttributeDescriptor> attrs) {
 		StringBuffer ret=new StringBuffer();
 		String sep="";

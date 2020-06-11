@@ -314,11 +314,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
             }
             // write object attribute-values of model attribute-names
             try {
-//                if (iomObj.getattrcount() > 0) {
-                    System.out.println(iomObj.getattrcount());
-                    SimpleFeature feature=convertObject(iomObj);
-                    writeFeatureToShapefile(feature);
-//                }
+                SimpleFeature feature = convertObject(iomObj);
+                writeFeatureToShapefile(feature);
             } catch (IOException e) {
                 throw new IoxException("failed to write object "+iomObj.getobjecttag(),e);
             } catch (Iox2jtsException e) {
@@ -568,29 +565,21 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         if (dataStore == null) {
             throw new IoxException("datastore null");
         }
-        System.out.println("1");
         List <AttributeDescriptor> attrDescs = feature.getFeatureType().getAttributeDescriptors();
         try {
             SimpleFeature newFeature = (SimpleFeature) writer.next();
-            System.out.println("2");
-            System.out.println(newFeature.getIdentifier());
-
             // newFeature.setAttributes(feature.getAttributes()) does not work
             // since the two AttributeDescriptor have not the same order of attributes.
             for (AttributeDescriptor attrDesc : attrDescs) {
                 if (attrDesc.getLocalName().equals(ShapeReader.GEOTOOLS_THE_GEOM)) {
                     com.vividsolutions.jts.geom.Geometry oldGeom = (com.vividsolutions.jts.geom.Geometry) feature.getAttribute(attrDesc.getLocalName());
-                    org.locationtech.jts.geom.Geometry newGeom = wkb2wkb(oldGeom);
+                    org.locationtech.jts.geom.Geometry newGeom = geom2geom(oldGeom);
                     newFeature.setAttribute(attrDesc.getLocalName(), newGeom);                    
                 } else {
                     newFeature.setAttribute(attrDesc.getLocalName(), feature.getAttribute(attrDesc.getLocalName()));
                 }
             }
-            System.out.println("3");
-            System.out.println(newFeature.toString());
             writer.write();
-            System.out.println("4");
-
         } catch (IOException e) {
                 try {
                     transaction.rollback();
@@ -601,13 +590,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         }
     }
     
-    private org.locationtech.jts.geom.Geometry wkb2wkb(com.vividsolutions.jts.geom.Geometry oldGeom) throws IOException {
+    private org.locationtech.jts.geom.Geometry geom2geom(com.vividsolutions.jts.geom.Geometry oldGeom) throws IOException {
         if (oldGeom == null) {
-            org.locationtech.jts.geom.GeometryFactory geometryFactory = new org.locationtech.jts.geom.GeometryFactory();
-            return geometryFactory.createPoint();
+            return null;
         }
         try {
-            System.out.println(oldGeom);
             org.locationtech.jts.io.WKBReader wkbReader = new org.locationtech.jts.io.WKBReader();
             com.vividsolutions.jts.io.WKBWriter wkbWriter = new com.vividsolutions.jts.io.WKBWriter();
             org.locationtech.jts.geom.Geometry newGeom = wkbReader.read(wkbWriter.write(oldGeom));
