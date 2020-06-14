@@ -15,7 +15,6 @@ import ch.interlis.iox_j.EndTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.StartBasketEvent;
 import ch.interlis.iox_j.StartTransferEvent;
-import ch.interlis.ioxwkf.shp.ShapeReader;
 import static org.junit.Assert.*;
 import java.io.File;
 import java.io.IOException;
