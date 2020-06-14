@@ -23,8 +23,26 @@ jobs:
         java-version: ${{ matrix.java }}
     - name: Build with Gradle
       run: ./gradlew clean build -x test
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ 8 ]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Build with Gradle
+      run: ./gradlew clean build -x test
     - name: Publish Jar
-      #if: success() && github.ref == 'refs/heads/master'
       env:
         bintrayUser: ${{secrets.bintrayUser}}
         bintrayKey: ${{secrets.bintrayKey}}
