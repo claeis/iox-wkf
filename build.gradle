@@ -5,7 +5,8 @@ plugins {
 
 group 'ch.interlis'
 //version '1.1.0'+System.getProperty('release','-SNAPSHOT')
-version '1.1.1'
+//version '1.1.1'
+version = new ProjectVersion(1, 1, System.env.GITHUB_RUN_NUMBER)
 
 apply plugin: "java"
 apply plugin: "maven"
@@ -208,5 +209,27 @@ if (JavaVersion.current().isJava8Compatible()) {
         tasks.withType(Javadoc) {
             options.addStringOption('Xdoclint:none', '-quiet')
         }
+    }
+}
+
+class ProjectVersion {
+    Integer major
+    Integer minor
+    String build
+    
+    ProjectVersion(Integer major, Integer minor, String build) {
+        this.major = major
+        this.minor = minor
+        this.build = build
+    }
+    
+    @Override
+    String toString() {
+        String fullVersion = "$major.$minor"
+        
+        if(build) {
+            fullVersion += ".$build"
+        }    
+        fullVersion
     }
 }
