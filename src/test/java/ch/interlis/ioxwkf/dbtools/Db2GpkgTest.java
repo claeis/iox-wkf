@@ -12,8 +12,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.testcontainers.containers.PostgisContainerProvider;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2gpkg.Gpkg2iox;
@@ -22,10 +26,15 @@ import ch.interlis.iox.IoxException;
 
 
 public class Db2GpkgTest {
-	private String dburl=System.getProperty("dburl");
-	private String dbuser=System.getProperty("dbusr");
-	private String dbpwd=System.getProperty("dbpwd");
 	private static final String TEST_OUT="build/test/data/DB2Gpkg/";
+
+    static String WAIT_PATTERN = ".*database system is ready to accept connections.*\\s";
+    
+    @ClassRule
+    public static PostgreSQLContainer postgres = 
+        (PostgreSQLContainer) new PostgisContainerProvider()
+        .newInstance().withDatabaseName("ioxwkf")
+        .waitingFor(Wait.forLogMessage(WAIT_PATTERN, 2));
 
 	@BeforeClass
 	public static void setup() {
@@ -45,8 +54,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_SingleRow_Ok.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());	        
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -108,8 +116,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_NoRow_Ok.gpkg");
 
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());	        
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -169,8 +176,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_SchemaNotSet_Ok.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+	        pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());	        
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP TABLE IF EXISTS defaultgpkgexport CASCADE");
@@ -232,8 +238,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_FindTableInDefinedSchema_Ok.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -300,8 +305,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_FindTableInDefaultSchema_Ok.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -367,8 +371,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeBigint.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -432,8 +435,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeBoolean.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -496,8 +498,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeBit.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -562,8 +563,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeBit1.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -627,8 +627,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeBit3.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -692,8 +691,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeCharacter.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -757,8 +755,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeVarchar.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -822,8 +819,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeDate.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -888,8 +884,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeDateNull.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -954,8 +949,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeDataTypesNull.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1020,8 +1014,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeInteger.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1085,8 +1078,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeNumeric.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1150,8 +1142,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeText.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1215,8 +1206,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeSmallint.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1281,8 +1271,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeTimestamp.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1346,8 +1335,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeUuid.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1411,8 +1399,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeXml.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1476,8 +1463,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypePoint2d.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1541,8 +1527,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypePoint3d.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1606,8 +1591,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeMultiPoint2d.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1679,8 +1663,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeMultiPoint3d.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1753,8 +1736,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeLineString.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1826,8 +1808,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeMultiLineString.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1899,8 +1880,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypePolygon.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -1973,8 +1953,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_DataTypeMultiPolygon.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2040,7 +2019,6 @@ public class Db2GpkgTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = null;
 
 			File data=new File(TEST_OUT,"export_ConnectionFailed_Fail.gpkg");
@@ -2076,8 +2054,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_TableInSchemaNotFound_Fail.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2125,8 +2102,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_TableInSchemaNotFound_Fail.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2174,8 +2150,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_AllNotSet_Fail.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2219,8 +2194,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_TableNotSet_Fail.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2261,8 +2235,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_multiple_geometry_columns.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2305,8 +2278,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_multiple_geometry_columns.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2349,8 +2321,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_TwoTables.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        {
 	        	Statement preStmt=pgConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
@@ -2432,8 +2403,7 @@ public class Db2GpkgTest {
 		File data = new File(TEST_OUT,"export_Realworld_Dataset.gpkg");
 		
 		try {
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        pgConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
 	        
 			if(data.exists()) {
 				data.delete();

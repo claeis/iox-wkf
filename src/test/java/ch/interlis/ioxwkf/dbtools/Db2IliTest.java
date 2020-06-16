@@ -11,7 +11,12 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.testcontainers.containers.PostgisContainerProvider;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.metamodel.AssociationDef;
@@ -37,12 +42,17 @@ import ch.interlis.ili2c.metamodel.TypeAlias;
 import ch.interlis.iox.IoxException;
 
 public class Db2IliTest {
-	private String dburl=System.getProperty("dburl");
-	private String dbuser=System.getProperty("dbusr");
-	private String dbpwd=System.getProperty("dbpwd");
 	private static final String TEST_OUT="build/test/data/DB2Ili/";
 	private static final String TOPICNAME="topic1";
 	
+    static String WAIT_PATTERN = ".*database system is ready to accept connections.*\\s";
+    
+    @ClassRule
+    public static PostgreSQLContainer postgres = 
+        (PostgreSQLContainer) new PostgisContainerProvider()
+        .newInstance().withDatabaseName("ioxwkf")
+        .waitingFor(Wait.forLogMessage(WAIT_PATTERN, 2));
+
 	@BeforeClass
 	public static void setup() throws Ili2cFailure
 	{
@@ -68,8 +78,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -138,8 +147,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -205,8 +213,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -577,8 +584,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -683,8 +689,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -777,8 +782,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -913,8 +917,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -1006,8 +1009,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -1091,8 +1093,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1127,8 +1128,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1168,8 +1168,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1214,8 +1213,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1284,8 +1282,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1356,8 +1353,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1428,8 +1424,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1517,8 +1512,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1608,8 +1602,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	preStmt.execute("DROP SCHEMA IF EXISTS "+SCHEMANAME+" CASCADE");
@@ -1701,8 +1694,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
@@ -1861,8 +1853,7 @@ public class Db2IliTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoilischema
