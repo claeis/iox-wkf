@@ -11,22 +11,32 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.testcontainers.containers.PostgisContainerProvider;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxException;
 import ch.interlis.ioxwkf.dbtools.AbstractImport2db;
 import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
 import ch.interlis.ioxwkf.dbtools.Csv2db;
 
-//-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Csv2dbTest {
-	private String dburl=System.getProperty("dburl");
-	private String dbuser=System.getProperty("dbusr");
-	private String dbpwd=System.getProperty("dbpwd");
 	private Statement stmt=null;
 	private Map<String, List<String>> rows=null;
 	private static final String TEST_IN="src/test/data/Csv2DB/";
 	
+    static String WAIT_PATTERN = ".*database system is ready to accept connections.*\\s";
+    
+    @ClassRule
+    public static PostgreSQLContainer postgres = 
+        (PostgreSQLContainer) new PostgisContainerProvider()
+        .newInstance().withDatabaseName("ioxwkf")
+        .waitingFor(Wait.forLogMessage(WAIT_PATTERN, 2));
+
 	// Bei diesem Test darf keine Fehlermeldung ausgegeben werden.
 	// Hier werden alle moeglichen Parameter gesetzt.
 	// wenn die Test-Konfiguration wird wie folgt gesetzt:
@@ -41,8 +51,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -89,8 +98,7 @@ public class Csv2dbTest {
         Settings config=new Settings();
         Connection jdbcConnection=null;
         try{
-            Class driverClass = Class.forName("org.postgresql.Driver");
-            jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
             {
                 Statement preStmt=jdbcConnection.createStatement();
                 // drop schema
@@ -148,8 +156,7 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop table
@@ -205,8 +212,7 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop table
@@ -258,8 +264,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -308,8 +313,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -358,8 +362,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -408,8 +411,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -452,8 +454,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -502,8 +503,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -552,8 +552,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -603,8 +602,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -654,8 +652,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -704,8 +701,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -754,8 +750,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -804,8 +799,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -855,8 +849,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -906,8 +899,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -956,8 +948,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1006,8 +997,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1056,8 +1046,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1106,8 +1095,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1190,8 +1178,7 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1233,8 +1220,7 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
@@ -1280,8 +1266,7 @@ public class Csv2dbTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop table
@@ -1321,8 +1306,7 @@ public class Csv2dbTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop schema
