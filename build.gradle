@@ -16,7 +16,7 @@ configurations {
 
 sourceCompatibility = JavaVersion.VERSION_1_8 
 targetCompatibility = JavaVersion.VERSION_1_8
-compileJava.options.encoding = 'UTF-8'
+compileJava.options.encoding = 'US-ASCII'
 
 dependencies {
     compile(group: 'org.geotools', name: 'gt-shapefile', version: '10.8') {
