@@ -141,7 +141,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	
 	private static final String CRS_CODESPACE_EPSG = "EPSG";
 	private DataStore dataStore=null; // --> data access
-    private List<AttributeDescriptor> attrDescs=null; // --> attribute type data
+    private Map<String,AttributeDescriptor> attrDescsMap=null; // --> attribute type data
 	private SimpleFeatureType featureType=null;
 	private SimpleFeatureBuilder featureBuilder=null;
 	private SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd"); // XTF format
@@ -169,7 +169,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private SimpleFeatureStore featureStore=null;
 	private FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
 	private Transaction transaction=null;
-	
+    private List<String> trimmedAttrNames=null;
+
     public ShapeWriter(java.io.File file) throws IoxException {
     	this(file,null);
     }
@@ -212,8 +213,9 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 			IomObject iomObj=(IomObject)obj.getIomObject();
 			String tag = iomObj.getobjecttag();
 			// check if class exist in model/models
-			if(attrDescs==null) {
-				attrDescs=new ArrayList<AttributeDescriptor>();
+			if(attrDescsMap==null) {
+                trimmedAttrNames = new ArrayList<String>();
+                attrDescsMap = new HashMap<String,AttributeDescriptor>();
 				if(td!=null) {
 					Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
 					if (aclass==null){
@@ -254,9 +256,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					attributeBuilder.setMaxOccurs(1);
 	    					attributeBuilder.setNillable(true);
 	    					//build the descriptor
-	    					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
-	    					// add descriptor to descriptor list
-	    					attrDescs.add(descriptor);
+                            String trimmedAttrName = trimAttributeName(attrName);
+                            AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
+	    					// add descriptor to descriptor map
+                            attrDescsMap.put(attrName, descriptor);      
 						}
 					}
 	            }else {
@@ -326,14 +329,15 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     					attributeBuilder.setMaxOccurs(1);
     					attributeBuilder.setNillable(true);
     					//build the descriptor
-    					AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(attrName);
+                        String trimmedAttrName = trimAttributeName(attrName);
+                        AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
     					// add descriptor to descriptor list
-    					attrDescs.add(descriptor);
+                        attrDescsMap.put(attrName, descriptor);      
             		}
 	            }
 			}
 			if(featureType==null) {
-				featureType=createFeatureType(attrDescs);
+				featureType=createFeatureType(attrDescsMap);
 				featureBuilder = new SimpleFeatureBuilder(featureType);
 		        try {
 					dataStore.createSchema(featureType);
@@ -351,6 +355,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         	// write object attribute-values of model attribute-names
         	try {
         		SimpleFeature feature=convertObject(iomObj);
+
     			writeFeatureToShapefile(feature);
 			} catch (IOException e) {
 				throw new IoxException("failed to write object "+iomObj.getobjecttag(),e);
@@ -363,8 +368,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 			if(featureStore==null) {
 				// write dummy file
 		        SimpleFeatureType featureType=null;
-				if(attrDescs!=null) {
-					featureType=createFeatureType(attrDescs);
+				if(attrDescsMap!=null) {
+					featureType=createFeatureType(attrDescsMap);
 				}else {
 			        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
 			        builder.setName(featureTypeName);
@@ -404,12 +409,13 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 		}
 		
 	}
-	private SimpleFeatureType createFeatureType(List<AttributeDescriptor> attrDescs) throws IoxException {
+    private SimpleFeatureType createFeatureType(Map<String,AttributeDescriptor> attrDescsMap) throws IoxException {
 		//create the builder
 		SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
 		builder.setName(featureTypeName);
 		boolean hasGeometry=false;
-        for(AttributeDescriptor attrDesc:attrDescs) {
+        for (Map.Entry<String, AttributeDescriptor> entry : attrDescsMap.entrySet()) {
+            AttributeDescriptor attrDesc = entry.getValue();
         	if(attrDesc.getLocalName().equals(iliGeomAttrName)) {
 				AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
 				attributeBuilder.init(attrDesc);
@@ -447,13 +453,16 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	}
 	
     private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
-    	for (int i = 0; i < attrDescs.size(); i++){
-	    	GeometryFactory geometryFactory=new GeometryFactory();
-	    	String attrName=attrDescs.get(i).getLocalName();
-	    	if(!attrName.equals(iliGeomAttrName)) {
-				String val=obj.getattrprim(attrName,0);
+        for (Map.Entry<String, AttributeDescriptor> entry : attrDescsMap.entrySet()) {
+            AttributeDescriptor attrDesc = entry.getValue();
+            GeometryFactory geometryFactory = new GeometryFactory();
+            String attrName = attrDesc.getLocalName();
+            String originalAttrName = entry.getKey();
+
+	    	if(!originalAttrName.equals(iliGeomAttrName)) {
+				String val=obj.getattrprim(originalAttrName,0);
 				if(val!=null){
-					if(attrDescs.get(i).getType().getBinding().equals(java.util.Date.class)){
+					if(attrDesc.getType().getBinding().equals(java.util.Date.class)){
 						try {
 							// match attrValue to format.
 							java.util.Date utilDate=dateFormat.parse(val);
@@ -652,7 +661,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	}
 	
 	public AttributeDescriptor[] getAttributeDescriptors() {
-		return attrDescs.toArray(new AttributeDescriptor[attrDescs.size()]);
+        List<AttributeDescriptor> attrDescs = new ArrayList<AttributeDescriptor>();
+        for (Map.Entry<String, AttributeDescriptor> entry : attrDescsMap.entrySet()) {
+            attrDescs.add(entry.getValue());
+        }
+        return attrDescs.toArray(new AttributeDescriptor[attrDescs.size()]);
 	}
 	
 	/** Sets the attribute descriptors of the shape file.
@@ -660,12 +673,37 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	 * @param attrDescs[]
 	 */
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
-		this.attrDescs = new ArrayList<AttributeDescriptor>();
-		for(AttributeDescriptor attrDesc:attrDescs) {
-			if(attrDesc.getType() instanceof GeometryType) {
-				iliGeomAttrName=attrDesc.getLocalName();
-			}
-			this.attrDescs.add(attrDesc);
-		}
+        this.attrDescsMap = new HashMap<String,AttributeDescriptor>(); 
+        for(AttributeDescriptor attrDesc:attrDescs) {
+            if(attrDesc.getType() instanceof GeometryType) {
+                iliGeomAttrName=attrDesc.getLocalName();
+            }
+            this.attrDescsMap.put(attrDesc.getLocalName(), attrDesc);
+        }
 	}
+	
+    private String trimAttributeName(String attrName) {
+        // Geometry attribute names do not need to be trimmed,
+        // since they are treated specifically.
+        if (attrName.length() <= 10 || attrName.equalsIgnoreCase(iliGeomAttrName)) {
+            return attrName;
+        }
+        // It works for a max of 9 similar/identical names.
+        // Can be extended but at the end of the day it is 
+        // not working endlessly.
+        for (int i=0; i<=9; i++) {
+            String trimmedAttrName;
+            if (i==0) {
+                trimmedAttrName = attrName.substring(0, 10);
+            } else {
+                trimmedAttrName = attrName.substring(0, 9) + String.valueOf(i);
+            }
+            
+            if (!trimmedAttrNames.contains(trimmedAttrName)) {
+                trimmedAttrNames.add(trimmedAttrName);     
+                return trimmedAttrName;
+            } 
+        }
+        return null;
+    }
 }
