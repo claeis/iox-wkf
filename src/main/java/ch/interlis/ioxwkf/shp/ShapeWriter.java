@@ -671,18 +671,38 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	/** Sets the attribute descriptors of the shape file.
 	 * Alternative to setting a model.
 	 * @param attrDescs[]
+	 * @throws IoxException 
 	 */
-	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) {
+	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) throws IoxException {
+        if (trimmedAttrNames == null) {
+            trimmedAttrNames = new ArrayList<String>(); 
+        }
+        
         this.attrDescsMap = new HashMap<String,AttributeDescriptor>(); 
         for(AttributeDescriptor attrDesc:attrDescs) {
             if(attrDesc.getType() instanceof GeometryType) {
                 iliGeomAttrName=attrDesc.getLocalName();
             }
-            this.attrDescsMap.put(attrDesc.getLocalName(), attrDesc);
+            
+            // Create new AttributeDescriptor b/c of trimmed attribute name.
+            AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
+            attributeBuilder.setBinding(attrDesc.getType().getBinding());
+            if(defaultSrsId!=null) {
+                attributeBuilder.setCRS(createCrs(defaultSrsId));
+            }
+            attributeBuilder.setName(attrDesc.getLocalName());
+            attributeBuilder.setMinOccurs(0);
+            attributeBuilder.setMaxOccurs(1);
+            attributeBuilder.setNillable(true);
+            
+            String trimmedAttrName = trimAttributeName(attrDesc.getLocalName());
+            AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
+
+            this.attrDescsMap.put(attrDesc.getLocalName(), descriptor);
         }
 	}
 	
-    private String trimAttributeName(String attrName) {
+    private String trimAttributeName(String attrName) {        
         // Geometry attribute names do not need to be trimmed,
         // since they are treated specifically.
         if (attrName.length() <= 10 || attrName.equalsIgnoreCase(iliGeomAttrName)) {

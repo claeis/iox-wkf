@@ -2127,4 +2127,57 @@ public class Db2ShpTest {
         	preStmt.close();
         }
 	}
+	
+    // Es wird getestet, ob ein zu langer Attributnamen gemaess Shapefile-Spezifikation gekuerzt wird..
+    // - set: database-dbtoshpschema
+    // - set: database-table
+    // --
+    // Erwartung: SUCCESS
+    @Test
+    public void export_LongAttributeName_Ok() throws Exception
+    {
+        Settings config=new Settings();
+        Connection jdbcConnection=null;
+        try{
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+            {
+                Statement preStmt=jdbcConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtoshpschema");
+                preStmt.execute("CREATE TABLE dbtoshpschema.exportlongattributename(sehrlangerattributnamen character varying,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+                preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportlongattributename(sehrlangerattributnamen,the_geom) VALUES ('abc','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+                preStmt.close();
+            }
+            {
+                // shp
+                File data=new File(TEST_OUT,"export_LongAttributeName.shp");
+                
+                config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+                config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportlongattributename");
+                AbstractExportFromdb db2Shp=new Db2Shp();
+                db2Shp.exportData(data, jdbcConnection, config);
+            }
+            {
+                //Open the file for reading
+                FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_LongAttributeName.shp"));
+                SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+                SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+                if(featureCollectionIter.hasNext()) {
+                    // feature object
+                    SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+                    Object attr1=shapeObj.getAttribute("sehrlanger");
+                    assertEquals(attr1.toString(), "abc");
+                    Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                    assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+                }
+                featureCollectionIter.close();
+                dataStore.dispose();
+            }
+        }finally{
+            if(jdbcConnection!=null){
+                jdbcConnection.close();
+            }
+        }
+    }
+	
 }
