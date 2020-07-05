@@ -999,6 +999,7 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+			System.out.println(shapeObj.toString());
 			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 			assertEquals("MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))",attr2.toString());
 		}
@@ -1392,9 +1393,9 @@ public class ShapeWriterTest {
     public void similarLongAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
         Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
         inputObj.setattrvalue("id1", "1");
-        inputObj.setattrvalue("SehrLangerText", "text1");
-        inputObj.setattrvalue("SehrLangerLangerText", "text2");
-        inputObj.setattrvalue("SehrLangerLangerLangerText", "text3");        
+        inputObj.setattrvalue("BodenbedeckungArt", "text1");
+        inputObj.setattrvalue("BodenbedeckungPos", "text2");
+        inputObj.setattrvalue("BodenbedeckungDatum", "text3");        
         inputObj.setattrvalue("Double", "53434");
         IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
         coordValue.setattrvalue("C1", "-0.4025974025974026");
@@ -1429,14 +1430,11 @@ public class ShapeWriterTest {
                 
                 Object attr1 = shapeObj.getAttribute("id1");
                 assertEquals("1", attr1.toString());
-                // Die Reihenfolge stimmt nicht mehr mit der Definition des IomObjektes ueberein.
-                // Auf den ersten Blick irritierend. Aber das sollte nicht falsch sein und 
-                // keine Auswirkungen haben.
-                Object attr2 = shapeObj.getAttribute("SehrLanger"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                Object attr2 = shapeObj.getAttribute("BodnbgDtum");
                 assertEquals("text3", attr2.toString());
-                Object attr3 = shapeObj.getAttribute("SehrLange1"); // Shapefile-tauglicher Attributnamen (9+1 Zeichen)
+                Object attr3 = shapeObj.getAttribute("BodnbngArt");
                 assertEquals("text1", attr3.toString());
-                Object attr4 = shapeObj.getAttribute("SehrLange2"); // Shapefile-tauglicher Attributnamen (9+1 Zeichen)
+                Object attr4 = shapeObj.getAttribute("BodnbngPos");
                 assertEquals("text2", attr4.toString());
                 Object attr5 = shapeObj.getAttribute("Double");
                 assertEquals("53434", attr5.toString());
@@ -1489,7 +1487,7 @@ public class ShapeWriterTest {
                 SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
                 Object attr1 = shapeObj.getAttribute("id1");
                 assertEquals("1", attr1.toString());
-                Object attr2 = shapeObj.getAttribute("SehrLanger"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                Object attr2 = shapeObj.getAttribute("SehrLrText"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
                 assertEquals("text1", attr2.toString());
                 Object attr3 = shapeObj.getAttribute("Double");
                 assertEquals("53434", attr3.toString());

@@ -85,6 +85,7 @@ import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
 import ch.ehi.basics.settings.Settings;
+import ch.ehi.basics.tools.NameUtility;
 import ch.interlis.ili2c.generator.Iligml20Generator;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.AttributeDef;
@@ -169,7 +170,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	private SimpleFeatureStore featureStore=null;
 	private FeatureWriter<SimpleFeatureType, SimpleFeature> writer;
 	private Transaction transaction=null;
-    private List<String> trimmedAttrNames=null;
 
     public ShapeWriter(java.io.File file) throws IoxException {
     	this(file,null);
@@ -214,7 +214,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 			String tag = iomObj.getobjecttag();
 			// check if class exist in model/models
 			if(attrDescsMap==null) {
-                trimmedAttrNames = new ArrayList<String>();
                 attrDescsMap = new HashMap<String,AttributeDescriptor>();
 				if(td!=null) {
 					Viewable aclass=(Viewable) XSDGenerator.getTagMap(td).get(tag);
@@ -256,7 +255,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					attributeBuilder.setMaxOccurs(1);
 	    					attributeBuilder.setNillable(true);
 	    					//build the descriptor
-                            String trimmedAttrName = trimAttributeName(attrName);
+                            String trimmedAttrName = trimAttributeName(attrName,10);
                             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
 	    					// add descriptor to descriptor map
                             attrDescsMap.put(attrName, descriptor);      
@@ -329,10 +328,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     					attributeBuilder.setMaxOccurs(1);
     					attributeBuilder.setNillable(true);
     					//build the descriptor
-                        String trimmedAttrName = trimAttributeName(attrName);
+                        String trimmedAttrName = trimAttributeName(attrName,10);
                         AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
     					// add descriptor to descriptor list
-                        attrDescsMap.put(attrName, descriptor);      
+                        attrDescsMap.put(attrName, descriptor);  
+                        System.out.println("descriptor: " + descriptor);
             		}
 	            }
 			}
@@ -674,10 +674,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	 * @throws IoxException 
 	 */
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) throws IoxException {
-        if (trimmedAttrNames == null) {
-            trimmedAttrNames = new ArrayList<String>(); 
-        }
-        
         this.attrDescsMap = new HashMap<String,AttributeDescriptor>(); 
         for(AttributeDescriptor attrDesc:attrDescs) {
             if(attrDesc.getType() instanceof GeometryType) {
@@ -695,35 +691,19 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
             attributeBuilder.setMaxOccurs(1);
             attributeBuilder.setNillable(true);
             
-            String trimmedAttrName = trimAttributeName(attrDesc.getLocalName());
+            String trimmedAttrName = trimAttributeName(attrDesc.getLocalName(),10);
             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
 
             this.attrDescsMap.put(attrDesc.getLocalName(), descriptor);
         }
 	}
 	
-    private String trimAttributeName(String attrName) {        
+    private String trimAttributeName(String attrName, int maxlen) {           
         // Geometry attribute names do not need to be trimmed,
         // since they are treated specifically.
-        if (attrName.length() <= 10 || attrName.equalsIgnoreCase(iliGeomAttrName)) {
+        if (attrName.length() <= maxlen || attrName.equalsIgnoreCase(iliGeomAttrName)) {
             return attrName;
         }
-        // It works for a max of 9 similar/identical names.
-        // Can be extended but at the end of the day it is 
-        // not working endlessly.
-        for (int i=0; i<=9; i++) {
-            String trimmedAttrName;
-            if (i==0) {
-                trimmedAttrName = attrName.substring(0, 10);
-            } else {
-                trimmedAttrName = attrName.substring(0, 9) + String.valueOf(i);
-            }
-            
-            if (!trimmedAttrNames.contains(trimmedAttrName)) {
-                trimmedAttrNames.add(trimmedAttrName);     
-                return trimmedAttrName;
-            } 
-        }
-        return null;
+        return NameUtility.shortcutName(attrName,maxlen);
     }
 }
