@@ -512,6 +512,7 @@ public class ShapeReaderTest {
 			IomObject iomObj=((ObjectEvent)event).getIomObject();
 			IomObject multiPolylineObj=iomObj.getattrobj(ShapeReader.GEOTOOLS_THE_GEOM, 0);
 			IomObject polyline=multiPolylineObj.getattrobj("polyline", 0);
+
 			IomObject sequence=polyline.getattrobj("sequence", 0);
 			IomObject segment=sequence.getattrobj("segment", 0);
 			assertTrue(segment.getattrvalue("C1").equals("-0.22857142857142854"));

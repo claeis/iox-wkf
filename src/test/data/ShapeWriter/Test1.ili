@@ -20,6 +20,13 @@ MODEL Test1 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
 			attrPoint2 : Lkoord;
 		END Point2;
 		
+        CLASS Point3 =
+            id1 : 0 .. 150;
+            SehrLangerText : TEXT*100;
+            Double : 0 .. 60000;
+            attrPoint2 : Lkoord;
+        END Point3;
+		
 		CLASS MultiPoint =
 			attrMPoint : Lkoord;
 		END MultiPoint;

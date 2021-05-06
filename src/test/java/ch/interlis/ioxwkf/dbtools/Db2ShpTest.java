@@ -12,21 +12,30 @@ import org.geotools.data.FileDataStoreFinder;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.opengis.feature.simple.SimpleFeature;
 import org.postgresql.util.PSQLException;
+import org.testcontainers.containers.PostgisContainerProvider;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.iox.IoxException;
 import ch.interlis.ioxwkf.shp.ShapeReader;
 
-//-Ddburl=jdbc:postgresql:dbname -Ddbusr=usrname -Ddbpwd=1234
 public class Db2ShpTest {
-	private String dburl=System.getProperty("dburl");
-	private String dbuser=System.getProperty("dbusr");
-	private String dbpwd=System.getProperty("dbpwd");
 	private static final String TEST_OUT="build/test/data/DB2Shp/";
+	
+    static String WAIT_PATTERN = ".*database system is ready to accept connections.*\\s";
+    
+    @ClassRule
+    public static PostgreSQLContainer postgres = 
+        (PostgreSQLContainer) new PostgisContainerProvider()
+        .newInstance().withDatabaseName("ioxwkf")
+        .waitingFor(Wait.forLogMessage(WAIT_PATTERN, 2));
 	
 	@BeforeClass
 	public static void setup() throws Ili2cFailure
@@ -45,8 +54,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -103,8 +111,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -157,8 +164,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -216,8 +222,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -276,8 +281,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -336,8 +340,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -393,8 +396,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -450,8 +452,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -507,8 +508,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -564,8 +564,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -621,8 +620,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -678,8 +676,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -735,8 +732,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -793,8 +789,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -849,8 +844,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -898,8 +892,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -955,8 +948,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1012,8 +1004,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1069,8 +1060,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1128,8 +1118,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1187,8 +1176,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1244,8 +1232,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1302,8 +1289,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1360,8 +1346,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1417,8 +1402,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1477,8 +1461,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1537,8 +1520,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop table
@@ -1593,8 +1575,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1650,8 +1631,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1707,8 +1687,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1763,8 +1742,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1820,8 +1798,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1877,8 +1854,7 @@ public class Db2ShpTest {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -1929,7 +1905,6 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
 	        jdbcConnection = null;
 			// shp
 			File data=new File(TEST_OUT,"export_ConnectionFailed_Fail.shp");
@@ -1962,8 +1937,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -2009,8 +1983,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -2055,8 +2028,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -2098,8 +2070,7 @@ public class Db2ShpTest {
 		config=new Settings();
 		Connection jdbcConnection=null;
 		try{
-	        Class driverClass = Class.forName("org.postgresql.Driver");
-	        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
 	        {
 	        	Statement preStmt=jdbcConnection.createStatement();
 	        	// drop dbtoshpschema
@@ -2137,8 +2108,7 @@ public class Db2ShpTest {
 	public void export_DatatypeBit3_ValueBit2_Fail() throws Exception {
 		Settings config=new Settings();
 		Connection jdbcConnection=null;
-        Class driverClass = Class.forName("org.postgresql.Driver");
-        jdbcConnection = DriverManager.getConnection(dburl, dbuser, dbpwd);
+        jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
         {
         	Statement preStmt=jdbcConnection.createStatement();
         	// drop dbtoshpschema
@@ -2157,4 +2127,58 @@ public class Db2ShpTest {
         	preStmt.close();
         }
 	}
+	
+    // Es wird getestet, ob ein zu langer Attributnamen gemaess Shapefile-Spezifikation gekuerzt wird..
+    // - set: database-dbtoshpschema
+    // - set: database-table
+    // --
+    // Erwartung: SUCCESS
+    @Test
+    public void export_LongAttributeName_Ok() throws Exception
+    {
+        Settings config=new Settings();
+        Connection jdbcConnection=null;
+        try{
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+            {
+                Statement preStmt=jdbcConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtoshpschema");
+                preStmt.execute("CREATE TABLE dbtoshpschema.exportlongattributename(sehrlangerattributnamen character varying,the_geom geometry(POINT,2056)) WITH (OIDS=FALSE);");
+                preStmt.executeUpdate("INSERT INTO dbtoshpschema.exportlongattributename(sehrlangerattributnamen,the_geom) VALUES ('abc','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+                preStmt.close();
+            }
+            {
+                // shp
+                File data=new File(TEST_OUT,"export_LongAttributeName.shp");
+                
+                config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtoshpschema");
+                config.setValue(IoxWkfConfig.SETTING_DBTABLE, "exportlongattributename");
+                AbstractExportFromdb db2Shp=new Db2Shp();
+                db2Shp.exportData(data, jdbcConnection, config);
+            }
+            {
+                //Open the file for reading
+                FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_LongAttributeName.shp"));
+                SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+                SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+                if(featureCollectionIter.hasNext()) {
+                    // feature object
+                    SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+                    System.out.println(shapeObj.toString());
+                    Object attr1=shapeObj.getAttribute("sehrltnmen");
+                    assertEquals(attr1.toString(), "abc");
+                    Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                    assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+                }
+                featureCollectionIter.close();
+                dataStore.dispose();
+            }
+        }finally{
+            if(jdbcConnection!=null){
+                jdbcConnection.close();
+            }
+        }
+    }
+	
 }

@@ -133,7 +133,7 @@ public abstract class AbstractExportFromdb {
 				try {
 					writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
 				}catch(IoxException e) {
-					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to file: <"+file.getAbsolutePath()+"> failed.",e);
+					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to object: <"+file.getPath()+"> failed.",e);
 				}
 			}
 		} catch (SQLException e) {

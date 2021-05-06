@@ -4,6 +4,15 @@ ideas/open issues
 LATEST
 -----------------------------
 
+iox-wkf 1.0.2 (2021-05-06)
+-----------------------------
+- ShpWriter: shortcut attribute names
+- add gpkg2db
+- add db2gpkg
+- add GpkgReader
+- add GpkgWriter
+- ili2db-4.4.1
+
 iox-wkf 1.0.1 (2019-06-05)
 -----------------------------
 - Import2db: support additional columns (not present in source file) in target table
