@@ -3,6 +3,10 @@ ideas/open issues
 
 LATEST
 -----------------------------
+
+iox-wkf 1.0.2 (2021-05-06)
+-----------------------------
+- ShpWriter: shortcut attribute names
 - add gpkg2db
 - add db2gpkg
 - add GpkgReader
