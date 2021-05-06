@@ -295,7 +295,9 @@ public class GeoPackageReader implements IoxReader {
                             if (theGeomAttrs.contains(gpkgAttrName)) {
                                 try {
                                     subIomObj = gpkg2iox.read((byte[])gpkgAttrValue);
-                                    iomObj.addattrobj(iliAttrName, subIomObj);
+                                    if(subIomObj!=null) {
+                                        iomObj.addattrobj(iliAttrName, subIomObj);
+                                    }
                                 } catch (ParseException e) {
                                     throw new IoxException(e);
                                 }

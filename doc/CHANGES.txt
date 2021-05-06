@@ -3,6 +3,7 @@ ideas/open issues
 
 LATEST
 -----------------------------
+- fixed GeoPackageReader NULL geom
 - iox-ili-1.21.6
 - ehibasics-1.4.1
 - ili2-5.2.2
