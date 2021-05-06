@@ -94,11 +94,16 @@ sourceSets {
 }
 
 task generateMyResources {
+	def versionPropsFile = new File(generatedResources,"ch/interlis/ioxwkf/Version.properties")
+	def version="$project.version"
+	def hash=getGitHash()
+	inputs.property("version","$project.version")
+	inputs.property("hash",getGitHash())
+	outputs.file versionPropsFile
 	doLast {
 		def versionProps = new Properties()
-		versionProps.setProperty('version', "$project.version")
-		versionProps.setProperty('versionCommit', getGitHash())
-		def versionPropsFile = new File(generatedResources,"ch/interlis/ioxwkf/Version.properties")
+		versionProps.setProperty('version', version)
+		versionProps.setProperty('versionCommit', hash)
 		versionPropsFile.getParentFile().mkdirs();
 		versionProps.store(versionPropsFile.newWriter(), null);
 	}
