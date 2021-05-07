@@ -5,6 +5,7 @@ LATEST
 -----------------------------
 - added JsonWriter
 - fixed GeoPackageReader NULL geom
+- jackson-core-2.9.7
 - iox-ili-1.21.6
 - ehibasics-1.4.1
 - ili2-5.2.2
