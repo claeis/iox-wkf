@@ -30,8 +30,8 @@ import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox.StartTransferEvent;
 import ch.interlis.iox_j.ObjectEvent;
 
-public class JsonWriter implements ch.interlis.iox.IoxWriter {
-	// td
+public class GeoJsonWriter implements ch.interlis.iox.IoxWriter {
+	 // td
 	private TransferDescription td=null;
 	// writer
 	private java.io.Writer writer=null;
@@ -49,10 +49,10 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 	 * @param file
 	 * @throws IoxException
 	 */
-	public JsonWriter(File file)throws IoxException{
+	public GeoJsonWriter(File file)throws IoxException{
 		this(file,null);
 	}
-	public JsonWriter(File file,Settings settings)throws IoxException{
+	public GeoJsonWriter(File file,Settings settings)throws IoxException{
 		if(file!=null) {
 			try {
 				writer=new BufferedWriter(new java.io.OutputStreamWriter(new java.io.FileOutputStream(file),"UTF-8"));
@@ -176,6 +176,9 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 	public void write(IoxEvent event) throws IoxException {
 		if(event instanceof StartTransferEvent){
 		    try {
+                jg.writeStartObject();
+                jg.writeStringField(Iox2geoJson.TYPE,Iox2geoJson.FEATURE_COLLECTION);
+                jg.writeFieldName(Iox2geoJson.FEATURES);
                 jg.writeStartArray();
             } catch (IOException e) {
                 throw new IoxException(e);
@@ -185,7 +188,7 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 		    currentBid=startBasket.getBid();
 		    currentTopic=startBasket.getType();
             try {
-                iox2json=new Iox2jsonWkt(jg,td);
+                iox2json=new Iox2geoJson(jg,td);
             } catch (IOException e) {
                 throw new IoxException(e);
             }
@@ -217,7 +220,7 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 			}
         	String[] validAttrValues=getAttributeValues(headerAttrNames, iomObj);
         	try {
-        		writeRecord(iomObj);
+        		writeFeature(iomObj);
         	} catch (IOException e) {
 				throw new IoxException(e);
         	}
@@ -229,6 +232,7 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 		}else if(event instanceof EndTransferEvent){
             try {
                 jg.writeEndArray();
+                jg.writeEndObject();
             } catch (IOException e) {
                 throw new IoxException(e);
             }
@@ -264,7 +268,7 @@ public class JsonWriter implements ch.interlis.iox.IoxWriter {
 	 * @throws IOException
 	 * @throws IoxException
 	 */
-    private void writeRecord(IomObject iomObject) throws IOException {
+    private void writeFeature(IomObject iomObject) throws IOException {
         iox2json.write(iomObject,currentBid,currentTopic);
 
     }

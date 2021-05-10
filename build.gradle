@@ -36,10 +36,10 @@ dependencies {
 	testCompile group: 'org.postgresql', name: 'postgresql', version: '42.1.4.jre6'
     testCompile group: 'org.testcontainers', name: 'testcontainers', version: '1.14.3'
     testCompile group: 'org.testcontainers', name: 'postgresql', version: '1.14.3'	
-	compile('ch.interlis:ili2pg:4.5.0') {
+	compile('ch.interlis:ili2pg:4.5.1+') {
         exclude group: 'ch.interlis', module: 'iox-ili'
     }
-    compile (group: 'ch.interlis', name: 'ili2gpkg', version: '4.5.0') {
+    compile (group: 'ch.interlis', name: 'ili2gpkg', version: '4.5.1+') {
         exclude group: 'ch.interlis', module: 'iox-ili'
     }
 	deployerJars "org.apache.maven.wagon:wagon-ftp:3.0.0"

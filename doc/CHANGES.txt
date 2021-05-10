@@ -3,7 +3,8 @@ ideas/open issues
 
 LATEST
 -----------------------------
-- added JsonWriter
+- added GeoJsonWriter (#37)
+- added JsonWriter (#36)
 - fixed GeoPackageReader NULL geom
 - jackson-core-2.9.7
 - iox-ili-1.21.6
