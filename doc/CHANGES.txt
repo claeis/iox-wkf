@@ -5,6 +5,7 @@ LATEST
 -----------------------------
 - added GeoJsonWriter (#37)
 - added JsonWriter (#36)
+- added JsonReader (#36)
 - fixed GeoPackageReader NULL geom
 - jackson-core-2.9.7
 - iox-ili-1.21.6
