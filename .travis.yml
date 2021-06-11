@@ -17,6 +17,7 @@ addons:
 install: true
 
 before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
     - psql -c 'create database ioxwkf;' -U postgres
     - psql -c 'select version();' -d ioxwkf -U postgres
     - psql -c 'create extension postgis;' -d ioxwkf -U postgres
