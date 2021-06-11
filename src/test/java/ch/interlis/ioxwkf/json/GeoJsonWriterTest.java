@@ -6,6 +6,9 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.vividsolutions.jts.geom.Coordinate;
+
 import ch.interlis.ili2c.Ili2cFailure;
 import ch.interlis.ili2c.config.Configuration;
 import ch.interlis.ili2c.config.FileEntry;
@@ -36,6 +39,7 @@ public class GeoJsonWriterTest {
     private final static String TEST_IN="src/test/data/GeoJsonWriter";
 	private final static String TEST_OUT="build/test/data/GeoJsonWriter";
 	private TransferDescription td=null;
+    private static final double E = 0.000001;
 	
 	@BeforeClass
 	public static void setupFolder() throws Ili2cFailure
@@ -265,6 +269,20 @@ public class GeoJsonWriterTest {
 	    	}
 		}
 	}
+   @Test
+    public void lv95toWGS84() throws IoxException, IOException{
+        Coordinate coord=new Coordinate(2600000.000,1200000.000);
+        Iox2geoJson.convertCoordinate(coord);
+        assertEquals(7.438637222222222,coord.x,E);
+        assertEquals(46.95108111111111,coord.y,E);
+   }
+   @Test
+   public void lv03toWGS84() throws IoxException, IOException{
+       Coordinate coord=new Coordinate(600000.000,200000.000);
+       Iox2geoJson.convertCoordinate(coord);
+       assertEquals(7.438637222222222,coord.x,E);
+       assertEquals(46.95108111111111,coord.y,E);
+  }
     @Test
     public void nullGeom() throws IoxException, IOException{
         Iom_jObject obj1=new Iom_jObject(CLASS_TEST1_TOPIC1_POINT_OF_INTEREST, "o1");

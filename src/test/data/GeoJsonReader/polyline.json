@@ -1,0 +1,19 @@
+{
+	"type": "FeatureCollection",
+	"features": [{
+		"type": "Feature",
+		"id": "o1",
+		"geometry": {
+			"type": "LineString",
+			"coordinates": [
+				[7.255208567759166, 46.81150681359125],
+				[7.255209877959094, 46.811506815693456]
+			]
+		},
+		"properties": {
+			"@type": "Test1.Topic1.Street",
+			"@bid": "bid1",
+			"@topic": "Test1.Topic1"
+		}
+	}]
+}

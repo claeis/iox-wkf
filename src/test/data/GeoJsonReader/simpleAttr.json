@@ -1,0 +1,17 @@
+{
+	"type": "FeatureCollection",
+	"features": [{
+		"type": "Feature",
+		"id": "o1",
+		"geometry": null,
+		"properties": {
+			"@type": "Test1.Topic1.SimpleAttr",
+			"@bid": "bid1",
+			"@topic": "Test1.Topic1",
+			"attrText": "lineA",
+			"attrMtext": "lineB\nnextlineB",
+			"attrInt": -20,
+			"attrDec": -10.0
+		}
+	}]
+}

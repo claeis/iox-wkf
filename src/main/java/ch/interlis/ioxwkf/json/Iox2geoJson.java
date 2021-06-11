@@ -45,7 +45,7 @@ class Iox2geoJson extends Iox2json {
     public static final String FEATURE = "Feature";
     public static final String POLYGON = "Polygon";
     public static final String TYPE = "type";
-    public static final String LINE_STRING = "LineString";
+    public static final String LINESTRING = "LineString";
     public static final String POINT = "Point";
     public static final String COORDINATES = "coordinates";
     public static final String FEATURE_COLLECTION = "FeatureCollection";
@@ -254,7 +254,7 @@ class Iox2geoJson extends Iox2json {
     }
     private static void writeGeoJsonLineString(JsonGenerator jg,LineString geom) throws IOException {
         jg.writeStartObject();
-        jg.writeStringField(TYPE,LINE_STRING);
+        jg.writeStringField(TYPE,LINESTRING);
         jg.writeFieldName(COORDINATES);
         witeLineStringCoordinates(jg, geom);
         jg.writeEndObject();
@@ -283,6 +283,16 @@ class Iox2geoJson extends Iox2json {
         jg.writeEndArray();
     }
     private static void writeCoordinates(JsonGenerator jg, Coordinate coord) throws IOException {
+        convertCoordinate(coord);
+        double x=coord.x;
+        double y=coord.y;
+            
+        jg.writeStartArray();
+        jg.writeNumber(x);
+        jg.writeNumber(y);
+        jg.writeEndArray();
+    }
+    public static void convertCoordinate(Coordinate coord) throws IOException {
         double x=coord.x;
         double y=coord.y;
         if(x>=460000.000 && x<=870000.000
@@ -300,16 +310,16 @@ class Iox2geoJson extends Iox2json {
                     - (0.0140 * Math.pow(x_aux, 3));
 
             // Unit 10000" to 1 " and converts seconds to degrees (dec)
-            lat = (lat * 100) / 36;
+            lat = (lat * 100.0) / 36.0;
             double lng = (2.6779094 + (4.728982 * y_aux)
                     + (0.791484 * y_aux * x_aux) + (0.1306 * y_aux * Math.pow(
                     x_aux, 2))) - (0.0436 * Math.pow(y_aux, 3));
 
             // Unit 10000" to 1 " and converts seconds to degrees (dec)
-            lng = (lng * 100) / 36;
+            lng = (lng * 100.0) / 36.0;
             
-            y=lat;
-            x=lng;
+            coord.x=lng;
+            coord.y=lat;
         }else if( x>=2460000.000 && x<=2870000.000
             && y>=1045000.000 &&  y<=1310000.000) {
             // LV95 
@@ -332,17 +342,11 @@ class Iox2geoJson extends Iox2json {
 
             // Unit 10000" to 1 " and converts seconds to degrees (dec)
             lng = (lng * 100) / 36;
-            y=lat;
-            x=lng;
+            coord.x=lng;
+            coord.y=lat;
         }
-            
-            
-        jg.writeStartArray();
-        jg.writeNumber(x);
-        jg.writeNumber(y);
-        jg.writeEndArray();
     }
-    private AttributeDef getGeometryAttr(Viewable aclass) {
+    static public AttributeDef getGeometryAttr(Viewable aclass) {
         Iterator viewableIter=aclass.getAttributes();
         while(viewableIter.hasNext()) {
             Object attrObj=viewableIter.next();
