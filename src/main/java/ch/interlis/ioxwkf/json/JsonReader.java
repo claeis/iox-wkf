@@ -27,9 +27,11 @@ import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.StartBasketEvent;
 import ch.interlis.iox.StartTransferEvent;
+import ch.interlis.iox_j.IoxIliReader;
 import ch.interlis.iox_j.ObjectEvent;
+import ch.interlis.iox_j.logging.LogEventFactory;
 
-public class JsonReader implements ch.interlis.iox.IoxReader {
+public class JsonReader implements ch.interlis.iox.IoxReader,IoxIliReader {
 	private TransferDescription td=null;
 	private java.io.Reader reader=null;
     private JsonParser jg=null;
@@ -50,6 +52,9 @@ public class JsonReader implements ch.interlis.iox.IoxReader {
 	public JsonReader(File file)throws IoxException{
 		this(file,null);
 	}
+    public JsonReader(File file,LogEventFactory logFactory,Settings settings)throws IoxException{
+        this(file,settings);
+    }
 	public JsonReader(File file,Settings settings)throws IoxException{
 		if(file!=null) {
 			try {
@@ -317,6 +322,7 @@ public class JsonReader implements ch.interlis.iox.IoxReader {
 	/** set model/models
 	 * @param td
 	 */
+    @Override
 	public void setModel(TransferDescription td) {
 		this.td=td;
 	}
@@ -358,4 +364,13 @@ public class JsonReader implements ch.interlis.iox.IoxReader {
 	public IomObject createIomObject(String type, String oid) throws IoxException {
 		return null;
 	}
+    @Override
+    public String getMimeType() {
+        return "application/json";
+    }
+    @Override
+    public void setTopicFilter(String[] arg0) {
+        // TODO Auto-generated method stub
+        
+    }
 }

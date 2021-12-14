@@ -29,8 +29,11 @@ import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
 import ch.interlis.iox.IoxReader;
+import ch.interlis.iox_j.IoxIliReader;
+import ch.interlis.iox_j.logging.LogEventFactory;
 import ch.ehi.ili2gpkg.Gpkg2iox;
 import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
+import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
 
 /** Read a table from a GeoPackage database.
  * If the file to read from can not be found, an exception will be thrown.
@@ -76,13 +79,13 @@ import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
  * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlis specification</a></li>
  */
 
-public class GeoPackageReader implements IoxReader {
+public class GeoPackageReader implements IoxReader, IoxIliReader {
 
     // the name of the geometry columns table in the geopackage database
     private static final String GEOMETRY_COLUMNS_TABLE_NAME = "gpkg_geometry_columns";
     private static final String GEOM_COLUMN_NAME = "column_name";
     private static final String GEOM_TYPE_COLUMN_NAME = "geometry_type_name";
-
+    
     // state
     private int state;
     private static final int START = 0;
@@ -128,6 +131,9 @@ public class GeoPackageReader implements IoxReader {
     public GeoPackageReader(File gpkgFile, String tableName) throws IoxException {
         this(gpkgFile, tableName, null);
     }
+    public GeoPackageReader(File gpkgFile, LogEventFactory logFactory, Settings settings) throws IoxException{
+        this(gpkgFile, (String)null, settings);
+    }
     
     /** Creates a new geopackage reader.
      * @param gpkgFile to read from
@@ -137,6 +143,12 @@ public class GeoPackageReader implements IoxReader {
         state = START;
         td = null;
         inputFile = gpkgFile;
+        if(tableName==null) {
+            tableName=settings.getValue(IoxWkfConfig.SETTING_GPKGTABLE);
+            if(tableName==null) {
+                settings.getValue(IoxWkfConfig.SETTING_DBTABLE);
+            }
+        }
         this.tableName = tableName;
         init(inputFile, settings);
     }
@@ -170,6 +182,7 @@ public class GeoPackageReader implements IoxReader {
     /** The optional Interlis model.
      * @param td
      */
+    @Override
     public void setModel(TransferDescription td){
         this.td = td;
     }
@@ -515,6 +528,17 @@ public class GeoPackageReader implements IoxReader {
      */
     public List<String> getGeometryAttributes() {
         return this.theGeomAttrs;
+    }
+
+    @Override
+    public String getMimeType() {
+        return "application/geopackage+sqlite3";
+    }
+
+    @Override
+    public void setTopicFilter(String[] arg0) {
+        // TODO Auto-generated method stub
+        
     }
 
 }

@@ -8,6 +8,7 @@ LATEST
 - added JsonWriter (#36)
 - added JsonReader (#36)
 - fixed GeoPackageReader NULL geom
+- implement IoxIliReader/ReaderFactory required constructor
 - jackson-core-2.9.7
 - iox-ili-1.21.6
 - ehibasics-1.4.1
