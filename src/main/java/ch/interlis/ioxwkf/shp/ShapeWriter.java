@@ -282,7 +282,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
     								int surfaceCount=iomGeom.getattrvaluecount("surface");
     								if(surfaceCount<=1) {
-    		        					attributeBuilder.setBinding(Polygon.class);
+    		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}else if(surfaceCount>1){
     		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}
@@ -309,7 +309,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
         								int surfaceCount=iomGeom.getattrvaluecount("surface");
         								if(surfaceCount==1) {
-        		        					attributeBuilder.setBinding(Polygon.class);
+        		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}else if(surfaceCount>1){
         		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}
