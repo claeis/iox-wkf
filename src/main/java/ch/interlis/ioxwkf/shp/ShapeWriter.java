@@ -282,7 +282,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
     								int surfaceCount=iomGeom.getattrvaluecount("surface");
     								if(surfaceCount<=1) {
-    		        					attributeBuilder.setBinding(Polygon.class);
+    								    /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
+    								     * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
+    								     * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
+    		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}else if(surfaceCount>1){
     		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}
@@ -309,7 +312,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
         								int surfaceCount=iomGeom.getattrvaluecount("surface");
         								if(surfaceCount==1) {
-        		        					attributeBuilder.setBinding(Polygon.class);
+                                            /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
+                                             * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
+                                             * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
+        		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}else if(surfaceCount>1){
         		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}
