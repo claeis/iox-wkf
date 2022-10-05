@@ -1386,20 +1386,22 @@ public class ShapeWriterTest {
 		}
 	}
 	
-    // Ueberlange Attributnamen (> 10 Zeichen)
-    // Gekuerzte Attributnamen (substring) waeren gleich. Algorithmus muss 
-    // eindeutige Namen finden.
-    @Test
-    public void similarLongAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+	
+	// Ueberlange Attributnamen (> 10 Zeichen)
+	// Algorithmus alleine (NameUtility.shortcutName()) kann doch wieder
+	// zu Namenskonflikten fuehren. Aus diesem Grund muessen nach dem
+	// Kuerzen alle zusammen betrachtet werden.
+	@Test
+	public void verySimilarLongAttributName_pointAttribute_Ok() throws IoxException, IOException {
         Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
         inputObj.setattrvalue("id1", "1");
-        inputObj.setattrvalue("BodenbedeckungArt", "text1");
-        inputObj.setattrvalue("BodenbedeckungPos", "text2");
-        inputObj.setattrvalue("BodenbedeckungDatum", "text3");        
+        inputObj.setattrvalue("ino2_2020_range", "text1");
+        inputObj.setattrvalue("ino2_2010_range", "text2");
         inputObj.setattrvalue("Double", "53434");
         IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
         coordValue.setattrvalue("C1", "-0.4025974025974026");
         coordValue.setattrvalue("C2", "1.3974025974025972");
+
         ShapeWriter writer = null;
         File file = new File(TEST_OUT, "Point2.shp");
         try {
@@ -1419,6 +1421,7 @@ public class ShapeWriterTest {
                 writer = null;
             }
         }
+
         {
             // Open the file for reading
             FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT, "Point2.shp"));
@@ -1430,11 +1433,69 @@ public class ShapeWriterTest {
                 
                 Object attr1 = shapeObj.getAttribute("id1");
                 assertEquals("1", attr1.toString());
-                Object attr2 = shapeObj.getAttribute("BodnbgDtum");
+                Object attr2 = shapeObj.getAttribute("ino2_rnge");
+                assertEquals("text1", attr2.toString());
+                Object attr3 = shapeObj.getAttribute("ino2_rnge1");
+                assertEquals("text2", attr3.toString());
+                Object attr5 = shapeObj.getAttribute("Double");
+                assertEquals("53434", attr5.toString());
+                Object attr6 = shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                assertEquals("POINT (-0.4025974025974026 1.3974025974025972)", attr6.toString());
+            }
+            featureCollectionIter.close();
+            dataStore.dispose();
+        }
+	}
+	
+    // Ueberlange Attributnamen (> 10 Zeichen)
+    // Gekuerzte Attributnamen (substring) waeren gleich. Algorithmus muss 
+    // eindeutige Namen finden.
+    @Test
+    public void similarLongAttributeName_pointAttribute_Ok() throws IoxException, IOException, Ili2cFailure {
+        Iom_jObject inputObj = new Iom_jObject("Test1.Topic1.Point2", "o1");
+        inputObj.setattrvalue("id1", "1");
+        inputObj.setattrvalue("BodenbedeckungArt", "text1");
+        inputObj.setattrvalue("BodenbedeckungPos", "text2");
+        inputObj.setattrvalue("BodenbedeckungDatum", "text3");        
+        inputObj.setattrvalue("Double", "53434");
+        IomObject coordValue = inputObj.addattrobj("attrPoint2", "COORD");
+        coordValue.setattrvalue("C1", "-0.4025974025974026");
+        coordValue.setattrvalue("C2", "1.3974025974025972");
+        ShapeWriter writer = null;
+        File file = new File(TEST_OUT, "Point2a.shp");
+        try {
+            writer = new ShapeWriter(file);
+            writer.write(new StartTransferEvent());
+            writer.write(new StartBasketEvent("Test1.Topic1", "bid1"));
+            writer.write(new ObjectEvent(inputObj));
+            writer.write(new EndBasketEvent());
+            writer.write(new EndTransferEvent());
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                writer = null;
+            }
+        }
+        {
+            // Open the file for reading
+            FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT, "Point2a.shp"));
+            SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+            SimpleFeatureIterator featureCollectionIter = featuresSource.getFeatures().features();
+            if (featureCollectionIter.hasNext()) {
+                // feature object
+                SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
+                
+                Object attr1 = shapeObj.getAttribute("id1");
+                assertEquals("1", attr1.toString());
+                Object attr2 = shapeObj.getAttribute("BodngDtum");
                 assertEquals("text3", attr2.toString());
-                Object attr3 = shapeObj.getAttribute("BodnbngArt");
+                Object attr3 = shapeObj.getAttribute("BodnngArt");
                 assertEquals("text1", attr3.toString());
-                Object attr4 = shapeObj.getAttribute("BodnbngPos");
+                Object attr4 = shapeObj.getAttribute("BodnngPos");
                 assertEquals("text2", attr4.toString());
                 Object attr5 = shapeObj.getAttribute("Double");
                 assertEquals("53434", attr5.toString());
@@ -1487,7 +1548,7 @@ public class ShapeWriterTest {
                 SimpleFeature shapeObj = (SimpleFeature) featureCollectionIter.next();
                 Object attr1 = shapeObj.getAttribute("id1");
                 assertEquals("1", attr1.toString());
-                Object attr2 = shapeObj.getAttribute("SehrLrText"); // Shapefile-tauglicher Attributnamen (10 Zeichen)
+                Object attr2 = shapeObj.getAttribute("SehrrText"); // Shapefile-tauglicher Attributnamen (9 oder 10 Zeichen)
                 assertEquals("text1", attr2.toString());
                 Object attr3 = shapeObj.getAttribute("Double");
                 assertEquals("53434", attr3.toString());
