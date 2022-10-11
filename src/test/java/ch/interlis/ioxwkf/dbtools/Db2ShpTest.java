@@ -2166,7 +2166,7 @@ public class Db2ShpTest {
                     // feature object
                     SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
                     System.out.println(shapeObj.toString());
-                    Object attr1=shapeObj.getAttribute("sehrltnmen");
+                    Object attr1=shapeObj.getAttribute("sehrtnmen");
                     assertEquals(attr1.toString(), "abc");
                     Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
                     assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
