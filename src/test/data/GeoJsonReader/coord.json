@@ -1,0 +1,25 @@
+{
+	"type": "FeatureCollection",
+	"features": [{
+		"type": "Feature",
+		"id": "o1",
+		"geometry": {
+			"type": "Point",
+			"coordinates": [7.438637222222222, 46.95108111111111]
+		},
+		"properties": {
+			"@type": "Test1.Topic1.PointOfInterest",
+			"@bid": "bid1",
+			"@topic": "Test1.Topic1"
+		}
+	}, {
+		"type": "Feature",
+		"id": "o2",
+		"geometry": null,
+		"properties": {
+			"@type": "Test1.Topic1.PointOfInterest",
+			"@bid": "bid1",
+			"@topic": "Test1.Topic1"
+		}
+	}]
+}

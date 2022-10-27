@@ -4,6 +4,21 @@ ideas/open issues
 LATEST
 -----------------------------
 
+iox-wkf 1.1.0 (2022-10-27)
+-----------------------------
+- added GeoJsonReader (#37)
+- added GeoJsonWriter (#37)
+- added JsonWriter (#36)
+- added JsonReader (#36)
+- fixed GeoPackageReader NULL geom
+- implement IoxIliReader/ReaderFactory required constructor
+- jackson-core-2.9.7
+- iox-ili-1.21.6
+- ehibasics-1.4.1
+- ili2-5.2.2
+- ili2pg-4.5.0
+- ili2gpkg-4.5.0
+
 iox-wkf 1.0.2 (2021-05-06)
 -----------------------------
 - ShpWriter: shortcut attribute names

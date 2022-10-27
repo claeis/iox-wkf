@@ -1,0 +1,24 @@
+{
+	"type": "FeatureCollection",
+	"features": [{
+		"type": "Feature",
+		"id": "o1",
+		"geometry": null,
+		"properties": {
+			"@type": "Test1.Topic2.ClassA",
+			"@bid": "bid1",
+			"@topic": "Test1.Topic2",
+			"attrStruct": {
+				"@type": "Test1.Topic2.StructA",
+				"attrText": "lineA"
+			},
+			"attrBag": [{
+				"@type": "Test1.Topic2.StructA",
+				"attrText": "lineB"
+			}, {
+				"@type": "Test1.Topic2.StructA",
+				"attrText": "lineC"
+			}]
+		}
+	}]
+}

@@ -44,6 +44,7 @@ import ch.interlis.ili2c.metamodel.Topic;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
+import ch.interlis.iox_j.IoxIliReader;
 import ch.interlis.iox_j.jts.Jts2iox;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
@@ -102,7 +103,7 @@ import ch.interlis.iox.IoxReader;
  * <li><a href="https://www.esri.com/library/whitepapers/pdfs/shapefile.pdf">Shapefile specification</a></li>
  * <li><a href="https://www.ech.ch/vechweb/page?p=dossier&documentNumber=eCH-0031&documentVersion=2.0">Interlis specification</a></li>
  */
-public class ShapeReader implements IoxReader{
+public class ShapeReader implements IoxReader,IoxIliReader{
 	
 	/** The name used for geometry attributes, if no model is set.
      */
@@ -204,6 +205,7 @@ public class ShapeReader implements IoxReader{
 	/** The optional Interlis model.
 	 * @param td
 	 */
+	@Override
 	public void setModel(TransferDescription td){
 		this.td=td;
 	}
@@ -559,4 +561,15 @@ public class ShapeReader implements IoxReader{
 	public String getGeomAttr() {
 		return theGeomAttr;
 	}
+
+    @Override
+    public String getMimeType() {
+        return "x-gis/x-shapefile";
+    }
+
+    @Override
+    public void setTopicFilter(String[] arg0) {
+        // TODO Auto-generated method stub
+        
+    }
 }

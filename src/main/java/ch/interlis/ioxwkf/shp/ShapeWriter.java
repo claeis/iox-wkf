@@ -256,7 +256,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					attributeBuilder.setMaxOccurs(1);
 	    					attributeBuilder.setNillable(true);
 	    					//build the descriptor
-                            String trimmedAttrName = trimAttributeName(attrName,10);
+                            String trimmedAttrName = trimAttributeName(attrName,9);
                             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
 	    					// add descriptor to descriptor map
                             addAttrDesc(attrName, descriptor);      
@@ -282,7 +282,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
     								int surfaceCount=iomGeom.getattrvaluecount("surface");
     								if(surfaceCount<=1) {
-    		        					attributeBuilder.setBinding(Polygon.class);
+    								    /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
+    								     * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
+    								     * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
+    		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}else if(surfaceCount>1){
     		        					attributeBuilder.setBinding(MultiPolygon.class);
     								}
@@ -309,7 +312,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
         								int surfaceCount=iomGeom.getattrvaluecount("surface");
         								if(surfaceCount==1) {
-        		        					attributeBuilder.setBinding(Polygon.class);
+                                            /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
+                                             * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
+                                             * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
+        		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}else if(surfaceCount>1){
         		        					attributeBuilder.setBinding(MultiPolygon.class);
         								}
@@ -329,7 +335,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     					attributeBuilder.setMaxOccurs(1);
     					attributeBuilder.setNillable(true);
     					//build the descriptor
-                        String trimmedAttrName = trimAttributeName(attrName,10);
+                        String trimmedAttrName = trimAttributeName(attrName,9);
                         AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
     					addAttrDesc(attrName, descriptor);  
             		}
@@ -668,7 +674,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	 * @throws IoxException 
 	 */
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) throws IoxException {
-        initAttrDescs(); 
+	    initAttrDescs(); 
         for(AttributeDescriptor attrDesc:attrDescs) {
             if(attrDesc.getType() instanceof GeometryType) {
                 iliGeomAttrName=attrDesc.getLocalName();
@@ -685,7 +691,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
             attributeBuilder.setMaxOccurs(1);
             attributeBuilder.setNillable(true);
             
-            String trimmedAttrName = trimAttributeName(attrDesc.getLocalName(),10);
+            String trimmedAttrName = trimAttributeName(attrDesc.getLocalName(),9);
             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
 
             addAttrDesc(attrDesc.getLocalName(), descriptor);
@@ -700,6 +706,11 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         attrDescs.add(descriptor);
         attrDescsMap.put(originalAttrName, descriptor);
     }
+    
+    private boolean existsAttrName(String attrName) {        
+        return attrDescs.stream().anyMatch(s -> s.getLocalName().equals(attrName)) ? true : false;
+    }
+
 	
     private String trimAttributeName(String attrName, int maxlen) {           
         // Geometry attribute names do not need to be trimmed,
@@ -707,6 +718,18 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         if (attrName.length() <= maxlen || attrName.equalsIgnoreCase(iliGeomAttrName)) {
             return attrName;
         }
-        return NameUtility.shortcutName(attrName,maxlen);
+        
+        String trimmedAttrName = NameUtility.shortcutName(attrName,maxlen);
+
+        // Sehr aehnliche Attributnamen koennen nach dem Kuerzen
+        // gleich sein und muessen nochmals angepasst werden.
+        // Funktioniert bis maximal c=9. Bei c>9 ist die Laenge
+        // des Namens > 10 und nicht mehr Shapefile-konform.
+        String base=trimmedAttrName;
+        int c=1;
+        while(existsAttrName(trimmedAttrName)){
+            trimmedAttrName=base+Integer.toString(c++);
+        }
+        return trimmedAttrName;
     }
 }
