@@ -3,6 +3,9 @@ ideas/open issues
 
 LATEST
 -----------------------------
+
+iox-wkf 1.1.0 (2022-10-27)
+-----------------------------
 - added GeoJsonReader (#37)
 - added GeoJsonWriter (#37)
 - added JsonWriter (#36)
