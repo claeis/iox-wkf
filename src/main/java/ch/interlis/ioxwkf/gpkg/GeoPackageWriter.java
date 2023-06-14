@@ -1,59 +1,27 @@
 package ch.interlis.ioxwkf.gpkg;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
-import java.io.UnsupportedEncodingException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import net.iharder.Base64;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2gpkg.Iox2gpkg;
-import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
 import ch.interlis.ili2c.generator.XSDGenerator;
-import ch.interlis.ili2c.metamodel.BlackboxType;
-import ch.interlis.ili2c.metamodel.CoordType;
-import ch.interlis.ili2c.metamodel.Domain;
-import ch.interlis.ili2c.metamodel.LineForm;
-import ch.interlis.ili2c.metamodel.LocalAttribute;
-import ch.interlis.ili2c.metamodel.MultiSurfaceOrAreaType;
-import ch.interlis.ili2c.metamodel.NumericType;
-import ch.interlis.ili2c.metamodel.NumericalType;
-import ch.interlis.ili2c.metamodel.SurfaceOrAreaType;
-import ch.interlis.ili2c.metamodel.PolylineType;
-import ch.interlis.ili2c.metamodel.MultiPolylineType;
-import ch.interlis.ili2c.metamodel.MultiCoordType;
-import ch.interlis.ili2c.metamodel.TransferDescription;
-import ch.interlis.ili2c.metamodel.Viewable;
+import ch.interlis.ili2c.metamodel.*;
 import ch.interlis.iom.IomObject;
-import ch.interlis.iox.EndBasketEvent;
-import ch.interlis.iox.EndTransferEvent;
-import ch.interlis.iox.IoxEvent;
-import ch.interlis.iox.IoxException;
-import ch.interlis.iox.IoxFactoryCollection;
-import ch.interlis.iox.IoxWriter;
-import ch.interlis.iox.StartBasketEvent;
-import ch.interlis.iox.StartTransferEvent;
+import ch.interlis.iox.*;
 import ch.interlis.iox_j.ObjectEvent;
 import ch.interlis.iox_j.jts.Iox2jts;
 import ch.interlis.iox_j.jts.Iox2jtsException;
 import ch.interlis.iox_j.wkb.Iox2wkbException;
+import ch.interlis.ioxwkf.dbtools.AttributeDescriptor;
+import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import net.iharder.Base64;
+
+import java.io.*;
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.*;
 
 /** Write data to a GeoPackage.
  * If the table in the file already exists, an exception will be thrown.
@@ -123,6 +91,7 @@ public class GeoPackageWriter implements IoxWriter {
 
     // geopackage writer
     private Connection conn = null;
+    private PreparedStatement preparedStatementObjectInsert;
     private boolean featureTableExists = false;
     private boolean appendFeatures = false; // TODO
     private boolean tablesCreated = false;
@@ -137,6 +106,8 @@ public class GeoPackageWriter implements IoxWriter {
 
 	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
 	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private int batchSize = IoxWkfConfig.SETTING_BATCHSIZE_DEFAULT;
+    private int currentBatchSize = 0;
 
 	// model
     private TransferDescription td=null;
@@ -155,6 +126,10 @@ public class GeoPackageWriter implements IoxWriter {
     
     private void init(File file, String tableName, Settings settings) throws IoxException {
         this.tableName = tableName;
+
+        Optional.ofNullable(settings)
+                .map(s -> s.getValue(IoxWkfConfig.SETTING_BATCHSIZE))
+                .ifPresent(batchSizeString -> batchSize = Integer.parseInt(batchSizeString));
         
         if (file.exists()) {
             isNewFile = false;
@@ -515,7 +490,7 @@ public class GeoPackageWriter implements IoxWriter {
             	}
             }
            
-            if (attrDescs != null && attrDescs.size() > 0) {
+            if (preparedStatementObjectInsert == null && attrDescs != null && attrDescs.size() > 0) {
         		// insert statement
         		List<String> attrList = new ArrayList<String>();
         		for (AttributeDescriptor attrDesc : attrDescs) {
@@ -536,23 +511,52 @@ public class GeoPackageWriter implements IoxWriter {
         		}
         		
         		insertIntoTableSql.append(")");
-                
+
                 try {
-                	PreparedStatement pstmt = conn.prepareStatement(insertIntoTableSql.toString());
-                	convertObject(iomObj, pstmt);
-                	pstmt.executeUpdate();
-				} catch (SQLException e) {
-					// TODO: How to deal with sql exception from preparedstatements?
-					// A .gpkg-journal file will be around. Rollback/Close does not help.
-                	throw new IoxException(e.getMessage());
-				} catch (Iox2wkbException e) {
-                	throw new IoxException(e.getMessage());
-                } catch (Iox2jtsException e) {
-                	throw new IoxException(e.getMessage());
-				} 
+                    preparedStatementObjectInsert = conn.prepareStatement(insertIntoTableSql.toString());
+                } catch (SQLException e) {
+                    throw new IoxException(e);
+                }
+            }
+
+            if (preparedStatementObjectInsert != null) {
+                try {
+                    preparedStatementObjectInsert.clearParameters();
+                    convertObject(iomObj, preparedStatementObjectInsert);
+                    preparedStatementObjectInsert.addBatch();
+                    currentBatchSize++;
+
+                    if (currentBatchSize % batchSize == 0) {
+                        preparedStatementObjectInsert.executeBatch();
+                        preparedStatementObjectInsert.clearBatch();
+                        currentBatchSize = 0;
+                    }
+                } catch (SQLException e) {
+                    // TODO: How to deal with sql exception from preparedstatements?
+                    // A .gpkg-journal file will be around. Rollback/Close does not help.
+                    throw new IoxException(e);
+                } catch (Iox2wkbException | Iox2jtsException e) {
+                    throw new IoxException(e.getMessage());
+                }
             }
         } else if(event instanceof EndBasketEvent){
-            // ignore
+            try {
+                if (preparedStatementObjectInsert != null) {
+                    preparedStatementObjectInsert.executeBatch();
+                }
+            } catch (SQLException e) {
+                throw new IoxException(e);
+            } finally {
+                try {
+                    if (preparedStatementObjectInsert != null) {
+                        preparedStatementObjectInsert.close();
+                    }
+                } catch (SQLException e) {
+                    throw new IoxException(e);
+                }
+                preparedStatementObjectInsert = null;
+                currentBatchSize = 0;
+            }
         } else if (event instanceof EndTransferEvent) {
         	if (tablesCreated && attrDescs != null && attrDescs.size() > 0) {
             	try {
