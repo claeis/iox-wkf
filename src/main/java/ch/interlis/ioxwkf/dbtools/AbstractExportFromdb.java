@@ -1,11 +1,7 @@
 package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -127,45 +123,31 @@ public abstract class AbstractExportFromdb {
 
 		EhiLogger.logState("start to write records.");
 		
-		PreparedStatement ps=null;
-		ResultSet rs=null;
-		try {
+		try (Statement ps = db.createStatement()) {
+			// Set autocommit to false, otherwise fetchSize will be ignored by the Postgres JDBC driver.
+			// See https://jdbc.postgresql.org/documentation/query/#getting-results-based-on-a-cursor
+			db.setAutoCommit(false);
+
+			ps.setFetchSize(fetchSize);
+
 			// create selection for appropriate datatypes.
 			// geometry datatypes are wrapped from db to ili.
 			String selectQuery = getSelectStatement(definedSchemaName, definedTableName, attributes, db);
-			ps = db.prepareStatement(selectQuery);
-			ps.clearParameters();
-			ps.setFetchSize(fetchSize);
-			rs = ps.executeQuery();
-			while(rs.next()) {
-				// convert records to iomObject data types.
-				iomObject=convertRecordToIomObject(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, attributes, rs, db);
-				try {
-					writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
-				}catch(IoxException e) {
-					throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to object: <"+file.getPath()+"> failed.",e);
+			try (ResultSet rs = ps.executeQuery(selectQuery)) {
+				while (rs.next()) {
+					// convert records to iomObject data types.
+					iomObject=convertRecordToIomObject(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, attributes, rs, db);
+					try {
+						writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
+					}catch(IoxException e) {
+						throw new IoxException("export of: <"+iomObject.getobjecttag()+"> to object: <"+file.getPath()+"> failed.",e);
+					}
 				}
 			}
 		} catch (SQLException e) {
 			throw new IoxException(e);
-		}finally{
-			if(rs!=null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-					throw new IoxException(e);
-				}
-				rs=null;
-			}
-			if(ps!=null) {
-				try {
-					ps.close();
-				} catch (SQLException e) {
-					throw new IoxException(e);
-				}
-				ps=null;
-			}
 		}
+
 		writer.write(new EndBasketEvent());
 		writer.write(new EndTransferEvent());
 		

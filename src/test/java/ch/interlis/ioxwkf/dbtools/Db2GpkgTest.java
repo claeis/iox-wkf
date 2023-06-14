@@ -2423,7 +2423,7 @@ public class Db2GpkgTest {
 	 */
 	@Test
 	public void export_Large_Dataset_with_Fetch_and_Batch_Ok() throws SQLException, IoxException, ParseException {
-		final int ROW_COUNT = 100_000;
+		final int ROW_COUNT = 100_000; // 6_000_000
 
 		File data = new File(TEST_OUT,"export_Large_Dataset.gpkg");
 		if(data.exists()) {

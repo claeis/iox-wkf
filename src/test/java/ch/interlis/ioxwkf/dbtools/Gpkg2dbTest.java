@@ -1230,7 +1230,7 @@ public class Gpkg2dbTest {
      */
     @Test
     public void import_Large_Dataset_with_Fetch_and_Batch_Ok() throws SQLException, IoxException {
-        final int ROW_COUNT = 100_000;
+        final int ROW_COUNT = 100_000; // 6_000_000
 
         File data = new File(TEST_OUT, "LargeDataset_" + ROW_COUNT + ".gpkg");
         if (!data.exists()) {
