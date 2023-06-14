@@ -223,8 +223,6 @@ public class GeoPackageReader implements IoxReader, IoxIliReader {
                     gpkgAttributes.add(attrDesc);
                 }
                 rs.close();
-                
-                rs.close();
             } catch (SQLException e) {
                 throw new IoxException(e);
             } finally {
