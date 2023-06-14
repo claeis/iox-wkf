@@ -1151,8 +1151,8 @@ public class Gpkg2dbTest {
         }
     }
     
-    // Testet, ob die Fehlermeldung: shapefile .. not found ausgegeben wird,
-    // wenn die gesetzte shp Datei nicht existiert.
+    // Testet, ob die Fehlermeldung: geopackage .. not found ausgegeben wird,
+    // wenn die gesetzte gpkg Datei nicht existiert.
     // Die Test-Konfiguration wird wie folgt gesetzt:
     // - set: database-schema
     // - set: database-table
@@ -1166,7 +1166,7 @@ public class Gpkg2dbTest {
         Connection jdbcConnection=null;
         try {
             jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-            // shp
+            // gpkg
             File data=new File(TEST_IN, "NOTFOUND/testPointAttrs.gpkg");
             config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "testPointAttrs");
             AbstractImport2db gpkg2db=new Gpkg2db();
