@@ -35,6 +35,7 @@ public abstract class AbstractExportFromdb {
 	private SimpleDateFormat dateFormat;
 	private SimpleDateFormat timeFormat;
 	private SimpleDateFormat timeStampFormat;
+	private int fetchSize;
 	
 	/** the default model content.
 	 */
@@ -99,6 +100,14 @@ public abstract class AbstractExportFromdb {
 			EhiLogger.logState("db table name: <"+definedTableName+">.");
 		}
 
+		// optional: set fetch size.
+		String fetchSizeString = config.getValue(IoxWkfConfig.SETTING_FETCHSIZE);
+		if (fetchSizeString == null) {
+			fetchSize = IoxWkfConfig.SETTING_FETCHSIZE_DEFAULT;
+		} else {
+			fetchSize = Integer.parseInt(fetchSizeString);
+		}
+
 		// create selection to get information about attributes of target data base table.
 		List<AttributeDescriptor> attributes=null;
 		try {
@@ -126,6 +135,7 @@ public abstract class AbstractExportFromdb {
 			String selectQuery = getSelectStatement(definedSchemaName, definedTableName, attributes, db);
 			ps = db.prepareStatement(selectQuery);
 			ps.clearParameters();
+			ps.setFetchSize(fetchSize);
 			rs = ps.executeQuery();
 			while(rs.next()) {
 				// convert records to iomObject data types.
