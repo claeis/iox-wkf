@@ -1,16 +1,10 @@
 package ch.interlis.ioxwkf.dbtools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-
+import ch.ehi.basics.settings.Settings;
+import ch.ehi.ili2gpkg.Gpkg2iox;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iox.IoxException;
+import com.vividsolutions.jts.io.ParseException;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -19,10 +13,10 @@ import org.testcontainers.containers.PostgisContainerProvider;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import ch.ehi.basics.settings.Settings;
-import ch.ehi.ili2gpkg.Gpkg2iox;
-import ch.interlis.iom.IomObject;
-import ch.interlis.iox.IoxException;
+import java.io.File;
+import java.sql.*;
+
+import static org.junit.Assert.*;
 
 
 public class Db2GpkgTest {
@@ -2424,4 +2418,76 @@ public class Db2GpkgTest {
 		}
 	}
 
+	/**
+	 * Testet, ob der Export mit angabe von fetchSize und batchSize funktioniert.
+	 */
+	@Test
+	public void export_Large_Dataset_with_Fetch_and_Batch_Ok() throws SQLException, IoxException, ParseException {
+		final int ROW_COUNT = 100_000;
+
+		File data = new File(TEST_OUT,"export_Large_Dataset.gpkg");
+		if(data.exists()) {
+			assertTrue("Could not delete existing output file: " + data, data.delete());
+		}
+
+		InsertLargeDatasetIntoPostgis(ROW_COUNT);
+
+		Settings config = new Settings();
+		config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "dbtogpkgschema");
+		config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgexportlarge");
+		config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_large_dataset");
+		config.setValue(IoxWkfConfig.SETTING_FETCHSIZE, "1000");
+		config.setValue(IoxWkfConfig.SETTING_BATCHSIZE, "1000");
+
+		try (Connection pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())) {
+			AbstractExportFromdb db2Gpkg = new Db2Gpkg();
+
+			long startTime = System.nanoTime();
+			db2Gpkg.exportData(data, pgConnection, config);
+			long endTime = System.nanoTime();
+			System.out.println("Db2Gpkg.exportData with " + ROW_COUNT + " rows took " + (endTime - startTime) / 1_000_000 + "ms");
+		}
+
+		try (Connection gpkgConnection = DriverManager.getConnection("jdbc:sqlite:" + data.getAbsolutePath())) {
+			try (Statement stmt = gpkgConnection.createStatement()) {
+				try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM export_large_dataset")) {
+					assertTrue(rs.next());
+					assertEquals(ROW_COUNT, rs.getInt(1));
+				}
+				try (ResultSet rs = stmt.executeQuery("SELECT attr, geom FROM export_large_dataset LIMIT 1")) {
+					assertTrue(rs.next());
+					assertTrue(rs.getBoolean(1));
+
+					IomObject iomGeom = new Gpkg2iox().read(rs.getBytes(2));
+					assertEquals("COORD {C1 2635450.0, C2 1244699.8}", iomGeom.toString());
+				}
+			}
+		}
+	}
+
+	private void InsertLargeDatasetIntoPostgis(int rowCount) {
+		try (Connection pgConnection = DriverManager.getConnection(postgres.getJdbcUrl() + "&reWriteBatchedInserts=true", postgres.getUsername(), postgres.getPassword())) {
+			try (Statement preStmt = pgConnection.createStatement()) {
+				preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
+				preStmt.execute("CREATE SCHEMA dbtogpkgschema");
+				preStmt.execute("CREATE TABLE dbtogpkgschema.gpkgexportlarge(attr boolean,geom geometry(POINT,2056));");
+			}
+			try (PreparedStatement ps = pgConnection.prepareStatement("INSERT INTO dbtogpkgschema.gpkgexportlarge (geom, attr) VALUES (?, ?);")) {
+				byte[] pointGeom = new byte[] {0x01, 0x01, 0x00, 0x00, 0x20, 0x08, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5d, 0x1b, 0x44, 0x41, (byte)0xcd, (byte)0xcc, (byte)0xcc, (byte)0xcc, 0x1b, (byte)0xfe, 0x32, 0x41};
+				for (int i = 0; i < rowCount; i++) {
+					ps.setObject(1, pointGeom);
+					ps.setBoolean(2, i % 2 == 0);
+					ps.addBatch();
+
+					if (i % 10_000 == 0) {
+						ps.executeBatch();
+						ps.clearBatch();
+					}
+				}
+				ps.executeBatch();
+			}
+		} catch (SQLException e) {
+			fail("Creation of test entries failed: " + e.getMessage());
+		}
+	}
 }

@@ -1,29 +1,28 @@
 package ch.interlis.ioxwkf.dbtools;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
-
+import ch.ehi.basics.settings.Settings;
+import ch.ehi.ili2gpkg.Iox2gpkg;
+import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
+import ch.interlis.iox.IoxException;
+import ch.interlis.iox_j.wkb.Iox2wkbException;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.testcontainers.containers.PostgisContainerProvider;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
-import ch.ehi.basics.settings.Settings;
-import ch.interlis.iox.IoxException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.sql.*;
+
+import static org.junit.Assert.*;
 
 public class Gpkg2dbTest {
     private Statement stmt=null;
     private static final String TEST_IN="src/test/data/Gpkg2DB/";
+    private static final String TEST_OUT="build/test/data/Gpkg2DB";
 
     static String WAIT_PATTERN = ".*database system is ready to accept connections.*\\s";
     
@@ -32,6 +31,11 @@ public class Gpkg2dbTest {
         (PostgreSQLContainer) new PostgisContainerProvider()
         .newInstance().withDatabaseName("ioxwkf")
         .waitingFor(Wait.forLogMessage(WAIT_PATTERN, 2));
+
+    @BeforeClass
+    public static void setup() {
+        new File(TEST_OUT).mkdirs();
+    }
 
     // Testet ob der Import eines Points in die Datenbank funktioniert,
     // wenn die Test-Konfiguration wie folgt gesetzt wird:
@@ -1218,6 +1222,101 @@ public class Gpkg2dbTest {
             if (jdbcConnection!=null){
                 jdbcConnection.close();
             }
+        }
+    }
+
+    /**
+     * Testet, ob der Import mit angabe von fetchSize und batchSize funktioniert.
+     */
+    @Test
+    public void import_Large_Dataset_with_Fetch_and_Batch_Ok() throws SQLException, IoxException {
+        final int ROW_COUNT = 100_000;
+
+        File data = new File(TEST_OUT, "LargeDataset_" + ROW_COUNT + ".gpkg");
+        if (!data.exists()) {
+            CreateLargeTestGpkg(data, ROW_COUNT);
+        }
+
+        try (Connection jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())) {
+            try (Statement preStmt = jdbcConnection.createStatement()) {
+                preStmt.execute("DROP SCHEMA IF EXISTS gpkgtodbschema CASCADE");
+                preStmt.execute("CREATE SCHEMA gpkgtodbschema");
+                preStmt.execute("CREATE TABLE gpkgtodbschema.gpkgimportlarge(fid integer, attr boolean, geom geometry(POINT,2056))");
+            }
+
+            Settings config = new Settings();
+            config.setValue(IoxWkfConfig.SETTING_DBSCHEMA, "gpkgtodbschema");
+            config.setValue(IoxWkfConfig.SETTING_DBTABLE, "gpkgimportlarge");
+            config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "large_dataset");
+            config.setValue(IoxWkfConfig.SETTING_FETCHSIZE, "1000");
+            config.setValue(IoxWkfConfig.SETTING_BATCHSIZE, "1000");
+            AbstractImport2db gpkg2db = new Gpkg2db();
+
+            long startTime = System.nanoTime();
+            gpkg2db.importData(data, jdbcConnection, config);
+            long endTime = System.nanoTime();
+            System.out.println("Gpkg2db.importData with " + ROW_COUNT + " rows took " + (endTime - startTime) / 1_000_000 + "ms");
+
+            try (Statement stmt = jdbcConnection.createStatement()) {
+                try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM gpkgtodbschema.gpkgimportlarge")) {
+                    assertTrue(rs.next());
+                    assertEquals(ROW_COUNT, rs.getInt(1));
+                }
+                try (ResultSet rs = stmt.executeQuery("SELECT fid,attr,st_asewkt(geom) FROM gpkgtodbschema.gpkgimportlarge LIMIT 1")) {
+                    assertTrue(rs.next());
+                    assertEquals(1, rs.getObject(1));
+                    assertEquals(true, rs.getBoolean(2));
+                    assertEquals("SRID=2056;POINT(2635450 1244699.8)", rs.getObject(3));
+                }
+            }
+        }
+    }
+
+    private void CreateLargeTestGpkg(File filename, int rowCount) {
+        try (Connection gpkgConnection = DriverManager.getConnection("jdbc:sqlite:" + filename.getAbsolutePath())) {
+            gpkgConnection.setAutoCommit(false);
+            try (InputStream is = getClass().getResourceAsStream("/ch/interlis/ioxwkf/gpkg/init.sql")) {
+                assertNotNull(is);
+
+                String[] initStatements = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))
+                        .lines().filter(l -> l.trim().length() > 0).toArray(String[]::new);
+
+                for (String initStatement : initStatements) {
+                    try (Statement statement = gpkgConnection.createStatement()) {
+                        statement.execute(initStatement);
+                    }
+                }
+            }
+
+            try (Statement statement = gpkgConnection.createStatement()) {
+                statement.execute("INSERT INTO gpkg_contents (table_name, data_type, identifier, last_change, srs_id) VALUES ('large_dataset', 'features', 'LargeDataset', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 2056);");
+                statement.execute("INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES ('large_dataset', 'geom', 'POINT', 2056, 0, 0);");
+                statement.execute("CREATE TABLE large_dataset (fid INTEGER PRIMARY KEY AUTOINCREMENT, geom POINT, attr TEXT);");
+            }
+
+            IomObject point = new Iom_jObject(null, null);
+            point.setattrvalue("C1", "2635450.0");
+            point.setattrvalue("C2", "1244699.8");
+
+            Object pointGeom = new Iox2gpkg(2).coord2wkb(point, 2056);
+
+            try (PreparedStatement ps = gpkgConnection.prepareStatement("INSERT INTO large_dataset (geom, attr) VALUES (?, ?);")) {
+                for (int i = 0; i < rowCount; i++) {
+                    ps.setObject(1, pointGeom);
+                    ps.setString(2, String.valueOf(i % 2 == 0));
+                    ps.addBatch();
+
+                    if (i % 1_000 == 0) {
+                        ps.executeBatch();
+                        ps.clearBatch();
+                    }
+                }
+                ps.executeBatch();
+            }
+
+            gpkgConnection.commit();
+        } catch (SQLException | IOException | Iox2wkbException e) {
+            fail("Creation of test gpkg failed: " + e.getMessage());
         }
     }
 }
