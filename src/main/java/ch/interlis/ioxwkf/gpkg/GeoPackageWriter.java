@@ -532,8 +532,6 @@ public class GeoPackageWriter implements IoxWriter {
                         currentBatchSize = 0;
                     }
                 } catch (SQLException e) {
-                    // TODO: How to deal with sql exception from preparedstatements?
-                    // A .gpkg-journal file will be around. Rollback/Close does not help.
                     throw new IoxException(e);
                 } catch (Iox2wkbException | Iox2jtsException e) {
                     throw new IoxException(e.getMessage());
