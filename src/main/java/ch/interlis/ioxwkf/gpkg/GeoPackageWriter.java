@@ -1,6 +1,7 @@
 package ch.interlis.ioxwkf.gpkg;
 
 import ch.ehi.basics.settings.Settings;
+import ch.ehi.ili2db.base.StatementExecutionHelper;
 import ch.ehi.ili2gpkg.Iox2gpkg;
 import ch.interlis.ili2c.generator.XSDGenerator;
 import ch.interlis.ili2c.metamodel.*;
@@ -92,6 +93,7 @@ public class GeoPackageWriter implements IoxWriter {
     // geopackage writer
     private Connection conn = null;
     private PreparedStatement preparedStatementObjectInsert;
+    private StatementExecutionHelper statementExecutionHelper;
     private boolean featureTableExists = false;
     private boolean appendFeatures = false; // TODO
     private boolean tablesCreated = false;
@@ -107,7 +109,6 @@ public class GeoPackageWriter implements IoxWriter {
 	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
 	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
     private int batchSize = IoxWkfConfig.SETTING_BATCHSIZE_DEFAULT;
-    private int currentBatchSize = 0;
 
 	// model
     private TransferDescription td=null;
@@ -514,6 +515,7 @@ public class GeoPackageWriter implements IoxWriter {
 
                 try {
                     preparedStatementObjectInsert = conn.prepareStatement(insertIntoTableSql.toString());
+                    statementExecutionHelper = new StatementExecutionHelper(batchSize);
                 } catch (SQLException e) {
                     throw new IoxException(e);
                 }
@@ -523,24 +525,15 @@ public class GeoPackageWriter implements IoxWriter {
                 try {
                     preparedStatementObjectInsert.clearParameters();
                     convertObject(iomObj, preparedStatementObjectInsert);
-                    preparedStatementObjectInsert.addBatch();
-                    currentBatchSize++;
-
-                    if (currentBatchSize % batchSize == 0) {
-                        preparedStatementObjectInsert.executeBatch();
-                        preparedStatementObjectInsert.clearBatch();
-                        currentBatchSize = 0;
-                    }
-                } catch (SQLException e) {
+                    statementExecutionHelper.write(preparedStatementObjectInsert);
+                } catch (SQLException | Iox2wkbException | Iox2jtsException e) {
                     throw new IoxException(e);
-                } catch (Iox2wkbException | Iox2jtsException e) {
-                    throw new IoxException(e.getMessage());
                 }
             }
         } else if(event instanceof EndBasketEvent){
             try {
                 if (preparedStatementObjectInsert != null) {
-                    preparedStatementObjectInsert.executeBatch();
+                    statementExecutionHelper.flush(preparedStatementObjectInsert);
                 }
             } catch (SQLException e) {
                 throw new IoxException(e);
@@ -553,7 +546,7 @@ public class GeoPackageWriter implements IoxWriter {
                     throw new IoxException(e);
                 }
                 preparedStatementObjectInsert = null;
-                currentBatchSize = 0;
+                statementExecutionHelper = null;
             }
         } else if (event instanceof EndTransferEvent) {
         	if (tablesCreated && attrDescs != null && attrDescs.size() > 0) {
