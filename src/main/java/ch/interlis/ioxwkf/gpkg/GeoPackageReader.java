@@ -8,12 +8,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.*;
+
 import net.iharder.Base64;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 import com.vividsolutions.jts.io.ParseException;
 
@@ -103,6 +100,7 @@ public class GeoPackageReader implements IoxReader, IoxIliReader {
 
 	private SimpleDateFormat xtfDate=new SimpleDateFormat("yyyy-MM-dd");
 	private SimpleDateFormat xtfDateTime=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+    private int fetchSize = IoxWkfConfig.SETTING_FETCHSIZE_DEFAULT;
 
     // iox
     private TransferDescription td;
@@ -150,6 +148,11 @@ public class GeoPackageReader implements IoxReader, IoxIliReader {
             }
         }
         this.tableName = tableName;
+
+        Optional.ofNullable(settings)
+                .map(s -> s.getValue(IoxWkfConfig.SETTING_FETCHSIZE))
+                .ifPresent(fetchSizeString -> fetchSize = Integer.parseInt(fetchSizeString));
+
         init(inputFile, settings);
     }
     
@@ -223,8 +226,6 @@ public class GeoPackageReader implements IoxReader, IoxIliReader {
                     gpkgAttributes.add(attrDesc);
                 }
                 rs.close();
-                
-                rs.close();
             } catch (SQLException e) {
                 throw new IoxException(e);
             } finally {
@@ -253,6 +254,7 @@ public class GeoPackageReader implements IoxReader, IoxIliReader {
                 String attrs = GeoPackageWriter.StringJoin(",", gpkgAttributeNames);
                 String sql = "SELECT " + attrs + " FROM " + tableName;
                 featureStatement = conn.createStatement();
+                featureStatement.setFetchSize(fetchSize);
                 featureResultSet = featureStatement.executeQuery(sql);
             } catch (SQLException e) {
                 throw new IoxException(e);

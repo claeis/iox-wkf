@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
+import ch.ehi.ili2db.base.StatementExecutionHelper;
 import ch.ehi.ili2db.converter.ConverterException;
 import ch.ehi.ili2pg.converter.PostgisColumnConverter;
 import ch.interlis.iom.IomObject;
@@ -136,29 +137,20 @@ public abstract class AbstractImport2db {
 		}
 		// insert statement to insert data to db.
 		PreparedStatement ps=null;
+		StatementExecutionHelper statementExecutionHelper = new StatementExecutionHelper(batchSize);
 		
 		// read IoxEvents
 		IoxEvent event=reader.read();
 		EhiLogger.logState("start import");
-		int k = 0;
 		while(event instanceof IoxEvent){
 			if(event instanceof ObjectEvent) {
 				IomObject iomObj=((ObjectEvent)event).getIomObject();
-				int rs;
 				try {
 					ps.clearParameters();
 					// convert data to import data type.
 					convertObject(attrDescriptors, iomObj, ps, db, config, dateFormatPattern);
-					ps.addBatch();
-					
-					if (k % batchSize == 0) {
-						ps.executeBatch();
-						ps.clearBatch();
-		            }
-					k+=1;
-				} catch (SQLException e) {
-					throw new IoxException(e);
-				} catch (ConverterException e) {
+					statementExecutionHelper.write(ps);
+				} catch (SQLException | ConverterException e) {
 					throw new IoxException(e);
 				}
 			}else if(event instanceof StartBasketEvent) {
@@ -174,7 +166,7 @@ public abstract class AbstractImport2db {
 			event=reader.read();
 		}
 		try {
-			ps.executeBatch();
+			statementExecutionHelper.flush(ps);
 		} catch (SQLException e) {
 			throw new IoxException(e);
 		}
