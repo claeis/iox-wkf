@@ -148,4 +148,10 @@ public class IoxWkfConfig {
 	/** the default batch size.
 	 */
 	public final static int SETTING_BATCHSIZE_DEFAULT=5000;
+	/** the jdbc fetch size.
+	 */
+	public final static String SETTING_FETCHSIZE = PREFIX + ".fetchSize";
+	/** the default fetch size.
+	 */
+	public final static int SETTING_FETCHSIZE_DEFAULT = 5_000;
 }
