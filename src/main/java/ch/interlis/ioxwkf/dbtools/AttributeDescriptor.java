@@ -582,6 +582,76 @@ public class AttributeDescriptor {
 		return attributeDesc;
 	}
 	
+    public static List<AttributeDescriptor> addGeomDataToAttributeDescriptors(String dbQuery, List<AttributeDescriptor> attributeDesc, Connection db) throws SQLException, IoxException {
+        for (AttributeDescriptor attr : attributeDesc) {
+            if (attr.getDbColumnTypeName().equals(DBCOLUMN_TYPENAME_GEOMETRY)) {                
+                String columnName = attr.getDbColumnName();
+                ResultSet metaGeom = null;
+                StringBuilder queryBuild = new StringBuilder();
+                queryBuild.append("SELECT ST_NDims("+columnName+") AS coord_dimension, ST_SRID("+columnName+") AS srid, GeometryType("+columnName+") AS type FROM ("+ dbQuery +" LIMIT 1) AS myquery;");
+
+                try {
+                    Statement stmt = db.createStatement();
+                    metaGeom = stmt.executeQuery(queryBuild.toString());
+                } catch (SQLException e) {
+                    throw new SQLException(e);
+                }
+                
+                metaGeom.next();
+                attr.setCoordDimension(metaGeom.getInt(GEOMCOLUMNS_COLUMN_DIMENSION));
+                attr.setSrId(metaGeom.getInt(GEOMCOLUMNS_COLUMN_SRID));
+                attr.setDbColumnGeomTypeName(metaGeom.getString(GEOMCOLUMNS_COLUMN_TYPE));
+            }
+        }
+        return attributeDesc;
+    }
+	
+	public static List<AttributeDescriptor> getAttributeDescriptors(String dbQuery, Connection db) throws IoxException {
+	       List<AttributeDescriptor> attrs = new ArrayList<AttributeDescriptor>();
+	      
+	       if(dbQuery.indexOf(";") != -1){
+	           dbQuery = dbQuery.substring(0, dbQuery.length() - 1);
+	       }
+	       String limitDbQuery = dbQuery + " LIMIT 0;";
+
+	       ResultSet rs = null;
+	       try (PreparedStatement ps = db.prepareStatement(limitDbQuery);) {
+	            ps.clearParameters();
+	            rs = ps.executeQuery();
+	            if(rs == null) {
+	                throw new IoxException("error while running database query: " + dbQuery);
+	            }
+	            
+	            ResultSetMetaData rsmd = rs.getMetaData();
+                int colCount = rsmd.getColumnCount();
+	               
+                for (int i = 1; i <= colCount; i++) {
+                    AttributeDescriptor attr=new AttributeDescriptor();
+                    attr.setPrecision(rsmd.getPrecision(i));
+                    attr.setDbColumnName(rsmd.getColumnName(i));
+                    attr.setDbColumnType(rsmd.getColumnType(i));
+                    attr.setDbColumnTypeName(rsmd.getColumnTypeName(i));
+                    if (rsmd.isNullable(i) == 0) {
+                        attr.setMandatory(true);                        
+                    } else {
+                        attr.setMandatory(true);                        
+                    }
+                    attrs.add(attr);
+                }	            
+	       } catch (SQLException e) {
+	           e.printStackTrace();
+	           throw new IoxException(e);
+	       }
+	       
+           try {
+               addGeomDataToAttributeDescriptors(dbQuery, attrs, db);
+           } catch (SQLException e) {
+               throw new IoxException(e);
+           }
+
+	       return attrs;
+	}
+
 	/** create selection to table inside schema, create and return a list of attribute descriptors.
 	 * @param schemaName
 	 * @param tableName

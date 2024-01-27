@@ -43,6 +43,115 @@ public class Db2ShpTest {
 		new File(TEST_OUT).mkdirs();
 	}
 	
+	@Test
+	public void export_SqlQuery_Ok() throws Exception {
+        Settings config = new Settings();
+        Connection jdbcConnection = null;
+        
+        try {
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+            {
+                Statement preStmt=jdbcConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtoshpschema");
+               
+                preStmt.execute("CREATE TABLE dbtoshpschema.foo(attr character varying, the_geom geometry(POINT, 2056));");
+                preStmt.executeUpdate("INSERT INTO dbtoshpschema.foo(attr, the_geom) VALUES ('coord2d', '0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+                                
+                preStmt.close();
+            }
+            {
+                File data=new File(TEST_OUT,"export_SqlQuery_Ok.shp");
+                if(data.exists()) {
+                    data.delete();
+                }
+                
+                String query = "SELECT * FROM dbtoshpschema.foo;";
+                config.setValue(IoxWkfConfig.SETTING_DBQUERY, query);
+                AbstractExportFromdb db2Shp = new Db2Shp();
+                db2Shp.exportData(data, jdbcConnection, config);
+            }
+            {
+                FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_SqlQuery_Ok.shp"));
+                SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+                SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+                if(featureCollectionIter.hasNext()) {
+                    // feature object
+                    SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+                    Object attr1=shapeObj.getAttribute("attr");
+                    assertEquals(attr1.toString(), "coord2d");
+                    Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                    assertEquals(attr2.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+                }
+                featureCollectionIter.close();
+                dataStore.dispose();
+            }
+        } finally {
+            if (jdbcConnection != null) {
+                jdbcConnection.close();
+            }
+        }
+	}
+	
+    @Test
+    public void export_SqlJoinQuery_Ok() throws Exception {
+        Settings config = new Settings();
+        Connection jdbcConnection = null;
+        
+        try {
+            jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+            {
+                Statement preStmt=jdbcConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtoshpschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtoshpschema");
+               
+                preStmt.execute("CREATE TABLE dbtoshpschema.foo(mypk integer, attr character varying, the_geom geometry(POINT, 2056));");
+                preStmt.executeUpdate("INSERT INTO dbtoshpschema.foo(mypk, attr, the_geom) VALUES (11, 'coord2d', '0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+                
+                preStmt.execute("CREATE TABLE dbtoshpschema.bar(atext character varying, aint integer);");
+                preStmt.executeUpdate("INSERT INTO dbtoshpschema.bar(atext, aint) VALUES ('qwertz', 11)");
+                
+                preStmt.close();
+            }
+            {
+                File data=new File(TEST_OUT,"export_SqlJoinQuery_Ok.shp");
+                if(data.exists()) {
+                    data.delete();
+                }
+                
+                String query = "SELECT * FROM dbtoshpschema.foo LEFT JOIN dbtoshpschema.bar ON foo.mypk = bar.aint;";
+                config.setValue(IoxWkfConfig.SETTING_DBQUERY, query);
+                AbstractExportFromdb db2Shp = new Db2Shp();
+                db2Shp.exportData(data, jdbcConnection, config);
+            }
+            {
+                FileDataStore dataStore = FileDataStoreFinder.getDataStore(new java.io.File(TEST_OUT,"export_SqlJoinQuery_Ok.shp"));
+                SimpleFeatureSource featuresSource = dataStore.getFeatureSource();
+                SimpleFeatureIterator featureCollectionIter=featuresSource.getFeatures().features();
+                if(featureCollectionIter.hasNext()) {
+                    // feature object
+                    SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
+                    Object attr1=shapeObj.getAttribute("mypk");
+                    assertEquals(attr1, 11);
+                    Object attr2=shapeObj.getAttribute("attr");
+                    assertEquals(attr2.toString(), "coord2d");
+                    Object attr3=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
+                    assertEquals(attr3.toString(), "POINT (-0.2285714285714285 0.5688311688311687)");
+                    Object attr4=shapeObj.getAttribute("atext");
+                    assertEquals(attr4.toString(), "qwertz");
+                    Object attr5=shapeObj.getAttribute("aint");
+                    assertEquals(attr5, 11);
+                }
+                featureCollectionIter.close();
+                dataStore.dispose();
+            }
+        } finally {
+            if (jdbcConnection != null) {
+                jdbcConnection.close();
+            }
+        }
+    }
+	
 	// Es soll keine Fehlermeldung ausgegeben werden, 1 Reihe der Tabelle in eine Shp-Datei geschrieben wird.
 	// - set: database-dbtoshpschema
 	// - set: database-table
@@ -2165,7 +2274,6 @@ public class Db2ShpTest {
                 if(featureCollectionIter.hasNext()) {
                     // feature object
                     SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-                    System.out.println(shapeObj.toString());
                     Object attr1=shapeObj.getAttribute("sehrtnmen");
                     assertEquals(attr1.toString(), "abc");
                     Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);

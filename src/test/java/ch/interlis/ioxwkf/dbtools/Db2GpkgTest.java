@@ -34,6 +34,65 @@ public class Db2GpkgTest {
 	public static void setup() {
 		new File(TEST_OUT).mkdirs();
 	}
+	
+    @Test
+    public void export_SqlQuery_Ok() throws Exception {
+        Settings config = new Settings();
+        Connection pgConnection = null;
+        Connection gpkgConnection = null;
+        File data = new File(TEST_OUT, "export_SqlQuery_Ok.gpkg");
+        
+        try {
+            pgConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());          
+            {
+                Statement preStmt=pgConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtogpkgschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtogpkgschema");
+                preStmt.execute("CREATE TABLE dbtogpkgschema.gpkgexportsqlquery(attr character varying,the_geom geometry(POINT,2056));");
+                preStmt.executeUpdate("INSERT INTO dbtogpkgschema.gpkgexportsqlquery(attr,the_geom) VALUES ('coord2d','0101000020080800001CD4411DD441CDBF0E69626CDD33E23F')");
+                preStmt.close();
+            }
+            {
+                if(data.exists()) {
+                    data.delete();
+                }
+                config.setValue(IoxWkfConfig.SETTING_GPKGTABLE, "export_sqlquery_ok");
+                
+                String query = "SELECT * FROM dbtogpkgschema.gpkgexportsqlquery;";
+                config.setValue(IoxWkfConfig.SETTING_DBQUERY, query);
+                AbstractExportFromdb db2Gpkg=new Db2Gpkg();
+                db2Gpkg.exportData(data, pgConnection, config);
+            }
+            {
+                Statement stmt = null;
+                ResultSet rs = null;
+                try {
+                    Gpkg2iox gpkg2iox = new Gpkg2iox(); 
+                    gpkgConnection = DriverManager.getConnection("jdbc:sqlite:" + data.getAbsolutePath());
+                    stmt = gpkgConnection.createStatement();
+                    rs = stmt.executeQuery("SELECT attr, the_geom FROM export_sqlquery_ok");
+                    while (rs.next()) {
+                        assertEquals("coord2d", rs.getString(1));
+                        IomObject iomGeom = gpkg2iox.read(rs.getBytes(2));
+                        assertEquals("COORD {C1 -0.22857142857142854, C2 0.5688311688311687}",
+                                iomGeom.toString());
+                    }
+                rs.close();
+                stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    fail();
+                }
+            }
+        } finally {
+            if (pgConnection!=null) {
+                pgConnection.close();
+            }
+            if (gpkgConnection!=null) {
+                gpkgConnection.close();
+            }
+        }
+    }
 
 	// Es soll keine Fehlermeldung ausgegeben werden, wenn 1 Reihe der Tabelle in eine Gpkg-Datei geschrieben wird.
 	// - set: database-dbtogpkgschema

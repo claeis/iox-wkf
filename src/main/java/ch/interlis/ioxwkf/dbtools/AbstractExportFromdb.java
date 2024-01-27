@@ -5,6 +5,8 @@ import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
 import ch.ehi.ili2db.converter.ConverterException;
@@ -80,22 +82,29 @@ public abstract class AbstractExportFromdb {
 		}
 		timeStampFormat = new SimpleDateFormat(timeStampFormatPattern);
 		
-		// optional: set database schema, if table is not in default schema.
-		String definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
-		if(definedSchemaName==null) {
-			EhiLogger.logState("no db schema name defined, get default schema.");
-		}else {
-			EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+		// strategy: if DBQUERY is found, possible existing DBSCHEMA
+		// and/or DBTABLE are ignored
+		String definedDbQuery = config.getValue(IoxWkfConfig.SETTING_DBQUERY);	
+		String definedSchemaName = null;
+		String definedTableName = null;
+		if (definedDbQuery == null) {
+		    // optional: set database schema, if table is not in default schema.
+	        definedSchemaName=config.getValue(IoxWkfConfig.SETTING_DBSCHEMA);
+	        if(definedSchemaName==null) {
+	            EhiLogger.logState("no db schema name defined, get default schema.");
+	        }else {
+	            EhiLogger.logState("db schema name: <"+definedSchemaName+">.");
+	        }
+	        
+	        // mandatory: set database table to insert data into.
+	        definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
+	        if(definedTableName==null) {
+	            throw new IoxException("database table==null.");
+	        }else {
+	            EhiLogger.logState("db table name: <"+definedTableName+">.");
+	        }		    
 		}
 		
-		// mandatory: set database table to insert data into.
-		String definedTableName=config.getValue(IoxWkfConfig.SETTING_DBTABLE);
-		if(definedTableName==null) {
-			throw new IoxException("database table==null.");
-		}else {
-			EhiLogger.logState("db table name: <"+definedTableName+">.");
-		}
-
 		// optional: set fetch size.
 		String fetchSizeString = config.getValue(IoxWkfConfig.SETTING_FETCHSIZE);
 		if (fetchSizeString == null) {
@@ -106,14 +115,22 @@ public abstract class AbstractExportFromdb {
 
 		// create selection to get information about attributes of target data base table.
 		List<AttributeDescriptor> attributes=null;
-		try {
-			attributes=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
-		}catch(Exception e) {
-			if(definedSchemaName!=null) {
-				throw new IoxException("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: not found.",e);
-			}else{
-				throw new IoxException("db table "+definedTableName+" inside default db schema: not found.",e);
-			}
+		if (definedDbQuery != null) {
+            try {
+                attributes = AttributeDescriptor.getAttributeDescriptors(definedDbQuery, db);
+            } catch (Exception e) {
+                throw new IoxException("database query <"+definedDbQuery+"> throws errors.", e);
+            }
+		} else {
+	        try {
+	            attributes=AttributeDescriptor.getAttributeDescriptors(definedSchemaName, definedTableName, db);
+	        }catch(Exception e) {
+	            if(definedSchemaName!=null) {
+	                throw new IoxException("db table <"+definedTableName+"> inside db schema <"+definedSchemaName+">: not found.",e);
+	            }else{
+	                throw new IoxException("db table "+definedTableName+" inside default db schema: not found.",e);
+	            }
+	        }		    
 		}
 		
 		IomObject iomObject=null;
@@ -132,11 +149,21 @@ public abstract class AbstractExportFromdb {
 
 			// create selection for appropriate datatypes.
 			// geometry datatypes are wrapped from db to ili.
-			String selectQuery = getSelectStatement(definedSchemaName, definedTableName, attributes, db);
+			String selectQuery;
+			if (definedDbQuery != null) {
+			    selectQuery = getSelectStatement(definedDbQuery, attributes, db);
+			} else {
+	            selectQuery = getSelectStatement(definedSchemaName, definedTableName, attributes, db);			    
+			}
+			
 			try (ResultSet rs = ps.executeQuery(selectQuery)) {
 				while (rs.next()) {
 					// convert records to iomObject data types.
-					iomObject=convertRecordToIomObject(definedSchemaName,definedTableName, MODELNAME, TOPICNAME, attributes, rs, db);
+		            if (definedSchemaName != null) {
+		                // is needed for creating a IomObject
+		                definedTableName = "native_query_" + UUID.randomUUID().toString().substring(0,8);
+		            }
+					iomObject=convertRecordToIomObject(definedTableName, MODELNAME, TOPICNAME, attributes, rs, db);
 					try {
 						writer.write(new ch.interlis.iox_j.ObjectEvent(iomObject));
 					}catch(IoxException e) {
@@ -159,40 +186,61 @@ public abstract class AbstractExportFromdb {
 		EhiLogger.logState("export: <successful>.");
 	}
 	
+	private String getAttributeSelectStatement(List<AttributeDescriptor> attrs) {
+        StringBuilder selectionQueryBuild = new StringBuilder();
+        String comma="";
+        for(AttributeDescriptor attr:attrs) {
+            String dbColName="\""+attr.getDbColumnName()+"\"";
+            Integer datatype=attr.getDbColumnType();
+            String geoColumnTypeGeom=attr.getDbColumnTypeName();
+            String geoColumnTypeName=attr.getDbColumnGeomTypeName();
+            selectionQueryBuild.append(comma);
+            if(attr.isGeometry()) {
+                // the object is a geometry.
+                if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(dbColName));
+                }else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOINT)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiCoord(dbColName));
+                }else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperPolyline(dbColName));
+                }else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTILINESTRING)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiPolyline(dbColName));
+                }else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperSurface(dbColName));
+                }else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOLYGON)) {
+                    selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiSurface(dbColName));
+                }
+            }else if(datatype.equals(Types.OTHER)) {
+                // the object is not part of geometry.
+                selectionQueryBuild.append(dbColName);
+            }else {
+                selectionQueryBuild.append(dbColName);
+            }
+            comma=",";
+        }
+        return selectionQueryBuild.toString();
+	}
+	
+    private String getSelectStatement(String dbQuery, List<AttributeDescriptor> attrs, Connection db) throws SQLException {
+        if(dbQuery.indexOf(";") != -1){
+            dbQuery = dbQuery.substring(0, dbQuery.length() - 1);
+        }
+
+        StringBuilder selectionQueryBuild = new StringBuilder();
+        selectionQueryBuild.append("SELECT ");
+        // convert each attribute to db valid data type.
+        selectionQueryBuild.append(getAttributeSelectStatement(attrs));
+        selectionQueryBuild.append(" FROM ");
+        selectionQueryBuild.append("("+dbQuery+") AS myquery;");
+        return selectionQueryBuild.toString();
+    }
+    
 	private String getSelectStatement(String schemaName, String tableName, List<AttributeDescriptor> attrs, Connection db) throws SQLException {
 		StringBuilder selectionQueryBuild=new StringBuilder();
 		String comma="";
 		selectionQueryBuild.append("SELECT ");
-		// convert each attribute to db valid data type.
-		for(AttributeDescriptor attr:attrs) {
-			String dbColName="\""+attr.getDbColumnName()+"\"";
-			Integer datatype=attr.getDbColumnType();
-			String geoColumnTypeGeom=attr.getDbColumnTypeName();
-			String geoColumnTypeName=attr.getDbColumnGeomTypeName();
-			selectionQueryBuild.append(comma);
-			if(attr.isGeometry()) {
-				// the object is a geometry.
-				if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperCoord(dbColName));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOINT)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiCoord(dbColName));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperPolyline(dbColName));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTILINESTRING)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiPolyline(dbColName));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperSurface(dbColName));
-				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOLYGON)) {
-					selectionQueryBuild.append(pgConverter.getSelectValueWrapperMultiSurface(dbColName));
-				}
-			}else if(datatype.equals(Types.OTHER)) {
-				// the object is not part of geometry.
-				selectionQueryBuild.append(dbColName);
-			}else {
-				selectionQueryBuild.append(dbColName);
-			}
-			comma=",";
-		}
+	    // convert each attribute to db valid data type.
+        selectionQueryBuild.append(getAttributeSelectStatement(attrs));
 		selectionQueryBuild.append(" FROM ");
 		if(schemaName!=null) {
 			selectionQueryBuild.append("\""+schemaName+"\""+".");
@@ -201,7 +249,7 @@ public abstract class AbstractExportFromdb {
 		return selectionQueryBuild.toString();
 	}
 	
-	private IomObject convertRecordToIomObject(String definedSchemaName,String definedTableName, String modelName, String topicName, List<AttributeDescriptor> attrs, ResultSet rs, Connection db) throws IoxException, SQLException {
+	private IomObject convertRecordToIomObject(String definedTableName, String modelName, String topicName, List<AttributeDescriptor> attrs, ResultSet rs, Connection db) throws IoxException, SQLException {
 		IomObject geoIomObj=null;
 		// create iomObject to put attributes or objects inside.
 		IomObject iomObj;
