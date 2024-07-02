@@ -37,6 +37,57 @@ public class Db2CsvTest {
 	{
 		new File(TEST_OUT).mkdirs();
 	}
+	
+	@Test 
+	public void export_SqlQuery_Ok()  throws Exception {
+	    Settings config = new Settings();
+	    Connection jdbcConnection = null;    
+	    try {
+	        jdbcConnection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+	        {
+                Statement preStmt=jdbcConnection.createStatement();
+                preStmt.execute("DROP SCHEMA IF EXISTS dbtocsvschema CASCADE");
+                preStmt.execute("CREATE SCHEMA dbtocsvschema");
+                preStmt.execute("CREATE TABLE dbtocsvschema.csvexportsql(idname character varying, abbreviation character varying, state character varying) WITH (OIDS=FALSE);");
+                preStmt.executeUpdate("INSERT INTO dbtocsvschema.csvexportsql (idname, abbreviation, state) VALUES ('10', 'CH', 'Schweiz')");
+                preStmt.close();
+	        }
+	        {
+	            File data=new File(TEST_OUT+"export_SqlQuery_Ok.csv");
+                if(data.exists()) {
+                    data.delete();
+                }
+                String query = "SELECT * FROM dbtocsvschema.csvexportsql;";
+                config.setValue(IoxWkfConfig.SETTING_DBQUERY, query);
+                config.setValue(IoxWkfConfig.SETTING_FIRSTLINE, IoxWkfConfig.SETTING_FIRSTLINE_AS_HEADER);
+                AbstractExportFromdb db2Csv=new Db2Csv();
+                db2Csv.exportData(data, jdbcConnection, config);
+	        } 
+            {
+                // Open the file for reading
+                BufferedReader br = new BufferedReader(new FileReader(new File(TEST_OUT + "export_SqlQuery_Ok.csv")));
+                String line = null;
+                int lineIndex = 0;
+                while ((line = br.readLine()) != null) {
+                    lineIndex += 1;
+                    if (lineIndex == 1) {
+                        assertEquals("\"abbreviation\",\"idname\",\"state\"", line);
+                    } else if (lineIndex == 2) {
+                        assertEquals("\"CH\",\"10\",\"Schweiz\"", line);
+                    } else {
+                        fail();
+                    }
+                }
+                br.close();
+            }
+	    } finally{
+            if(jdbcConnection!=null){
+                jdbcConnection.close();
+            }
+        }
+	}
+	
+	
 	// Es soll keine Fehlermeldung ausgegeben werden, 1 Reihe der Tabelle in eine Csv-Datei geschrieben wird.
 	// - set: database-dbtocsvschema
 	// - set: database-table
