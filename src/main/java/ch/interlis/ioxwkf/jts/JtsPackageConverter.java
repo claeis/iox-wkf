@@ -13,8 +13,7 @@ public class JtsPackageConverter {
             org.locationtech.jts.geom.Geometry newGeom = wkbReader.read(wkbWriter.write(oldGeom));
             return newGeom;
         } catch (org.locationtech.jts.io.ParseException e) {
-            e.printStackTrace();
-            throw new IOException(e.getMessage());
+            throw new IOException(e);
         } 
     }
 
@@ -28,8 +27,7 @@ public class JtsPackageConverter {
             com.vividsolutions.jts.geom.Geometry oldGeom = wkbReader.read(wkbWriter.write(newGeom));            
             return oldGeom;
         } catch (com.vividsolutions.jts.io.ParseException e) {
-            e.printStackTrace();
-            throw new IOException(e.getMessage());
+            throw new IOException(e);
         } 
     }
     
