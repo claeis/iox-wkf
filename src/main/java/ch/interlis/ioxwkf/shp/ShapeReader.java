@@ -24,14 +24,6 @@ import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.feature.type.AttributeType;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.geom.PrecisionModel;
 
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.ili2c.metamodel.DataModel;
@@ -46,6 +38,7 @@ import ch.interlis.ili2c.metamodel.Viewable;
 import ch.interlis.iom.IomObject;
 import ch.interlis.iox_j.IoxIliReader;
 import ch.interlis.iox_j.jts.Jts2iox;
+import ch.interlis.ioxwkf.jts.JtsPackageConverter;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.IoxFactoryCollection;
@@ -280,7 +273,7 @@ public class ShapeReader implements IoxReader,IoxIliReader{
 		if(state==INSIDE_OBJECT){
 			SimpleFeature shapeObj=null;
 			if(pendingShapeObj!=null) {
-				shapeObj=pendingShapeObj;
+	              shapeObj=pendingShapeObj;
 				pendingShapeObj=null;
 			}else if(featureCollectionIter.hasNext()) {
 				shapeObj=(SimpleFeature) featureCollectionIter.next();	
@@ -300,22 +293,22 @@ public class ShapeReader implements IoxReader,IoxIliReader{
 	        		AttributeType shapeAttrType=shapeAttribute.getType();
 	        		Object shapeAttrValue=shapeObj.getAttribute(shapeAttrName);
 	        		if(shapeAttrValue!=null) {
-		        		if(shapeAttrValue instanceof MultiLineString) {
+		        		if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiLineString) {
 	    					// multiLineString
-	        				MultiLineString multiLineString=(MultiLineString)shapeAttrValue;
+		        		    org.locationtech.jts.geom.MultiLineString multiLineString=(org.locationtech.jts.geom.MultiLineString)shapeAttrValue;
 	        				// contains number of linestrings.
-	        				Coordinate[] coords=multiLineString.getCoordinates();
-	        				PrecisionModel precisionModel=multiLineString.getPrecisionModel();
+		        		    org.locationtech.jts.geom.Coordinate[] coords=multiLineString.getCoordinates();
+		        		    org.locationtech.jts.geom.PrecisionModel precisionModel=multiLineString.getPrecisionModel();
 	        				Integer srid=multiLineString.getSRID();
 	        				if(multiLineString.getNumGeometries()==1) {
 			        			// lineString
 	        					try {
 	        						if(coords!=null && precisionModel!=null && srid!=null) {
 	        							// create lineString
-	        							LineString lineString=new LineString(coords, precisionModel, srid);
+	        						    org.locationtech.jts.geom.LineString lineString=new org.locationtech.jts.geom.LineString(coords, precisionModel, srid);
 	        							if(lineString!=null) {
 	        								// convert to iox polyline
-	        								subIomObj=Jts2iox.JTS2polyline(lineString);
+	        								subIomObj=Jts2iox.JTS2polyline(JtsPackageConverter.toOldPackage(lineString));
 	        							}
 	        						}
 	        					} catch (Exception e) {
@@ -324,52 +317,56 @@ public class ShapeReader implements IoxReader,IoxIliReader{
 	    					}else {
 	    						// multiLineString
 		        				try {
-	    							subIomObj=Jts2iox.JTS2multipolyline(multiLineString);
+	    							subIomObj=Jts2iox.JTS2multipolyline(JtsPackageConverter.toOldPackage(multiLineString));
 								} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}
 	        				iomObj.addattrobj(iliAttrName, subIomObj);
-	    				}else if(shapeAttrValue instanceof MultiPoint) {
+	    				}else if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiPoint) {
 	    					// multiPoint
-	        				MultiPoint multiPoint=(MultiPoint)shapeAttrValue;
+	    				    org.locationtech.jts.geom.MultiPoint multiPoint=(org.locationtech.jts.geom.MultiPoint)shapeAttrValue;
 	        				try {
-	        					Coordinate[] coords=multiPoint.getCoordinates();
-								subIomObj=Jts2iox.JTS2multicoord(coords);
+	        				    org.locationtech.jts.geom.Coordinate[] coords=multiPoint.getCoordinates();
+								subIomObj=Jts2iox.JTS2multicoord(JtsPackageConverter.toOldPackage(coords));
 								iomObj.addattrobj(iliAttrName, subIomObj);
 							} catch (Exception e){
 								throw new IoxException(e);
 							}
-	    				}else if(shapeAttrValue instanceof MultiPolygon) {
+	    				}else if(shapeAttrValue instanceof org.locationtech.jts.geom.MultiPolygon) {
 	        				// multiPolygon
-	        				MultiPolygon multiPolygon=(MultiPolygon)shapeAttrValue;
+	    				    org.locationtech.jts.geom.MultiPolygon multiPolygon=(org.locationtech.jts.geom.MultiPolygon)shapeAttrValue;
 	        				if(multiPolygon.getNumGeometries()==1) {
 	        					try {
-		        					Polygon polygonObj=(Polygon)multiPolygon.getGeometryN(0);
-									subIomObj=Jts2iox.JTS2surface(polygonObj);
+	        					    org.locationtech.jts.geom.Polygon polygonObj=(org.locationtech.jts.geom.Polygon)multiPolygon.getGeometryN(0);
+									subIomObj=Jts2iox.JTS2surface(JtsPackageConverter.toOldPackage(polygonObj));
 			        				iomObj.addattrobj(iliAttrName, subIomObj);
 	        					} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}else {
 		        				try {
-	    							subIomObj=Jts2iox.JTS2multisurface(multiPolygon);
+	    							subIomObj=Jts2iox.JTS2multisurface(JtsPackageConverter.toOldPackage(multiPolygon));
 	    							iomObj.addattrobj(iliAttrName, subIomObj);
 								} catch (Exception e){
 									throw new IoxException(e);
 								}
 	        				}
-	        			}else if(shapeAttrValue instanceof Point) {
+	        			}else if(shapeAttrValue instanceof org.locationtech.jts.geom.Point) {
 	        				// point
-	        				Point pointObj=(Point)shapeAttrValue;
-	        				Coordinate coord=pointObj.getCoordinate();
-							subIomObj=Jts2iox.JTS2coord(coord);
+	        			    org.locationtech.jts.geom.Point pointObj=(org.locationtech.jts.geom.Point)shapeAttrValue;
+	        			    org.locationtech.jts.geom.Coordinate coord=pointObj.getCoordinate();
+							subIomObj=Jts2iox.JTS2coord(JtsPackageConverter.toOldPackage(coord));
 							iomObj.addattrobj(iliAttrName, subIomObj);
-	        			}else if(shapeAttrValue instanceof Polygon) {
+	        			}else if(shapeAttrValue instanceof org.locationtech.jts.geom.Polygon) {
 	        				// polygon
-	        				Polygon polygonObj=(Polygon)shapeAttrValue;
-							subIomObj=Jts2iox.JTS2surface(polygonObj);
-	        				iomObj.addattrobj(iliAttrName, subIomObj);
+	        			    try {
+	                            org.locationtech.jts.geom.Polygon polygonObj=(org.locationtech.jts.geom.Polygon)shapeAttrValue;
+	                            subIomObj=Jts2iox.JTS2surface(JtsPackageConverter.toOldPackage(polygonObj));
+	                            iomObj.addattrobj(iliAttrName, subIomObj);	        			        
+	        			    } catch (Exception e) {
+                                throw new IoxException(e);
+                            }
 	        			}else {
 		        			String shapeGeomTypeName=shapeAttrType.getName().toString();
 		        			String shapeTypeName=shapeAttrType.getBinding().getSimpleName();
@@ -406,6 +403,7 @@ public class ShapeReader implements IoxReader,IoxIliReader{
 		return null;
 	}
 
+	
     private String getNameList(List<AttributeDescriptor> attrs) {
 		StringBuffer ret=new StringBuffer();
 		String sep="";

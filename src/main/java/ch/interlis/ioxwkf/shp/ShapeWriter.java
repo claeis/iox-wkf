@@ -58,16 +58,6 @@ import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.ReferenceIdentifier;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateList;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 import ch.interlis.iom.*;
 import ch.interlis.iox.EndBasketEvent;
 import ch.interlis.iox.EndTransferEvent;
@@ -81,6 +71,7 @@ import ch.interlis.iox_j.jts.Iox2jts;
 import ch.interlis.iox_j.jts.Iox2jtsException;
 import ch.interlis.iox_j.wkb.Wkb2iox;
 import ch.interlis.ioxwkf.dbtools.IoxWkfConfig;
+import ch.interlis.ioxwkf.jts.JtsPackageConverter;
 import ch.interlis.iom_j.ViewableProperties;
 import ch.interlis.iom_j.ViewableProperty;
 import ch.interlis.iom_j.xtf.Ili2cUtility;
@@ -213,7 +204,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 			ObjectEvent obj=(ObjectEvent) event;
 			IomObject iomObj=(IomObject)obj.getIomObject();
 			String tag = iomObj.getobjecttag();
-			// check if class exist in model/models
+			// check if class exist in model/models			
 			if(attrDescsMap==null) {
                 initAttrDescs();
 				if(td!=null) {
@@ -232,19 +223,19 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    					ch.interlis.ili2c.metamodel.Type iliType=localAttr.getDomainResolvingAliases();
 	    					if(iliType instanceof ch.interlis.ili2c.metamodel.CoordType) {
 	    						iliGeomAttrName=attrName;
-		    					attributeBuilder.setBinding(Point.class);
+		    					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
     							if(defaultSrsId!=null) {
     								attributeBuilder.setCRS(createCrs(defaultSrsId));
     							}
 	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.PolylineType) {
 	    						iliGeomAttrName=attrName;
-		    					attributeBuilder.setBinding(LineString.class);
+		    					attributeBuilder.setBinding(org.locationtech.jts.geom.LineString.class);
     							if(defaultSrsId!=null) {
     								attributeBuilder.setCRS(createCrs(defaultSrsId));
     							}
 	    					}else if(iliType instanceof ch.interlis.ili2c.metamodel.SurfaceOrAreaType) {
 	    						iliGeomAttrName=attrName;
-		    					attributeBuilder.setBinding(Polygon.class);
+		    					attributeBuilder.setBinding(org.locationtech.jts.geom.Polygon.class);
     							if(defaultSrsId!=null) {
     								attributeBuilder.setCRS(createCrs(defaultSrsId));
     							}
@@ -272,25 +263,25 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     						IomObject iomGeom=iomObj.getattrobj(attrName,0);
     						if (iomGeom != null){
     							if (iomGeom.getobjecttag().equals(COORD)){
-    	        					attributeBuilder.setBinding(Point.class);
+    	        					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
     							}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
-    	        					attributeBuilder.setBinding(MultiPoint.class);
+    	        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPoint.class);
     							}else if(iomGeom.getobjecttag().equals(POLYLINE)){
-    	        					attributeBuilder.setBinding(LineString.class);
+    	        					attributeBuilder.setBinding(org.locationtech.jts.geom.LineString.class);
     							}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
-    	        					attributeBuilder.setBinding(MultiLineString.class);
+    	        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiLineString.class);
     							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
     								int surfaceCount=iomGeom.getattrvaluecount("surface");
     								if(surfaceCount<=1) {
     								    /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
     								     * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
     								     * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
-    		        					attributeBuilder.setBinding(MultiPolygon.class);
+    		        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPolygon.class);
     								}else if(surfaceCount>1){
-    		        					attributeBuilder.setBinding(MultiPolygon.class);
+    		        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPolygon.class);
     								}
     							}else {
-    	        					attributeBuilder.setBinding(Point.class);
+    	        					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
     							}
     							if(defaultSrsId!=null) {
     								attributeBuilder.setCRS(createCrs(defaultSrsId));
@@ -302,25 +293,25 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         						IomObject iomGeom=iomObj.getattrobj(attrName,0);
         						if (iomGeom != null){
         							if (iomGeom.getobjecttag().equals(COORD)){
-        	        					attributeBuilder.setBinding(Point.class);
+        	        					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
         							}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
-        	        					attributeBuilder.setBinding(MultiPoint.class);
+        	        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPoint.class);
         							}else if(iomGeom.getobjecttag().equals(POLYLINE)){
-        	        					attributeBuilder.setBinding(LineString.class);
+        	        					attributeBuilder.setBinding(org.locationtech.jts.geom.LineString.class);
         							}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
-        	        					attributeBuilder.setBinding(MultiLineString.class);
+        	        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiLineString.class);
         							}else if (iomGeom.getobjecttag().equals(MULTISURFACE)){
         								int surfaceCount=iomGeom.getattrvaluecount("surface");
         								if(surfaceCount==1) {
                                             /* Weil der Featuretype (das Schema) des Shapefiles anhand des ersten IomObjektes erstellt wird, 
                                              * kann es vorkommen, dass Multisurfaces mit mehr als einer Surface nicht zu einem Multipolygon umgewandelt werden, 
                                              * sondern zu einem Polygon. Aus diesem Grund wird immer das MultiPolygon-Binding verwendet. */
-        		        					attributeBuilder.setBinding(MultiPolygon.class);
+        		        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPolygon.class);
         								}else if(surfaceCount>1){
-        		        					attributeBuilder.setBinding(MultiPolygon.class);
+        		        					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPolygon.class);
         								}
         							}else {
-        	        					attributeBuilder.setBinding(Point.class);
+        	        					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
         							}
         							if(defaultSrsId!=null) {
         								attributeBuilder.setCRS(createCrs(defaultSrsId));
@@ -378,7 +369,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				}else {
 			        SimpleFeatureTypeBuilder builder = new SimpleFeatureTypeBuilder();
 			        builder.setName(featureTypeName);
-			        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
+			        builder.add(ShapeReader.GEOTOOLS_THE_GEOM, org.locationtech.jts.geom.Point.class);
 			        if(defaultSrsId!=null) {
 			        	builder.setCRS(createCrs(defaultSrsId));
 			        }
@@ -426,7 +417,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				attributeBuilder.setName(ShapeReader.GEOTOOLS_THE_GEOM);
 				builder.add(attributeBuilder.buildDescriptor(ShapeReader.GEOTOOLS_THE_GEOM));
 	            builder.setDefaultGeometry(ShapeReader.GEOTOOLS_THE_GEOM);
-	    		CoordinateReferenceSystem crs =((GeometryType)attrDesc.getType()).getCoordinateReferenceSystem();
+	            GeometryType geomType = (GeometryType)attrDesc.getType();
+	    		CoordinateReferenceSystem crs = geomType.getCoordinateReferenceSystem();
 	    		if(crs!=null) {
 	    	        builder.setCRS(crs);
 	    	        srsId=getEPSGCode(crs);
@@ -437,7 +429,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
         	}
         }
         if(!hasGeometry) {
-	        builder.add(ShapeReader.GEOTOOLS_THE_GEOM,Point.class);
+	        builder.add(ShapeReader.GEOTOOLS_THE_GEOM, org.locationtech.jts.geom.Point.class);
 	        if(defaultSrsId!=null) {
 	        	builder.setCRS(createCrs(defaultSrsId));
 	        }
@@ -459,7 +451,8 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
     private SimpleFeature convertObject(IomObject obj) throws IoxException, IOException, Iox2jtsException {
         for (Map.Entry<String, AttributeDescriptor> entry : attrDescsMap.entrySet()) {
             AttributeDescriptor attrDesc = entry.getValue();
-            GeometryFactory geometryFactory = new GeometryFactory();
+//            com.vividsolutions.jts.geom.GeometryFactory geometryFactory = new com.vividsolutions.jts.geom.GeometryFactory();
+            org.locationtech.jts.geom.GeometryFactory geometryFactory = new org.locationtech.jts.geom.GeometryFactory();
             String attrName = attrDesc.getLocalName();
             String originalAttrName = entry.getKey();
 
@@ -484,33 +477,33 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 				if (iomGeom != null){
 					if (iomGeom.getobjecttag().equals(COORD)){
 						// COORD
-						Coordinate jtsCoord=null;
+					    org.locationtech.jts.geom.Coordinate jtsCoord=null;
 						try {
 							// convert ili to jts
-							jtsCoord=ch.interlis.iox_j.jts.Iox2jts.coord2JTS(iomGeom);
+							jtsCoord = JtsPackageConverter.toNewPackage(ch.interlis.iox_j.jts.Iox2jts.coord2JTS(iomGeom));
 						} catch (Iox2jtsException e) {
 							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
 						}
 						if(iomValueCount > 1){
 							throw new IoxException("max one COORD value allowed ("+attrName+")");
 						}
-						Geometry geometry=(geometryFactory.createPoint(jtsCoord));
+						org.locationtech.jts.geom.Geometry geometry = geometryFactory.createPoint(jtsCoord);
 						if(srsId!=null) {
 							geometry.setSRID(srsId);
 						}
 						featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
 					}else if (iomGeom.getobjecttag().equals(MULTICOORD)){
 						try {
-							Geometry geometry = Iox2jts.multicoord2JTS(iomGeom);
+						    org.locationtech.jts.geom.Geometry geometry = JtsPackageConverter.toNewPackage(Iox2jts.multicoord2JTS(iomGeom));
 							featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
 						}catch(Exception e) {
 							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
 						}
 					}else if(iomGeom.getobjecttag().equals(POLYLINE)){
 						// POLYLINE
-						CoordinateList jtsLineString=null;
+                        org.locationtech.jts.geom.CoordinateList jtsLineString=null;
 						try{
-							jtsLineString=ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(iomGeom, true, 0.0);
+							jtsLineString = JtsPackageConverter.toNewPackage(ch.interlis.iox_j.jts.Iox2jts.polyline2JTS(iomGeom, true, 0.0));
 						}catch (Iox2jtsException e){
 							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
 						}
@@ -518,10 +511,10 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 							throw new IoxException("max one POLYLINE value allowed ("+attrName+")");
 						}
 						// convert list to array
-						Coordinate[] coordArray = new Coordinate[jtsLineString.size()];
-						coordArray = (Coordinate[]) jtsLineString.toArray(coordArray);
+						org.locationtech.jts.geom.Coordinate[] coordArray = new org.locationtech.jts.geom.Coordinate[jtsLineString.size()];
+						coordArray = (org.locationtech.jts.geom.Coordinate[]) jtsLineString.toArray(coordArray);
 						// convert ili to jts
-						Geometry geometry=(geometryFactory.createLineString(coordArray));
+						org.locationtech.jts.geom.Geometry geometry=(geometryFactory.createLineString(coordArray));
 						if(srsId!=null) {
 							geometry.setSRID(srsId);
 						}
@@ -530,7 +523,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 					}else if (iomGeom.getobjecttag().equals(MULTIPOLYLINE)){
 						// MULTIPOLYLINE
 						try {
-							Geometry geometry = Iox2jts.multipolyline2JTS(iomGeom, 0.0);
+                            org.locationtech.jts.geom.Geometry geometry = JtsPackageConverter.toNewPackage(Iox2jts.multipolyline2JTS(iomGeom, 0.0));
 							featureBuilder.set(ShapeReader.GEOTOOLS_THE_GEOM, geometry);
 						}catch(Exception e) {
 							throw new IoxException("failed to convert "+iomGeom.getobjecttag()+" to jts",e);
@@ -542,7 +535,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 						int surfaceCount=iomGeom.getattrvaluecount("surface");
 						if(surfaceCount==1) {
 							try {
-								Polygon jtsSurface=Iox2jts.surface2JTS(iomGeom, 0.00);
+							    org.locationtech.jts.geom.Polygon jtsSurface = JtsPackageConverter.toNewPackage(Iox2jts.surface2JTS(iomGeom, 0.00));
 								if(srsId!=null) {
 									jtsSurface.setSRID(srsId);
 								}
@@ -553,7 +546,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 						}else if(surfaceCount>1){
 							// MULTIPOLYGON
 							try {
-								Geometry geometry = Iox2jts.multisurface2JTS(iomGeom, 0,0); 
+	                            org.locationtech.jts.geom.Geometry geometry = JtsPackageConverter.toNewPackage(Iox2jts.multisurface2JTS(iomGeom, 0,0));
 								if(srsId!=null) {
 									geometry.setSRID(srsId);
 								}
@@ -591,7 +584,13 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	        // newFeature.setAttributes(feature.getAttributes()) does not work
 	        // since the two AttributeDescriptor have not the same order of attributes.
 	        for (AttributeDescriptor attrDesc : attrDescs) {
-	        		newFeature.setAttribute(attrDesc.getLocalName(), feature.getAttribute(attrDesc.getLocalName()));	
+                if (attrDesc.getLocalName().equals(ShapeReader.GEOTOOLS_THE_GEOM)) {
+                    org.locationtech.jts.geom.Geometry geom = (org.locationtech.jts.geom.Geometry) feature.getAttribute(attrDesc.getLocalName());
+                    newFeature.setAttribute(attrDesc.getLocalName(), geom);                    
+                } else {
+                    newFeature.setAttribute(attrDesc.getLocalName(), feature.getAttribute(attrDesc.getLocalName()));
+                }
+	
 	        }
 	        writer.write();
 	    }
@@ -604,7 +603,7 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	    		throw new IoxException("no data written to shapefile",e);
 	    }
 	}
-
+	
 	@Override
     public void close() throws IoxException
 	{
@@ -676,16 +675,22 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
 	public void setAttributeDescriptors(AttributeDescriptor attrDescs[]) throws IoxException {
 	    initAttrDescs(); 
         for(AttributeDescriptor attrDesc:attrDescs) {
-            if(attrDesc.getType() instanceof GeometryType) {
-                iliGeomAttrName=attrDesc.getLocalName();
-            }
-            
             // Create new AttributeDescriptor b/c of trimmed attribute name.
             AttributeTypeBuilder attributeBuilder = new AttributeTypeBuilder();
-            attributeBuilder.setBinding(attrDesc.getType().getBinding());
-            if(defaultSrsId!=null) {
-                attributeBuilder.setCRS(createCrs(defaultSrsId));
+
+            if(attrDesc.getType() instanceof GeometryType) {   
+                iliGeomAttrName=attrDesc.getLocalName();
+
+                GeometryType geomType = (GeometryType) attrDesc.getType();
+                CoordinateReferenceSystem crs = geomType.getCoordinateReferenceSystem();
+                attributeBuilder.setCRS(crs);
+                
+                if (crs == null && defaultSrsId != null) {
+                    attributeBuilder.setCRS(createCrs(defaultSrsId));
+                }
             }
+
+            attributeBuilder.setBinding(attrDesc.getType().getBinding());
             attributeBuilder.setName(attrDesc.getLocalName());
             attributeBuilder.setMinOccurs(0);
             attributeBuilder.setMaxOccurs(1);
@@ -693,7 +698,6 @@ public class ShapeWriter implements ch.interlis.iox.IoxWriter {
             
             String trimmedAttrName = trimAttributeName(attrDesc.getLocalName(),9);
             AttributeDescriptor descriptor = attributeBuilder.buildDescriptor(trimmedAttrName);                            
-
             addAttrDesc(attrDesc.getLocalName(), descriptor);
         }
 	}
