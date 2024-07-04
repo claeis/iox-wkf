@@ -16,7 +16,51 @@ public class JtsPackageConverter {
             throw new IOException(e);
         } 
     }
+    
+    public static org.locationtech.jts.geom.Coordinate toNewPackage(com.vividsolutions.jts.geom.Coordinate oldCoord) throws IOException {
+        if (oldCoord == null) {
+            return null;
+        } 
+        
+        if (Double.valueOf(oldCoord.z) != null) {
+            return new org.locationtech.jts.geom.Coordinate(oldCoord.x, oldCoord.y, oldCoord.z);    
+        } else {
+            return new org.locationtech.jts.geom.Coordinate(oldCoord.x, oldCoord.y);    
+        }        
+    }
 
+    public static org.locationtech.jts.geom.CoordinateList toNewPackage(com.vividsolutions.jts.geom.CoordinateList oldCoords) throws IOException {
+        if (oldCoords == null) {
+            return null;
+        }
+        
+        org.locationtech.jts.geom.CoordinateList newCoords = new org.locationtech.jts.geom.CoordinateList();
+        for (int i=0; i<oldCoords.size(); i++) {
+            org.locationtech.jts.geom.Coordinate newCoord = new org.locationtech.jts.geom.Coordinate(
+                    ((com.vividsolutions.jts.geom.Coordinate)oldCoords.get(i)).x, 
+                    ((com.vividsolutions.jts.geom.Coordinate)oldCoords.get(i)).y,
+                    ((com.vividsolutions.jts.geom.Coordinate)oldCoords.get(i)).z);
+            newCoords.add(newCoord);
+        }
+        return newCoords;
+    }
+    
+    public static org.locationtech.jts.geom.Polygon toNewPackage(com.vividsolutions.jts.geom.Polygon oldGeom) throws IOException {
+        return (org.locationtech.jts.geom.Polygon) toNewPackage((com.vividsolutions.jts.geom.Geometry) oldGeom);        
+    }
+
+    public static org.locationtech.jts.geom.MultiPolygon toNewPackage(com.vividsolutions.jts.geom.MultiPolygon oldGeom) throws IOException {
+        return (org.locationtech.jts.geom.MultiPolygon) toNewPackage((com.vividsolutions.jts.geom.Geometry) oldGeom);        
+    }    
+    
+    public static org.locationtech.jts.geom.MultiPoint toNewPackage(com.vividsolutions.jts.geom.MultiPoint oldGeom) throws IOException {
+        return (org.locationtech.jts.geom.MultiPoint) toNewPackage((com.vividsolutions.jts.geom.Geometry) oldGeom);        
+    }
+
+    public static org.locationtech.jts.geom.MultiLineString toNewPackage(com.vividsolutions.jts.geom.MultiLineString oldGeom) throws IOException {
+        return (org.locationtech.jts.geom.MultiLineString) toNewPackage((com.vividsolutions.jts.geom.Geometry) oldGeom);        
+    }
+    
     public static com.vividsolutions.jts.geom.Geometry toOldPackage(org.locationtech.jts.geom.Geometry newGeom) throws IOException {
         if (newGeom == null) {
             return null;
