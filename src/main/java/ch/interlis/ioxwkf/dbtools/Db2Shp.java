@@ -2,20 +2,12 @@ package ch.interlis.ioxwkf.dbtools;
 
 import java.io.File;
 import java.sql.Types;
-import java.util.List;
 
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CRSAuthorityFactory;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.MultiLineString;
-import com.vividsolutions.jts.geom.MultiPoint;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.settings.Settings;
@@ -80,7 +72,7 @@ public class Db2Shp extends AbstractExportFromdb {
 		
 		// create and return a shape writer.
 		ShapeWriter writer=new ShapeWriter(file,config);
-		org.opengis.feature.type.AttributeDescriptor attrDescs[]=new org.opengis.feature.type.AttributeDescriptor[dbColumns.length];
+        org.opengis.feature.type.AttributeDescriptor attrDescs[]=new org.opengis.feature.type.AttributeDescriptor[dbColumns.length];
 		for(int i=0;i<dbColumns.length;i++) {
 			org.geotools.feature.AttributeTypeBuilder attributeBuilder=new org.geotools.feature.AttributeTypeBuilder();
 			String attrName=dbColumns[i].getIomAttributeName();
@@ -89,17 +81,17 @@ public class Db2Shp extends AbstractExportFromdb {
 			if(dbColumns[i].isGeometry()) {
 				String geoColumnTypeName=dbColumns[i].getDbColumnGeomTypeName();
 				if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POINT)) {
-					attributeBuilder.setBinding(Point.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.Point.class);
 				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOINT)) {
-					attributeBuilder.setBinding(MultiPoint.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPoint.class);
 				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_LINESTRING)) {
-					attributeBuilder.setBinding(LineString.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.LineString.class);
 				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTILINESTRING)) {
-					attributeBuilder.setBinding(MultiLineString.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiLineString.class);
 				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_POLYGON)) {
-					attributeBuilder.setBinding(Polygon.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.Polygon.class);
 				}else if(geoColumnTypeName.equals(AttributeDescriptor.GEOMETRYTYPE_MULTIPOLYGON)) {
-					attributeBuilder.setBinding(MultiPolygon.class);
+					attributeBuilder.setBinding(org.locationtech.jts.geom.MultiPolygon.class);
 				}else {
 					throw new IllegalStateException("unexpected geometry type "+geoColumnTypeName);
 				}
@@ -137,7 +129,7 @@ public class Db2Shp extends AbstractExportFromdb {
 			attributeBuilder.setMinOccurs(0);
 			attributeBuilder.setMaxOccurs(1);
 			attributeBuilder.setNillable(true);
-			attrDescs[i]=attributeBuilder.buildDescriptor(attrName);
+			attrDescs[i]=attributeBuilder.buildDescriptor(attrName);    
 		}
 		writer.setAttributeDescriptors(attrDescs);
 		return writer;
