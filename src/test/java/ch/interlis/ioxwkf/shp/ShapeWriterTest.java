@@ -999,7 +999,6 @@ public class ShapeWriterTest {
 		if(featureCollectionIter.hasNext()) {
 			// feature object
 			SimpleFeature shapeObj=(SimpleFeature) featureCollectionIter.next();
-			System.out.println(shapeObj.toString());
 			Object attr2=shapeObj.getAttribute(ShapeReader.GEOTOOLS_THE_GEOM);
 			assertEquals("MULTIPOLYGON (((-0.2285714285714285 0.5688311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5888311688311687, -0.1585714285714285 0.5688311688311687, -0.1585714285714285 0.5688311688311687, -0.2285714285714285 0.5688311688311687)))",attr2.toString());
 		}
