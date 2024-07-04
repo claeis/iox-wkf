@@ -1,6 +1,11 @@
 ideas/open issues
 ----------------------------
 
+iox-wkf 2.0.0(2024-07-04)
+-----------------------------
+- database query option for ExportFromDb (instead of tables only)
+- GeoTools 28.5 (last Java 8 compatible version)
+
 iox-wkf 1.1.1(2023-08-28)
 -----------------------------
 - Add fetchSize / batchSize to Import and export with GeoPackage
