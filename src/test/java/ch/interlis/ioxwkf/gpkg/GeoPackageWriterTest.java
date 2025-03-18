@@ -570,7 +570,7 @@ public class GeoPackageWriterTest {
                 rs = stmt.executeQuery("SELECT the_geom FROM class_found_in_last_input_model_ok");
                 while (rs.next()) {
                 	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-                	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
+                	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
                 			iomGeom.toString());
                 }
                 rs.close();
@@ -1304,7 +1304,7 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrpolygon FROM polygon");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
+	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
 	            			iomGeom.toString());
 	            }
 	            rs.close();
@@ -1396,7 +1396,7 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrpolygon2, attr1pg, attr2pg FROM polygon_2");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
+	            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}",
 	            			iomGeom.toString());
 	            	assertEquals("text2", rs.getString(2));
 	            	assertEquals(6, rs.getInt(3));
@@ -1524,7 +1524,7 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrmultipolygon FROM multipolygon");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
+	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
 	            			iomGeom.toString());
 	            }
 	            rs.close();
@@ -1650,7 +1650,7 @@ public class GeoPackageWriterTest {
 	            rs = stmt.executeQuery("SELECT attrmultipolygon2, attr1mpg, attr2mpg FROM multipolygon_2");
 	            while (rs.next()) {
 	            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(1));
-	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
+	            	assertEquals("MULTISURFACE {surface [SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.228, C2 0.568}]}}}}, SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 0.228, C2 1.3}, COORD {C1 0.158, C2 1.568}, COORD {C1 0.158, C2 0.5}, COORD {C1 0.228, C2 1.3}]}}}}]}",
 	            			iomGeom.toString());
 	            	assertEquals("text3", rs.getString(2));
 	            	assertEquals("8", rs.getString(3));	            	

@@ -642,11 +642,11 @@ public class GeoPackageWriter implements IoxWriter {
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(POLYGON)) {
     	    		jtsGeom = Iox2jts.surface2JTS(iomGeom, 0.00);
-    	    		Object geom = iox2gpgk.surface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
+    	    		Object geom = iox2gpgk.surface2wkb(iomGeom, false, 0.00, true, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	} else if (attrDesc.getDbColumnGeomTypeName().equalsIgnoreCase(MULTIPOLYGON)) {
     	    		jtsGeom = Iox2jts.multisurface2JTS(iomGeom, 0.00, defaultSrsId);
-    	    		Object geom = iox2gpgk.multisurface2wkb(iomGeom, false, 0.00, attrDesc.getSrId());
+    	    		Object geom = iox2gpgk.multisurface2wkb(iomGeom, false, 0.00, true, attrDesc.getSrId());
     	    		pstmt.setObject(i+1, geom);
     	    	}
     	    	

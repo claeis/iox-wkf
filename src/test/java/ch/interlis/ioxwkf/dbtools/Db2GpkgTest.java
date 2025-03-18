@@ -1964,7 +1964,7 @@ public class Db2GpkgTest {
 		            while (rs.next()) {
 		            	assertEquals("polygon", rs.getString(1));
 		            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(2));
-		            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}", 
+		            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.22857142857142854, C2 0.5688311688311687}, COORD {C1 -0.15857142857142853, C2 0.5888311688311687}, COORD {C1 -0.15857142857142853, C2 0.5688311688311687}, COORD {C1 -0.22857142857142854, C2 0.5688311688311687}]}}}}}", 
 		            			iomGeom.toString());
 		            }
 			        rs.close();
@@ -2037,7 +2037,7 @@ public class Db2GpkgTest {
 		            while (rs.next()) {
 		            	assertEquals("multipolygon", rs.getString(1));
 		            	IomObject iomGeom = gpkg2iox.read(rs.getBytes(2));
-		            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.228, C2 0.568}]}}}}}", 
+		            	assertEquals("MULTISURFACE {surface SURFACE {boundary BOUNDARY {polyline POLYLINE {sequence SEGMENTS {segment [COORD {C1 -0.228, C2 0.568}, COORD {C1 -0.158, C2 0.588}, COORD {C1 -0.158, C2 0.568}, COORD {C1 -0.228, C2 0.568}]}}}}}", 
 		            			iomGeom.toString());
 		            }
 			        rs.close();
