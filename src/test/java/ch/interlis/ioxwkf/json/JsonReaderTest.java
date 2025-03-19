@@ -12,6 +12,7 @@ import ch.interlis.ili2c.config.FileEntry;
 import ch.interlis.ili2c.config.FileEntryKind;
 import ch.interlis.ili2c.metamodel.TransferDescription;
 import ch.interlis.iom.IomObject;
+import ch.interlis.iom_j.Iom_jObject;
 import ch.interlis.iox.IoxEvent;
 import ch.interlis.iox.IoxException;
 import ch.interlis.iox.EndBasketEvent;
@@ -30,6 +31,9 @@ public class JsonReaderTest {
     private static final String CLASS_TEST1_TOPIC1_POINT_OF_INTEREST = "Test1.Topic1.PointOfInterest";
     private static final String CLASS_TEST1_TOPIC2_STRUCTA = "Test1.Topic2.StructA";
     private static final String CLASS_TEST1_TOPIC2_CLASSA = "Test1.Topic2.ClassA";
+    private static final String TOPIC_TEST2_TOPIC2 = "Test2.Topic2";
+    private static final String CLASS_TEST2_TOPIC2_STRUCTA = "Test2.Topic2.StructA";
+    private static final String CLASS_TEST2_TOPIC2_CLASSA = "Test2.Topic2.ClassA";
     private final static String TEST_IN="src/test/data/JsonReader";
 	private final static String TEST_OUT="build/test/data/JsonReader";
     private static final double E = 0.000001;
@@ -350,6 +354,57 @@ public class JsonReaderTest {
             assertTrue(reader.read() instanceof EndTransferEvent);
             assertNull(reader.read());
         }finally {
+            if(reader!=null) {
+                try {
+                    reader.close();
+                } catch (IoxException e) {
+                    throw new IoxException(e);
+                }
+                reader=null;
+            }
+        }
+    }
+    
+    @Test
+    public void listOfText() throws IoxException, IOException, Ili2cFailure {
+        Configuration ili2cConfig=new Configuration();
+        FileEntry fileEntry=new FileEntry(TEST_IN+"/Test2.ili", FileEntryKind.ILIMODELFILE);
+        ili2cConfig.addFileEntry(fileEntry);
+        td=null;
+        td=ch.interlis.ili2c.Ili2c.runCompiler(ili2cConfig);
+        assertNotNull(td);
+        
+        JsonReader reader = null;
+        File file = new File(TEST_IN,"simpleAttrList.json");
+        try {
+            reader = new JsonReader(file);
+            reader.setModel(td); 
+            assertTrue(reader.read() instanceof StartTransferEvent);
+            IoxEvent startBasket=reader.read();
+            assertTrue(startBasket instanceof StartBasketEvent);
+            assertEquals("bid1",((StartBasketEvent) startBasket).getBid());
+            assertEquals(TOPIC_TEST2_TOPIC2,((StartBasketEvent) startBasket).getType());
+            IoxEvent objectEvent=reader.read();
+            {
+                assertTrue(objectEvent instanceof ObjectEvent);
+                final IomObject obj1 = ((ObjectEvent) objectEvent).getIomObject();
+                assertEquals("o1",obj1.getobjectoid());
+                assertEquals(CLASS_TEST2_TOPIC2_CLASSA,obj1.getobjecttag());
+                IomObject structa=obj1.getattrobj("attrStruct", 0);
+                assertEquals(CLASS_TEST2_TOPIC2_STRUCTA,structa.getobjecttag());
+                assertEquals("lineA",structa.getattrvalue("attrText"));
+                IomObject structb0=obj1.getattrobj("attrBag", 0);
+                assertEquals(CLASS_TEST2_TOPIC2_STRUCTA,structb0.getobjecttag());
+                assertEquals("lineB",structb0.getattrvalue("attrText"));
+                IomObject structb1=obj1.getattrobj("attrBag", 1);
+                assertEquals(CLASS_TEST2_TOPIC2_STRUCTA,structb1.getobjecttag());
+                assertEquals("lineC",structb1.getattrvalue("attrText"));
+                assertEquals("lineF",obj1.getattrvalue("attrText"));
+                assertEquals(2,obj1.getattrvaluecount("attrTextList"));
+                assertEquals("lineD",obj1.getattrprim("attrTextList", 0));
+                assertEquals("lineE",obj1.getattrprim("attrTextList", 1));
+            }
+        } finally {
             if(reader!=null) {
                 try {
                     reader.close();
