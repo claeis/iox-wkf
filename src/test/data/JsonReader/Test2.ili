@@ -1,0 +1,27 @@
+INTERLIS 2.4;
+
+MODEL Test2 (de) AT "mailto:ceis@localhost" VERSION "20170703" =
+
+    DOMAIN
+    Coord2 = COORD
+      2460000.000 .. 2870000.000,
+      1045000.000 .. 1310000.000,
+      ROTATION 2 -> 1;
+    
+    TOPIC Topic2 =
+    
+        STRUCTURE StructA =
+            attrText : TEXT*60;
+            attrInt : -1000 .. 1000;
+        END StructA;
+
+        CLASS ClassA =
+            attrStruct : StructA;
+            attrBag : BAG OF StructA;
+            attrTextList : LIST {0..*} OF TEXT*5;
+            attrText : TEXT*60;
+        END ClassA;
+    
+    END Topic2;
+    
+END Test2.

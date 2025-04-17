@@ -1,6 +1,8 @@
 package ch.interlis.ioxwkf.json;
 
 import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.vividsolutions.jts.geom.Geometry;
@@ -46,7 +48,12 @@ class Json2iox {
             throw new IOException("unexpected json token "+current.toString()+"; '{' expected");
         }
         current = jg.nextToken();
-        IomObject ret=new Iom_jObject("TAG",null);
+        Iom_jObject ret=new Iom_jObject("TAG",null);
+        
+        JsonLocation location = jg.getCurrentLocation();
+        int lineNumber = location.getLineNr();
+        ret.setobjectline(lineNumber);
+
         while(current==JsonToken.FIELD_NAME) {
             String propName=jg.getCurrentName();
             current = jg.nextToken();
@@ -68,13 +75,22 @@ class Json2iox {
                 current = jg.nextToken();
             }else if(current==JsonToken.START_ARRAY) {
                 current = jg.nextToken();
-                while(current==JsonToken.START_OBJECT) {
-                    IomObject structEle=read();
-                    ret.addattrobj(propName, structEle);
-                    current = jg.nextToken();
-                }
-                if(current!=JsonToken.END_ARRAY) {
-                    throw new IOException("unexpected json token "+jg.currentToken().toString()+"; ']' expected");
+                while (current != JsonToken.END_ARRAY) {
+                    if (current == JsonToken.START_OBJECT) {
+                        IomObject structEle = read();
+                        ret.addattrobj(propName, structEle);
+                        current = jg.nextToken();
+                    } else if (current == JsonToken.VALUE_STRING 
+                            || current == JsonToken.VALUE_NUMBER_INT 
+                            || current == JsonToken.VALUE_NUMBER_FLOAT
+                            || current == JsonToken.VALUE_TRUE
+                            || current == JsonToken.VALUE_FALSE) {
+                        String arrayValue = jg.getValueAsString();
+                        ret.addattrvalue(propName, arrayValue);
+                        current = jg.nextToken();
+                    } else {
+                        throw new IOException("unexpected json token " + current.toString() + " in array");
+                    }
                 }
                 current = jg.nextToken();
             }else {

@@ -284,7 +284,7 @@ public class Shp2dbTest {
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){
 					assertEquals("12", rs.getObject(1));
-				  	assertEquals("SRID=2056;POLYGON((-0.228571428571429 0.568831168831169,-0.158571428571429 0.588831168831169,-0.158571428571429 0.588831168831169,-0.158571428571429 0.568831168831169,-0.158571428571429 0.568831168831169,-0.228571428571429 0.568831168831169))", rs.getObject(2));
+				  	assertEquals("SRID=2056;POLYGON((-0.228571428571429 0.568831168831169,-0.158571428571429 0.588831168831169,-0.158571428571429 0.568831168831169,-0.228571428571429 0.568831168831169))", rs.getObject(2));
 				}
 			}
 		}finally{
@@ -336,8 +336,8 @@ public class Shp2dbTest {
 				assertEquals(2, rsmd.getColumnCount());
 				while(rs.next()){
 					assertEquals("12", rs.getObject(1));
-				  	assertTrue(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((-0.228 0.568,-0.158 0.588,-0.158 0.588,-0.158 0.568,-0.158 0.568,-0.228 0.568)))") ||
-				  			(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((0.228 1.3,0.158 0.5,0.158 0.5,0.158 1.568,0.158 1.568,0.228 1.3)))")));
+				  	assertTrue(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((-0.228 0.568,-0.158 0.588,-0.158 0.568,-0.228 0.568)))") ||
+				  			(rs.getObject(2).equals("SRID=2056;MULTIPOLYGON(((0.228 1.3,0.158 0.5,0.158 1.568,0.228 1.3)))")));
 				}
 			}
 		}finally{
