@@ -28,6 +28,8 @@ script:
   - ./gradlew -Ddburl=jdbc:postgresql:ioxwkf -Ddbusr=postgres build 
 deploy:
   - provider: script
+    dpl_version: 2.0.5.2.beta.1
+    edge: true
     skip_cleanup: true
     script: ./gradlew -Drepos_pwd=${repos_pwd} -Drepos_usr=jql_jars-INTE upload
     on:
